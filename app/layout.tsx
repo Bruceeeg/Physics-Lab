@@ -23,8 +23,8 @@ const notoSansSC = Noto_Sans_SC({
 });
 
 export const metadata: Metadata = {
-  title: "匀变速直线运动 | Physics Lab",
-  description: "匀变速直线运动实验台：由初值积分得到 x(t) 与 v(t)，并按真实时间推进。",
+  title: "斜向拉力实验台 | Physics Lab",
+  description: "水平面上斜向拉力与摩擦的三维受力实验：可配置 F、θ、m、μs、μk、g。",
 };
 
 export default function RootLayout({

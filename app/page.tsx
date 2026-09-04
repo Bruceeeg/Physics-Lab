@@ -1,5 +1,5 @@
-import { LinearMotionLab } from "@/components/linear-motion-lab";
+import { PullFrictionLab } from "@/components/pull-friction-lab";
 
 export default function Home() {
-  return <LinearMotionLab />;
+  return <PullFrictionLab />;
 }
