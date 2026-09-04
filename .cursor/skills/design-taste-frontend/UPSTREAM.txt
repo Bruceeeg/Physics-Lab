@@ -1,0 +1,2 @@
+https://github.com/Leonxlnx/taste-skill
+skill: design-taste-frontend (v2, skills/taste-skill/SKILL.md)

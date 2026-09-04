@@ -1,28 +1,87 @@
 @import "tailwindcss";
 
+@theme inline {
+  --font-sans: var(--font-plex-sans), var(--font-noto), "PingFang SC",
+    "Hiragino Sans GB", "Noto Sans SC", sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, "SFMono-Regular", Menlo,
+    monospace;
+  --color-paper: #f8fafc;
+  --color-ink: #0f172a;
+  --color-navy: #1e3a5f;
+  --color-gold: #a16207;
+  --color-quiet: #475569;
+  --color-muted: #e9eef5;
+  --color-line: #cbd5e1;
+  --color-surface: #ffffff;
+}
+
 :root {
-  color-scheme: dark;
+  color-scheme: light;
+}
+
+html {
+  background: var(--color-paper);
 }
 
 body {
   margin: 0;
-  min-height: 100vh;
-  background:
-    radial-gradient(circle at top, rgba(34, 197, 94, 0.14), transparent 28%),
-    linear-gradient(180deg, #08111f 0%, #0f172a 100%);
-  color: #e2e8f0;
-  font-family:
-    "Inter",
-    "PingFang SC",
-    "Hiragino Sans GB",
-    "Microsoft YaHei",
-    sans-serif;
+  min-height: 100dvh;
+  background: var(--color-paper);
+  color: var(--color-ink);
 }
 
 * {
   box-sizing: border-box;
 }
 
+a,
+button,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
 input[type="range"] {
-  accent-color: #38bdf8;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 2px;
+  background: var(--color-line);
+  border-radius: 0;
+  cursor: pointer;
+}
+
+input[type="range"]:focus-visible {
+  outline: 2px solid var(--color-navy);
+  outline-offset: 6px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--color-navy);
+  background: var(--color-surface);
+  border-radius: 2px;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--color-navy);
+  background: var(--color-surface);
+  border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

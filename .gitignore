@@ -21,6 +21,11 @@
 # misc
 .DS_Store
 *.pem
+.tmp-uupm/
+
+# python
+__pycache__/
+*.py[cod]
 
 # debug
 npm-debug.log*
