@@ -13,7 +13,7 @@ export function clampTime(value: number) {
   if (!Number.isFinite(value)) {
     return TIME_MIN;
   }
-  return Math.min(TIME_MAX, Math.max(TIME_MIN, value));
+  return Math.max(TIME_MIN, value);
 }
 
 export function positionAt(x0: number, v0: number, a: number, t: number) {

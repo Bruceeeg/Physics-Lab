@@ -7,9 +7,8 @@ function precisionFor(step: number) {
   return text.includes(".") ? text.length - text.indexOf(".") - 1 : 0;
 }
 
-function normalize(value: number, min: number, max: number, step: number) {
-  const clamped = Math.min(max, Math.max(min, value));
-  const stepped = min + Math.round((clamped - min) / step) * step;
+function snapToStep(value: number, step: number) {
+  const stepped = Math.round(value / step) * step;
   return Number(stepped.toFixed(precisionFor(step)));
 }
 
@@ -56,7 +55,7 @@ export function ParameterControl({
       setDraft(displayValue(value, step));
       return;
     }
-    const next = normalize(parsed, min, max, step);
+    const next = snapToStep(parsed, step);
     setDraft(displayValue(next, step));
     onChange(next);
   };
@@ -71,8 +70,6 @@ export function ParameterControl({
         <input
           id={`${id}-number`}
           type="number"
-          min={min}
-          max={max}
           step={step}
           value={draft}
           aria-invalid={invalid}
@@ -87,7 +84,7 @@ export function ParameterControl({
             }
             const parsed = Number(nextDraft);
             if (Number.isFinite(parsed)) {
-              onChange(normalize(parsed, min, max, step));
+              onChange(snapToStep(parsed, step));
             }
           }}
           onBlur={commit}
@@ -108,8 +105,8 @@ export function ParameterControl({
       <input
         id={`${id}-range`}
         type="range"
-        min={min}
-        max={max}
+        min={Math.min(min, value)}
+        max={Math.max(max, value)}
         step={step}
         value={value}
         aria-label={`${label}滑条`}

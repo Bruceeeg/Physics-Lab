@@ -48,7 +48,7 @@ export function createPrediction(
   return {
     phase: "measure",
     hiddenV0: drawHiddenV0(random),
-    h: clamp(h, PREDICTION_H_MIN, PREDICTION_H_MAX),
+    h: Number.isFinite(h) && h >= 0 ? h : DEFAULT_PREDICTION_H,
     thetaDeg: 0,
     v0Estimate: null,
     v0Accepted: false,
@@ -78,22 +78,20 @@ export function setHeight(state: PredictionState, h: number): PredictionState {
   if (state.phase === "result" || !Number.isFinite(h)) {
     return state;
   }
-  const next = clamp(h, PREDICTION_H_MIN, PREDICTION_H_MAX);
-  if (next === state.h) {
+  if (h === state.h) {
     return state;
   }
-  return { ...state, h: next, lastLandingX: null, xPredicted: null, targetPlaced: false };
+  return { ...state, h, lastLandingX: null, xPredicted: null, targetPlaced: false };
 }
 
 export function setTheta(state: PredictionState, thetaDeg: number): PredictionState {
   if (state.phase !== "predict" || !Number.isFinite(thetaDeg)) {
     return state;
   }
-  const next = clamp(thetaDeg, PREDICTION_THETA_MIN, PREDICTION_THETA_MAX);
-  if (next === state.thetaDeg) {
+  if (thetaDeg === state.thetaDeg) {
     return state;
   }
-  return { ...state, thetaDeg: next, lastLandingX: null, xPredicted: null, targetPlaced: false };
+  return { ...state, thetaDeg, lastLandingX: null, xPredicted: null, targetPlaced: false };
 }
 
 export function submitV0Estimate(state: PredictionState, value: number): PredictionState {

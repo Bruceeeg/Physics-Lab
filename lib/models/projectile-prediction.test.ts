@@ -39,12 +39,12 @@ test("a new prediction starts in the measure phase with a horizontal launcher", 
   assert.equal(canLaunch(state), true);
 });
 
-test("theta is locked during measure and clamped during predict", () => {
+test("theta is locked during measure and accepts values past the slider range", () => {
   const measure = createPrediction(fixedV0);
   assert.equal(setTheta(measure, 30), measure);
   const predict = submitV0Estimate(measure, 4);
-  assert.equal(setTheta(predict, 95).thetaDeg, 80);
-  assert.equal(setTheta(predict, -5).thetaDeg, 0);
+  assert.equal(setTheta(predict, 95).thetaDeg, 95);
+  assert.equal(setTheta(predict, -5).thetaDeg, -5);
 });
 
 test("v0 estimate within 5 percent unlocks the predict phase", () => {
@@ -92,7 +92,7 @@ test("changing h or theta while predicting removes the placed target", () => {
   const placed = placeTarget(submitV0Estimate(createPrediction(fixedV0), 4), 2);
   assert.equal(setHeight(placed, 1.5).targetPlaced, false);
   assert.equal(setTheta(placed, 20).xPredicted, null);
-  assert.equal(setHeight(placed, 5).h, 3);
+  assert.equal(setHeight(placed, 5).h, 5);
   assert.equal(setHeight(placed, 1), placed);
 });
 

@@ -56,9 +56,9 @@ test("time at or below zero leaves no trail", () => {
   });
 });
 
-test("manual time is clamped to the allowed clock range", () => {
+test("manual time rejects non-finite and negative values but has no upper cap", () => {
   assert.equal(clampTime(-2), TIME_MIN);
-  assert.equal(clampTime(TIME_MAX + 8), TIME_MAX);
+  assert.equal(clampTime(TIME_MAX + 8), TIME_MAX + 8);
   assert.equal(clampTime(3.25), 3.25);
   assert.equal(clampTime(Number.NaN), TIME_MIN);
 });

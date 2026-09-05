@@ -122,10 +122,6 @@ export function LinearMotionLab() {
     if (playingRef.current) {
       return;
     }
-    if (timeRef.current >= TIME_MAX) {
-      setClock(TIME_MIN);
-    }
-
     playingRef.current = true;
     setIsPlaying(true);
     lastStampRef.current = 0;
@@ -144,11 +140,7 @@ export function LinearMotionLab() {
 
       const dt = Math.min(0.05, Math.max(0, (now - lastStampRef.current) / 1000));
       lastStampRef.current = now;
-      const next = setClock(timeRef.current + dt);
-      if (next >= TIME_MAX) {
-        pause();
-        return;
-      }
+      setClock(timeRef.current + dt);
       frameRef.current = requestAnimationFrame(tick);
     };
 
@@ -305,7 +297,7 @@ export function LinearMotionLab() {
           </div>
 
           <div className="mx-2 min-h-8 border border-line bg-paper px-2 py-1.5 text-[11px] leading-4 text-quiet">
-            t 范围 {TIME_MIN}-{TIME_MAX} s。播放按真实时间推进，也可直接输入或拖动 t。
+            滑条 {TIME_MIN}–{TIME_MAX} s，数字框可超出。播放按真实时间推进。
           </div>
 
           <section className="mx-2 mt-2 border-t border-line pt-2">
