@@ -556,7 +556,7 @@ export function ProjectileScene({
         labelOffset={[-0.16 * scale, 0, 0]}
         scale={scale}
       />
-      {landingX !== null ? <LandingMarker x={landingX} scale={scale} /> : null}
+      {landingX !== null && !target ? <LandingMarker x={landingX} scale={scale} /> : null}
       {target ? <TargetCup target={target} scale={scale} /> : null}
       <FitCamera extentX={extentX} extentY={extentY} allowRefit={allowRefit} />
       <OrbitControls

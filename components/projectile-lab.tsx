@@ -505,6 +505,7 @@ export function ProjectileLab() {
               points={chartSeries}
               currentTime={time}
               currentValue={sample.x}
+              minDuration={Math.max(flightTime(activeParams), 1)}
             />
             <TimeSeriesChart
               title="高度-时间"
@@ -515,6 +516,7 @@ export function ProjectileLab() {
               points={chartSeries}
               currentTime={time}
               currentValue={sample.y}
+              minDuration={Math.max(flightTime(activeParams), 1)}
             />
             <TimeSeriesChart
               title="水平速度-时间"
@@ -525,6 +527,7 @@ export function ProjectileLab() {
               points={chartSeries}
               currentTime={time}
               currentValue={sample.vx}
+              minDuration={Math.max(flightTime(activeParams), 1)}
             />
             <TimeSeriesChart
               title="竖直速度-时间"
@@ -535,6 +538,7 @@ export function ProjectileLab() {
               points={chartSeries}
               currentTime={time}
               currentValue={sample.vy}
+              minDuration={Math.max(flightTime(activeParams), 1)}
             />
           </aside>
         ) : (

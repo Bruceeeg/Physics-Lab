@@ -64,6 +64,7 @@ type TimeSeriesChartProps<T extends TimeSeriesPoint> = {
   points: readonly T[];
   currentTime: number;
   currentValue: number;
+  minDuration?: number;
 };
 
 function TimeSeriesChartInner<T extends TimeSeriesPoint>({
@@ -75,8 +76,9 @@ function TimeSeriesChartInner<T extends TimeSeriesPoint>({
   points,
   currentTime,
   currentValue,
+  minDuration = 10,
 }: TimeSeriesChartProps<T>) {
-  const timeMax = Math.max(10, currentTime);
+  const timeMax = Math.max(minDuration, currentTime);
   const { min, max, range } = useMemo(() => {
     const values = [...points.map((point) => valueOf(point, valueKey)), currentValue];
     const next = axisRange(values);
