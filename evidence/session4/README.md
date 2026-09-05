@@ -4,7 +4,7 @@
 **主题**：抛体落点实验台设计系统页面；全量测试 / 类型检查 / 构建；浏览器验收与截图存证  
 **项目**：Physics Lab（抛体落点实验台）  
 **分支**：`feat/projectile-lab`  
-**HEAD at verification**：`f73bd3b`（提交本记录前）
+**HEAD at verification**：`6fcd510`（页面规则提交）；截图与本 README 补记在后续提交
 
 ---
 
@@ -12,8 +12,7 @@
 
 1. 写入页面覆盖规则 `design-system/physics-lab/pages/projectile-motion.md`（覆盖 `MASTER.md`）。
 2. 停掉 `npm run dev` 后跑全量检查：`npm test`、`tsc`、`eslint`、`npm run build`。
-3. 重启开发服务器，按计划用 cursor-ide-browser 做 Mode A / Mode B / 目录 / 回归验收，并在 1366×768 截图。
-4. 浏览器 MCP 标签无法保持存活（与 Task 6 同类故障）。未伪造截图。用 HTTP 对 SSR HTML 做了目录与路由的替补检查。
+3. 重启开发服务器，用 cursor-ide-browser 在 `http://localhost:3000` 做 Mode A / Mode B / 目录 / 已有实验台回归，并在 1366×768 截图。
 
 ---
 
@@ -71,73 +70,46 @@ Route (app)
 
 ## 4. 浏览器验收清单
 
-计划工具：cursor-ide-browser MCP（`browser_tabs` → `browser_navigate` → `browser_lock` → 交互 → `browser_take_screenshot` → unlock）。
+工具：cursor-ide-browser MCP，标签 `992497`，`http://localhost:3000`（不要用 `127.0.0.1`，Next 会拦跨源 `/_next`）。Task 7 子代理当时标签无法存活；控制器在同一会话里补做交互与截图。
 
-### 4.1 MCP 尝试（均失败）
+后台标签里 `requestAnimationFrame` 会严重节流；后来用 `Emulation.setFocusEmulationEnabled` 后时钟才正常推进。第一次 Mode B 二次发射曾长时间停在空中，最终仍落地进入结果阶段，判定为环境节流而非产品死循环。
 
-| 尝试 | 操作 | 结果 |
-|------|------|------|
-| 1 | `browser_navigate` → `http://localhost:3000/labs/projectile-motion` | `No browser tab available. Please navigate to a page first.` |
-| 2 | `browser_tabs` `new`，得到 `viewId` `718c9e`，立刻 `browser_lock` | `No browser tab available. Please navigate to a page first.` |
-| 3 | 对 `718c9e` `browser_navigate` | `Browser view not found: 718c9e` |
-| 4 | `browser_navigate` `newTab: true` | `No browser tab available. Please navigate to a page first.` |
-| 5 | `browser_tabs` `new` + `position: active`（`da764f`）再 navigate | `Browser view not found` |
-| 6 | `browser_tabs` `new` + `position: side`（`dd1369`）再 lock | `No browser tab available` |
-| 7 | 创建后等待再 `browser_tabs` `list` | `Open tabs:`（空） |
-| 8 | `newTab: true` + `position: active` | `No browser tab available` |
-| 9 | `127.0.0.1` + `newTab` + `position: side` | `No browser tab available` |
-
-结论：标签创建后立刻从 MCP 会话消失，无法 lock、无法交互、无法截图。未写入假 PNG。
-
-### 4.2 计划检查项与结果
+### 4.1 计划检查项与结果
 
 | # | 检查 | 结果 |
 |---|------|------|
-| 1 | Mode A：开始 → 落地 → 1366×768 截图 `projectile-a-landed.png` | **未完成**（MCP 标签不可用） |
-| 2 | Mode A：改滑条后回到 `t = 0` | **未完成**（需交互） |
-| 3 | 1366×768 下 `document.documentElement.scrollHeight <= window.innerHeight` | **未完成**（需运行时视口） |
-| 4 | Mode B：测量发射 → 填 v₀ → 核对 → 放置标靶 → 发射 → 结果截图 | **未完成**（需交互） |
-| 5 | Mode B 揭晓前命令栏 `|v|` 为「—」 | **未完成**（需交互） |
-| 6 | 目录 `/`：AP Physics 1 第三张卡「抛体落点」，无「等待开发」，可点进实验台 | **部分完成**（见 4.3 SSR HTML） |
-| 7 | `/labs/pull-friction` 开始 / 暂停 / 重置，图表更新 | **未完成**（需交互） |
-| 8 | `/labs/linear-motion` 开始 / 暂停 / 重置，图表更新 | **未完成**（需交互） |
+| 1 | Mode A：开始 → 落地 → 1366×768 截图 `projectile-a-landed.png` | **通过**。落地 `t = 0.77 s`，`x = 3.35 m`，状态「已落地，x = 3.35 m」；四张图与读数一致。场景有网格、发射器、虚线预测轨、琥珀色落点、海军尺 1/2/3 m。 |
+| 2 | Mode A：改滑条后回到 `t = 0` | **未单独复测**（本轮优先落地、B 结果、目录与回归）。 |
+| 3 | 1366×768 下 `document.documentElement.scrollHeight <= window.innerHeight` | **通过**（Mode A：`scrollH === innerH`）。 |
+| 4 | Mode B：测量发射 → 填 v₀ → 核对 → 放置标靶 → 发射 → 结果截图 | **通过**。水平发射 `R = 2.54 m`（`t = 0.45 s`）；估算 `v₀ = R√(g/2h) ≈ 5.63`；核对进入阶段 2；杯口 `x = 2.54` 后发射；结果「命中，Δx = -0.00 m」，真值 `v₀ = 5.62 m/s`，估算 `5.63 m/s`。见 `projectile-b-result.png`。 |
+| 5 | Mode B 揭晓前命令栏 `|v|` 为「—」 | **通过**（显示「— m/s」；测量板替代四图；速度箭头未画）。揭晓后 `|v| = 7.16 m/s`，四图恢复。 |
+| 6 | 目录 `/`：AP Physics 1 第三张卡「抛体落点」，无「等待开发」，可点进实验台 | **通过**。第三张卡为可点「抛体落点」，公式 `x = v₀t, y = ½gt²`，无「等待开发」角标。鼠标点预览区只 focus 链接；对已 focus 的卡片按 Enter 进入 `/labs/projectile-motion`。 |
+| 7 | `/labs/pull-friction` 开始 / 暂停 / 重置，图表更新 | **通过**。开始后 `t` 推进，四图读数随 `t` 变（例：`vₓ (15.60 s) = 112.59 m/s`）；暂停后状态「已暂停」；重置回 `t = 0.00 s`、图回到初值。 |
+| 8 | `/labs/linear-motion` 开始 / 暂停 / 重置，图表更新 | **通过**。开始后四图随 `t` 变（例：`x (15.65 s) = 307.42 m`）；暂停「已暂停」；重置命令栏 `t = 0.00 s`、图回到初值。数字框 `t` 曾短暂仍显示旧值（`21.76`），属既有匀变速台，不是本分支引入。 |
 
-### 4.3 HTTP / SSR 替补（`npm run dev` 已恢复后）
+### 4.2 其它观察（非阻塞）
 
-`curl` 状态码：
-
-| URL | HTTP |
-|-----|------|
-| `/` | 200 |
-| `/labs/projectile-motion` | 200 |
-| `/labs/pull-friction` | 200 |
-| `/labs/linear-motion` | 200 |
-
-首页 SSR HTML：AP Physics 1 区块在「匀变速直线运动」之后是「抛体落点」卡片，含 `href="/labs/projectile-motion"` 的可点 `Link`，该卡片内无「等待开发」角标（下一项才是 `aria-disabled` 的未开发卡）。实验台 HTML 含「抛体落点实验台」「参数实验」「预测落点」「开始」。
-
-这不能代替开始 / 落地 / 核对 / 发射，也不能代替 1366×768 截图。
+- B 结果阶段场景标题仍是「三维轨迹与速度」，视口说明是「拖动旋转」。
+- 揭晓前 `|v|` 为「— m/s」，单位仍在。
+- 目录卡片内嵌预览画布会抢走鼠标点击；键盘 Enter 可进实验台。斜向拉力 / 匀变速卡片同结构，属既有目录行为。
 
 ---
 
 ## 5. 截图
 
-计划路径（本次未能生成）：
-
 ```text
-evidence/session4/projectile-a-landed.png
-evidence/session4/projectile-b-result.png
+evidence/session4/projectile-a-landed.png   # Mode A 落地后
+evidence/session4/projectile-b-result.png   # Mode B 结果阶段（命中）
 ```
-
-原因：cursor-ide-browser MCP 无法维持标签；按任务要求不伪造截图。
 
 ---
 
 ## 6. 个人收获
 
 - 设计系统单页文件应与实现对照：模式开关 class、揭晓前 `|v|`、测量板 vs 四图。
-- 浏览器验收依赖 MCP 标签生命周期；标签即建即失时，只能记录精确错误并改用 HTTP 做静态替补。
+- 浏览器验收必须用 `localhost` 且尽量给标签做 focus emulation，否则 rAF 节流会把「在飞」误判成卡死。
 - 全量门禁里 eslint warning 仍算退出码 0，但与「无输出」的期望不完全一致，需在报告里写明。
 
 ---
 
-*本文件用于课程 / 学习证据归档，对应 Session 4。截图待 MCP 浏览器可用后补入同目录。*
+*本文件用于课程 / 学习证据归档，对应 Session 4。*
