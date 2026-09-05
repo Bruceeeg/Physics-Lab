@@ -73,14 +73,16 @@ export function PullFrictionPreview({ running }: { running: boolean }) {
   const derived = useMemo(() => derive(PREVIEW_PARAMS, state), [state]);
 
   return (
-    <div className="h-full w-full" aria-hidden="true">
-      <PreviewCanvas
-        state={state}
-        derived={derived}
-        trail={trail}
-        params={PREVIEW_PARAMS}
-        running={running}
-      />
+    <div className="relative h-full w-full" aria-hidden="true">
+      <div className="absolute inset-0">
+        <PreviewCanvas
+          state={state}
+          derived={derived}
+          trail={trail}
+          params={PREVIEW_PARAMS}
+          running={running}
+        />
+      </div>
     </div>
   );
 }

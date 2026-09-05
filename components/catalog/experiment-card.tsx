@@ -36,7 +36,7 @@ export function ExperimentCard({
   previewsPaused: boolean;
 }) {
   const mediaRef = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(true);
   const [reduceMotion, setReduceMotion] = useState(false);
   const ready = isReadyExperiment(experiment);
 
@@ -55,7 +55,7 @@ export function ExperimentCard({
     }
     const observer = new IntersectionObserver(
       ([entry]) => setVisible(Boolean(entry?.isIntersecting)),
-      { threshold: 0.35 },
+      { threshold: 0.05, rootMargin: "80px 0px" },
     );
     observer.observe(node);
     return () => observer.disconnect();

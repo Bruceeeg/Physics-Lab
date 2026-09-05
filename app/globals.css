@@ -240,6 +240,7 @@ body {
   .lab-workspace {
     height: calc(100dvh - 70px);
     min-height: 0;
+    grid-template-rows: minmax(0, 1fr);
   }
 }
 
@@ -380,6 +381,10 @@ input[type="range"]::-moz-range-thumb {
 
 .catalog-preview * {
   transform-box: view-box;
+}
+
+.catalog-preview [class*="catalog-preview__"] {
+  animation-fill-mode: both;
 }
 
 @keyframes catalog-orbit {
@@ -591,20 +596,24 @@ input[type="range"]::-moz-range-thumb {
 
 .catalog-preview__ramp-cart {
   offset-path: path("M18 68 L84 68 L136 36");
+  offset-distance: 0%;
   offset-rotate: 0deg;
-  animation: catalog-offset 3.4s linear infinite;
+  animation: catalog-offset 3.4s linear infinite both;
 }
 
 .catalog-preview__cart-a {
-  animation: catalog-cart-a 2.4s ease-in-out infinite;
+  transform: translateX(22px);
+  animation: catalog-cart-a 2.4s ease-in-out infinite both;
 }
 
 .catalog-preview__cart-b {
-  animation: catalog-cart-b 2.4s ease-in-out infinite;
+  transform: translateX(118px);
+  animation: catalog-cart-b 2.4s ease-in-out infinite both;
 }
 
 .catalog-preview__roll {
-  animation: catalog-roll 3.2s linear infinite;
+  transform: translate(28px, 64px);
+  animation: catalog-roll 3.2s linear infinite both;
 }
 
 .catalog-preview__flow {
@@ -663,7 +672,18 @@ input[type="range"]::-moz-range-thumb {
 
 .catalog-preview__projectile {
   offset-path: path("M18 78 C58 18, 108 18, 148 78");
-  animation: catalog-offset 2.6s linear infinite;
+  offset-distance: 0%;
+  animation: catalog-offset 2.6s linear infinite both;
+}
+
+@supports not (offset-path: path("M0 0 L1 1")) {
+  .catalog-preview__projectile {
+    transform: translate(18px, 78px);
+  }
+
+  .catalog-preview__ramp-cart {
+    transform: translate(18px, 68px);
+  }
 }
 
 .catalog-preview__spin {
@@ -671,7 +691,8 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .catalog-preview__bullet {
-  animation: catalog-bullet 1.8s ease-in infinite;
+  transform: translate(18px, 58px);
+  animation: catalog-bullet 1.8s ease-in infinite both;
 }
 
 .catalog-preview__delay {
@@ -686,5 +707,10 @@ input[type="range"]::-moz-range-thumb {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  .catalog-preview,
+  .catalog-preview * {
+    animation: none !important;
   }
 }

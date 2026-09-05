@@ -16,6 +16,7 @@ import {
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 
 import { SpriteLabel } from "@/components/scene-label";
+import { fitViewDistance } from "@/lib/models/camera-fit";
 import { FORCE_COLORS, FORCE_LABEL_COLORS } from "@/lib/models/force-display";
 import {
   flightTime,
@@ -449,12 +450,17 @@ function FitCamera({
     if (!(camera instanceof PerspectiveCamera)) {
       return;
     }
-    const fov = (camera.fov * Math.PI) / 180;
-    const aspect = size.width / Math.max(1, size.height);
+    const distance = fitViewDistance({
+      extentX,
+      extentY,
+      width: size.width,
+      height: size.height,
+      fovDeg: camera.fov,
+    });
+    if (distance === null) {
+      return;
+    }
     const target = new Vector3(extentX / 2, extentY * 0.45, 0);
-    const fitHeight = (extentY * 1.3) / 2 / Math.tan(fov / 2);
-    const fitWidth = (extentX * 1.15) / 2 / (aspect * Math.tan(fov / 2));
-    const distance = Math.max(2, fitHeight, fitWidth);
     const direction =
       fitted.current === null
         ? DEFAULT_VIEW_DIRECTION.clone()

@@ -463,18 +463,20 @@ export function ProjectileLab() {
               {mode === "params" ? "虚线 预测轨迹　实线 v　虚线 vₓ/vᵧ　拖动旋转" : "拖动旋转"}
             </p>
           </div>
-          <div className="relative min-h-0 flex-1">
-            <SceneCanvas
-              params={activeParams}
-              sample={sample}
-              trail={trail}
-              showPrediction={mode === "params"}
-              showVelocity={Boolean(revealed)}
-              landingX={landed ? sample.x : null}
-              target={target}
-              frameParams={frameParams}
-              allowRefit={time === 0}
-            />
+          <div className="relative min-h-[280px] flex-1">
+            <div className="absolute inset-0">
+              <SceneCanvas
+                params={activeParams}
+                sample={sample}
+                trail={trail}
+                showPrediction={mode === "params"}
+                showVelocity={Boolean(revealed)}
+                landingX={landed ? sample.x : null}
+                target={target}
+                frameParams={frameParams}
+                allowRefit={time === 0}
+              />
+            </div>
           </div>
           <dl className="grid h-12 grid-cols-5 border-t border-line font-mono text-[11px] tabular-nums">
             {[
