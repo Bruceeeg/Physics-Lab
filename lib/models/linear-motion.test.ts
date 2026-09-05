@@ -5,6 +5,7 @@ import {
   clampTime,
   elapsedTrail,
   motionSample,
+  motionSamplePhased,
   predictedSamples,
   TIME_MAX,
   TIME_MIN,
@@ -54,6 +55,14 @@ test("time at or below zero leaves no trail", () => {
     markers: [],
     path: [],
   });
+});
+
+test("two-phase motion coasts after the switch if a2 is zero", () => {
+  const mid = motionSamplePhased(0, 0, 2, 2, 0, 2);
+  const later = motionSamplePhased(0, 0, 2, 2, 0, 4);
+  assert.ok(Math.abs(mid.v - 4) < 1e-9);
+  assert.ok(Math.abs(later.v - 4) < 1e-9);
+  assert.ok(Math.abs(later.x - (mid.x + 4 * 2)) < 1e-9);
 });
 
 test("manual time rejects non-finite and negative values but has no upper cap", () => {

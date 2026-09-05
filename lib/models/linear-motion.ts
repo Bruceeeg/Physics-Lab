@@ -32,6 +32,23 @@ export function motionSample(x0: number, v0: number, a: number, t: number): Moti
   };
 }
 
+export function motionSamplePhased(
+  x0: number,
+  v0: number,
+  a1: number,
+  tSwitch: number,
+  a2: number,
+  t: number,
+): MotionSample {
+  const time = Math.max(0, t);
+  if (time <= tSwitch) {
+    return motionSample(x0, v0, a1, time);
+  }
+  const mid = motionSample(x0, v0, a1, tSwitch);
+  const later = motionSample(mid.x, mid.v, a2, time - tSwitch);
+  return { t: time, x: later.x, v: later.v };
+}
+
 export function predictedSamples(
   x0: number,
   v0: number,
@@ -46,6 +63,23 @@ export function predictedSamples(
     nextPoints.push(motionSample(x0, v0, a, sampleTime));
   }
 
+  return nextPoints;
+}
+
+export function predictedSamplesPhased(
+  x0: number,
+  v0: number,
+  a1: number,
+  tSwitch: number,
+  a2: number,
+  duration: number,
+  stepCount = DEFAULT_TRAIL_STEPS,
+): MotionSample[] {
+  const nextPoints: MotionSample[] = [];
+  for (let index = 0; index <= stepCount; index += 1) {
+    const sampleTime = (duration * index) / stepCount;
+    nextPoints.push(motionSamplePhased(x0, v0, a1, tSwitch, a2, sampleTime));
+  }
   return nextPoints;
 }
 

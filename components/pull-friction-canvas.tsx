@@ -19,7 +19,8 @@ export default function PullFrictionCanvas({
   return (
     <Canvas
       className="h-full w-full"
-      style={{ overflow: "visible" }}
+      style={{ width: "100%", height: "100%", display: "block", overflow: "hidden" }}
+      resize={{ offsetSize: true }}
       camera={{ position: [5, 3.2, 6], fov: 45, near: 0.1, far: 2000 }}
       gl={{ antialias: true }}
     >

@@ -4,12 +4,15 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { TimeSeriesChart } from "@/components/kinematic-charts";
+import { ModeSwitch } from "@/components/lab-frame";
 import { ParameterControl } from "@/components/parameter-control";
 import {
   clampTime,
   elapsedTrail,
   motionSample,
+  motionSamplePhased,
   predictedSamples,
+  predictedSamplesPhased,
   TIME_MAX,
   TIME_MIN,
 } from "@/lib/models/linear-motion";
@@ -71,9 +74,12 @@ function toChartSample(
 }
 
 export function LinearMotionLab() {
+  const [mode, setMode] = useState<"single" | "two-phase">("single");
   const [x0, setX0] = useState(0);
   const [v0, setV0] = useState(4);
   const [a, setA] = useState(2);
+  const [tSwitch, setTSwitch] = useState(2);
+  const [a2, setA2] = useState(0);
   const [time, setTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -168,18 +174,27 @@ export function LinearMotionLab() {
     setA(value);
   };
 
-  const live = motionSample(x0, v0, a, time);
+  const twoPhase = mode === "two-phase";
+  const live = twoPhase
+    ? motionSamplePhased(x0, v0, a, tSwitch, a2, time)
+    : motionSample(x0, v0, a, time);
+  const currentA = twoPhase && time > tSwitch ? a2 : a;
   const currentPosition = live.x;
   const currentVelocity = live.v;
   const displacement = currentPosition - x0;
   const chartDomain = Math.max(10, time);
   const samples = useMemo(
-    () => predictedSamples(x0, v0, a, chartDomain),
-    [a, chartDomain, v0, x0],
+    () =>
+      twoPhase
+        ? predictedSamplesPhased(x0, v0, a, tSwitch, a2, chartDomain)
+        : predictedSamples(x0, v0, a, chartDomain),
+    [a, a2, chartDomain, tSwitch, twoPhase, v0, x0],
   );
   const trail = elapsedTrail(samples, live);
   const trailPoints = trail.path;
-  const chartSeries = samples.map((sample) => toChartSample(sample, x0, a));
+  const chartSeries = samples.map((sample) =>
+    toChartSample(sample, x0, twoPhase && sample.t > tSwitch ? a2 : a),
+  );
 
   const trackBounds = useMemo(() => {
     const xs = samples.map((point) => point.x);
@@ -219,7 +234,7 @@ export function LinearMotionLab() {
 
   return (
     <div className="lab-shell bg-paper text-ink">
-      <header className="lab-commandbar border-b border-line bg-surface">
+      <header className="lab-commandbar lab-commandbar--modes border-b border-line bg-surface">
         <div className="min-w-0">
           <p className="truncate text-base font-medium text-ink">
             <Link
@@ -232,6 +247,17 @@ export function LinearMotionLab() {
           </p>
           <p className="font-mono text-[10px] text-quiet">Physics Lab / 运动学</p>
         </div>
+        <ModeSwitch
+          value={mode}
+          options={[
+            { id: "single" as const, label: "单段加速" },
+            { id: "two-phase" as const, label: "两段运动" },
+          ]}
+          onChange={(next) => {
+            reset();
+            setMode(next);
+          }}
+        />
         <div className="grid min-w-0 grid-cols-3">
           <Stat label="时间 t" value={formatNumber(time)} unit="s" />
           <Stat label="速度 v" value={formatNumber(currentVelocity)} unit="m/s" />
@@ -284,8 +310,8 @@ export function LinearMotionLab() {
               <ParameterControl
                 key={item.key}
                 id={item.key}
-                label={item.label}
-                symbol={item.symbol}
+                label={item.key === "a" && twoPhase ? "第一段加速度" : item.label}
+                symbol={item.key === "a" && twoPhase ? "a₁" : item.symbol}
                 unit={item.unit}
                 value={paramValues[item.key]}
                 min={item.min}
@@ -294,6 +320,32 @@ export function LinearMotionLab() {
                 onChange={(value) => updateParam(item.key, value)}
               />
             ))}
+            {twoPhase ? (
+              <>
+                <ParameterControl
+                  id="tSwitch"
+                  label="换段时刻"
+                  symbol="t₁"
+                  unit="s"
+                  value={tSwitch}
+                  min={0.2}
+                  max={20}
+                  step={0.1}
+                  onChange={setTSwitch}
+                />
+                <ParameterControl
+                  id="a2"
+                  label="第二段加速度"
+                  symbol="a₂"
+                  unit="m/s²"
+                  value={a2}
+                  min={-5}
+                  max={5}
+                  step={0.1}
+                  onChange={setA2}
+                />
+              </>
+            ) : null}
           </div>
 
           <div className="mx-2 min-h-8 border border-line bg-paper px-2 py-1.5 text-[11px] leading-4 text-quiet">
@@ -303,14 +355,21 @@ export function LinearMotionLab() {
           <section className="mx-2 mt-2 border-t border-line pt-2">
             <h2 className="text-[13px] font-medium text-ink">公式代入</h2>
             <div className="mt-1 space-y-1 font-mono text-[11px] leading-5">
-              <p>
-                x = {formatNumber(x0)} + {formatNumber(v0)}t + ½{formatNumber(a)}t²
-              </p>
+              {twoPhase ? (
+                <>
+                  <p className="text-quiet">t ≤ t₁ 用 a₁，之后用 a₂。a₂ = 0 即匀速。</p>
+                  <p>
+                    t₁ = {formatNumber(tSwitch)} s，a₂ = {formatNumber(a2)} m/s²
+                  </p>
+                </>
+              ) : (
+                <p>
+                  x = {formatNumber(x0)} + {formatNumber(v0)}t + ½{formatNumber(a)}t²
+                </p>
+              )}
               <p className="text-navy">x = {formatNumber(currentPosition)} m</p>
-              <p>
-                v = {formatNumber(v0)} + {formatNumber(a)}t
-              </p>
               <p className="text-gold">v = {formatNumber(currentVelocity)} m/s</p>
+              <p>当前 a = {formatNumber(currentA)} m/s²</p>
             </div>
           </section>
         </aside>
@@ -378,7 +437,7 @@ export function LinearMotionLab() {
             {[
               ["x", currentPosition, "m"],
               ["v", currentVelocity, "m/s"],
-              ["a", a, "m/s²"],
+              ["a", currentA, "m/s²"],
               ["Δx", displacement, "m"],
             ].map(([label, value, unit]) => (
               <div key={String(label)} className="border-r border-line px-2 py-1 last:border-r-0">
@@ -420,7 +479,7 @@ export function LinearMotionLab() {
             valueKey="ax"
             points={chartSeries}
             currentTime={time}
-            currentValue={a}
+            currentValue={currentA}
           />
           <TimeSeriesChart
             title="位移-时间"

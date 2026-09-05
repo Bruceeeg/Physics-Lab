@@ -411,12 +411,14 @@ export function PullFrictionLab() {
             </p>
           </div>
           <div className="relative min-h-0 flex-1">
-            <SceneCanvas
-              state={state}
-              derived={derived}
-              trail={trail}
-              params={effectiveParams}
-            />
+            <div className="absolute inset-0 z-0">
+              <SceneCanvas
+                state={state}
+                derived={derived}
+                trail={trail}
+                params={effectiveParams}
+              />
+            </div>
             <PullFrictionDiagram2D derived={derived} z={state.z} />
           </div>
           <dl className="grid h-12 grid-cols-5 border-t border-line font-mono text-[11px] tabular-nums">

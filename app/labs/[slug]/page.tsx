@@ -1,6 +1,15 @@
 import type { ComponentType } from "react";
 
 import { LinearMotionLab } from "@/components/linear-motion-lab";
+import { AngularMomentumLab } from "@/components/p1/angular-momentum-lab";
+import { ArchimedesLab } from "@/components/p1/archimedes-lab";
+import { AtwoodMachineLab } from "@/components/p1/atwood-machine-lab";
+import { CircularMotionLab } from "@/components/p1/circular-motion-lab";
+import { ConservationOfEnergyLab } from "@/components/p1/conservation-of-energy-lab";
+import { FluidDynamicsLab } from "@/components/p1/fluid-dynamics-lab";
+import { HarmonicMotionLab } from "@/components/p1/harmonic-motion-lab";
+import { ImpulseMomentumLab } from "@/components/p1/impulse-momentum-lab";
+import { RotationalMotionLab } from "@/components/p1/rotational-motion-lab";
 import { ProjectileLab } from "@/components/projectile-lab";
 import { PullFrictionLab } from "@/components/pull-friction-lab";
 import {
@@ -16,6 +25,15 @@ const LAB_PAGES: Record<ReadySlug, ComponentType> = {
   "pull-friction": PullFrictionLab,
   "linear-motion": LinearMotionLab,
   "projectile-motion": ProjectileLab,
+  "circular-motion": CircularMotionLab,
+  "conservation-of-energy": ConservationOfEnergyLab,
+  "impulse-momentum": ImpulseMomentumLab,
+  "harmonic-motion": HarmonicMotionLab,
+  "rotational-motion": RotationalMotionLab,
+  "fluid-dynamics": FluidDynamicsLab,
+  "atwood-machine": AtwoodMachineLab,
+  "angular-momentum": AngularMomentumLab,
+  archimedes: ArchimedesLab,
 };
 
 type LabPageProps = {

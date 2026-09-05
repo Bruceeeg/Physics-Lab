@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
+import { ConservationOfEnergyPreview } from "@/components/catalog/previews/conservation-of-energy-preview";
 import { LinearMotionPreview } from "@/components/catalog/previews/linear-motion-preview";
 import { PullFrictionPreview } from "@/components/catalog/previews/pull-friction-preview";
 import { SchematicPreview } from "@/components/catalog/previews/schematic-preview";
@@ -24,6 +25,9 @@ function PreviewMedia({
   }
   if (experiment.preview === "linear-motion") {
     return <LinearMotionPreview running={running} />;
+  }
+  if (experiment.preview === "energy") {
+    return <ConservationOfEnergyPreview running={running} />;
   }
   return <SchematicPreview kind={experiment.preview} running={running} />;
 }

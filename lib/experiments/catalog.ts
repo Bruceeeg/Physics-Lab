@@ -1,4 +1,16 @@
-export type ReadySlug = "pull-friction" | "linear-motion" | "projectile-motion";
+export type ReadySlug =
+  | "pull-friction"
+  | "linear-motion"
+  | "projectile-motion"
+  | "circular-motion"
+  | "conservation-of-energy"
+  | "impulse-momentum"
+  | "harmonic-motion"
+  | "rotational-motion"
+  | "fluid-dynamics"
+  | "atwood-machine"
+  | "angular-momentum"
+  | "archimedes";
 
 export type ExperimentSlug = ReadySlug | string;
 
@@ -83,7 +95,7 @@ export const EXPERIMENTS: readonly ExperimentEntry[] = [
     unit: "Unit 1 运动学",
     preview: "linear-motion",
     status: "ready",
-    summary: "调节初位置、初速度与加速度，观察匀变速直线运动。",
+    summary: "单段匀变速，或先加速再匀速/再加速的两段运动，对应 x–t、v–t 图。",
   },
   {
     slug: "projectile-motion",
@@ -98,12 +110,12 @@ export const EXPERIMENTS: readonly ExperimentEntry[] = [
   {
     slug: "circular-motion",
     title: "圆周运动",
-    formula: "T = 2π√(r cosθ / g)",
+    formula: "T = 2π√(L cosθ / g)",
     course: "p1",
     unit: "Unit 2 力与平动",
     preview: "circular",
-    status: "pending",
-    summary: "圆锥摆：用摆长和张角预测周期。",
+    status: "ready",
+    summary: "圆锥摆、水平圆周或竖直圆周：比较周期、绳力和过顶条件。",
   },
   {
     slug: "conservation-of-energy",
@@ -112,8 +124,8 @@ export const EXPERIMENTS: readonly ExperimentEntry[] = [
     course: "p1",
     unit: "Unit 3 功、能、功率",
     preview: "energy",
-    status: "pending",
-    summary: "弹簧小车冲上斜面，比较弹性势能与重力势能。",
+    status: "ready",
+    summary: "弹射上坡或弹簧始终连接：比较弹性势能与重力势能，连接时小车会被拉回。",
   },
   {
     slug: "impulse-momentum",
@@ -122,8 +134,8 @@ export const EXPERIMENTS: readonly ExperimentEntry[] = [
     course: "p1",
     unit: "Unit 4 线动量",
     preview: "momentum",
-    status: "pending",
-    summary: "小车碰撞：由 F–t 图求冲量，检验动量守恒。",
+    status: "ready",
+    summary: "对心碰撞（可调 e）或爆炸分离：由 F–t 图求冲量，检验动量守恒。",
   },
   {
     slug: "harmonic-motion",
@@ -132,8 +144,8 @@ export const EXPERIMENTS: readonly ExperimentEntry[] = [
     course: "p1",
     unit: "Unit 7 振动",
     preview: "shm",
-    status: "pending",
-    summary: "单摆周期与长度、质量、振幅的关系。",
+    status: "ready",
+    summary: "单摆或水平弹簧振子：比较 T = 2π√(L/g) 与 T = 2π√(m/k)。",
   },
   {
     slug: "rotational-motion",
@@ -142,8 +154,8 @@ export const EXPERIMENTS: readonly ExperimentEntry[] = [
     course: "p1",
     unit: "Unit 5 力矩与转动",
     preview: "rotation",
-    status: "pending",
-    summary: "不同形状沿斜面无滑滚动，比较底端平动速度。",
+    status: "ready",
+    summary: "无滑滚动或无摩擦滑动：比较底端速率和转动动能。",
   },
   {
     slug: "fluid-dynamics",
@@ -152,7 +164,7 @@ export const EXPERIMENTS: readonly ExperimentEntry[] = [
     course: "p1",
     unit: "Unit 8 流体",
     preview: "fluids",
-    status: "pending",
+    status: "ready",
     summary: "液面深度与底部小孔出流速率。",
   },
   {
@@ -162,8 +174,8 @@ export const EXPERIMENTS: readonly ExperimentEntry[] = [
     course: "p1",
     unit: "Unit 2 力与平动",
     preview: "atwood",
-    status: "pending",
-    summary: "总质量、质量差与加速度的关系。",
+    status: "ready",
+    summary: "经典双吊，或桌上滑车（改进阿特伍德，可加摩擦）。",
   },
   {
     slug: "angular-momentum",
@@ -172,8 +184,8 @@ export const EXPERIMENTS: readonly ExperimentEntry[] = [
     course: "p1",
     unit: "Unit 6 转动系统",
     preview: "angmom",
-    status: "pending",
-    summary: "落物到转盘后检验角动量是否守恒。",
+    status: "ready",
+    summary: "落物粘盘，或收臂减小转动惯量：检验 Iω 守恒。",
   },
   {
     slug: "archimedes",
@@ -182,7 +194,7 @@ export const EXPERIMENTS: readonly ExperimentEntry[] = [
     course: "p1",
     unit: "Unit 8 流体",
     preview: "archimedes",
-    status: "pending",
+    status: "ready",
     summary: "用浮力测定液体密度。",
   },
   {

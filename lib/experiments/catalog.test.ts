@@ -27,11 +27,23 @@ test("lists ready labs first within Physics 1", () => {
   const p1 = listExperiments("p1");
   assert.deepEqual(
     p1.filter((item) => item.status === "ready").map((item) => item.slug),
-    ["pull-friction", "linear-motion", "projectile-motion"],
+    [
+      "pull-friction",
+      "linear-motion",
+      "projectile-motion",
+      "circular-motion",
+      "conservation-of-energy",
+      "impulse-momentum",
+      "harmonic-motion",
+      "rotational-motion",
+      "fluid-dynamics",
+      "atwood-machine",
+      "angular-momentum",
+      "archimedes",
+    ],
   );
+  assert.ok(p1.every((item) => item.status === "ready"));
   assert.equal(p1[0]?.slug, "pull-friction");
-  assert.equal(p1[1]?.slug, "linear-motion");
-  assert.equal(p1[2]?.slug, "projectile-motion");
 });
 
 test("only ready labs have detail routes", () => {
@@ -39,6 +51,15 @@ test("only ready labs have detail routes", () => {
     "pull-friction",
     "linear-motion",
     "projectile-motion",
+    "circular-motion",
+    "conservation-of-energy",
+    "impulse-momentum",
+    "harmonic-motion",
+    "rotational-motion",
+    "fluid-dynamics",
+    "atwood-machine",
+    "angular-momentum",
+    "archimedes",
   ]);
   const pending = listExperiments("all").find((item) => item.status === "pending");
   assert.ok(pending);
@@ -71,7 +92,7 @@ test("looks up ready and pending experiments by slug", () => {
   assert.equal(found?.formula, "N = mg − |F|sinθ");
   assert.equal(found?.course, "p1");
   assert.equal(found?.status, "ready");
-  assert.equal(getExperiment("circular-motion")?.status, "pending");
+  assert.equal(getExperiment("circular-motion")?.status, "ready");
   assert.equal(getExperiment("no-such-lab"), undefined);
 });
 

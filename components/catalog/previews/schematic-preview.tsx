@@ -38,7 +38,9 @@ function scene(kind: PreviewKind, running: boolean) {
     case "energy":
       return (
         <PreviewFrame running={running}>
-          <path d="M12 78 L88 78 L148 28" fill="none" stroke="#cbd5e1" strokeWidth="2" />
+          <path d="M16 80 L86 80 L142 36" fill="none" stroke="#cbd5e1" strokeWidth="2" />
+          <rect x="14" y="56" width="6" height="26" fill="#475569" />
+          <path d="M20 68 Q36 62 52 68 T84 68" fill="none" stroke="#A16207" strokeWidth="1.4" />
           <rect width="16" height="10" fill="#1e3a5f" className="catalog-preview__ramp-cart" />
         </PreviewFrame>
       );

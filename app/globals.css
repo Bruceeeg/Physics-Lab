@@ -47,8 +47,9 @@ body {
 
 .lab-workspace {
   display: grid;
-  min-height: 900px;
+  min-height: calc(100dvh - 70px);
   grid-template-columns: 260px minmax(0, 1fr) 330px;
+  grid-template-rows: minmax(640px, 1fr);
   gap: 6px;
   margin-top: 6px;
 }
@@ -56,18 +57,21 @@ body {
 .lab-scene {
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .scene-pip {
   position: absolute;
   top: 8px;
   right: 8px;
-  z-index: 4;
-  width: 128px;
+  z-index: 20;
+  width: 148px;
   overflow: hidden;
   border: 1px solid var(--color-line);
   background: rgb(248 250 252 / 96%);
   pointer-events: auto;
+  transform: translateZ(0);
+  isolation: isolate;
 }
 
 .scene-pip__title {
@@ -232,13 +236,15 @@ body {
 
 @media (min-width: 1280px) and (min-height: 720px) {
   .lab-shell {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
     height: 100dvh;
     min-height: 0;
     overflow: hidden;
   }
 
   .lab-workspace {
-    height: calc(100dvh - 70px);
+    height: auto;
     min-height: 0;
     grid-template-rows: minmax(0, 1fr);
   }
@@ -594,11 +600,34 @@ input[type="range"]::-moz-range-thumb {
   animation: catalog-swing 1.8s ease-in-out infinite;
 }
 
+@keyframes catalog-ramp-return {
+  0%,
+  100% {
+    offset-distance: 6%;
+  }
+  22% {
+    offset-distance: 38%;
+  }
+  50% {
+    offset-distance: 58%;
+  }
+  78% {
+    offset-distance: 38%;
+  }
+}
+
 .catalog-preview__ramp-cart {
-  offset-path: path("M18 68 L84 68 L136 36");
+  offset-path: path("M22 68 L86 68 L122 48");
+  offset-distance: 6%;
+  offset-rotate: auto;
+  animation: catalog-ramp-return 3.2s ease-in-out infinite both;
+}
+
+.catalog-preview__linear-cart {
+  offset-path: path("M18 43 L132 43");
   offset-distance: 0%;
   offset-rotate: 0deg;
-  animation: catalog-offset 3.4s linear infinite both;
+  animation: catalog-offset 3.2s linear infinite both;
 }
 
 .catalog-preview__cart-a {
@@ -683,6 +712,10 @@ input[type="range"]::-moz-range-thumb {
 
   .catalog-preview__ramp-cart {
     transform: translate(18px, 68px);
+  }
+
+  .catalog-preview__linear-cart {
+    transform: translate(18px, 43px);
   }
 }
 
