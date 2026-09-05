@@ -1,3 +1,5 @@
+import { appendTimeSample } from "./time-series.ts";
+
 export type PullParams = {
   F: number;
   thetaDeg: number;
@@ -209,35 +211,10 @@ export function projectKinematics(
   return samples;
 }
 
-const SAMPLE_EPS = 1e-4;
-const SERIES_CAP = 800;
-
 export function appendKinematicSample(
   prev: KinematicSample[],
   sample: KinematicSample,
   interval = 1 / 30,
 ): KinematicSample[] {
-  if (prev.length === 0) {
-    return [sample];
-  }
-
-  const last = prev[prev.length - 1];
-  if (Math.abs(sample.t - last.t) < SAMPLE_EPS) {
-    return [...prev.slice(0, -1), sample];
-  }
-  if (sample.t - last.t < interval) {
-    return prev;
-  }
-
-  const next = [...prev, sample];
-  if (next.length <= SERIES_CAP) {
-    return next;
-  }
-
-  const compacted = [next[0]];
-  for (let index = 2; index < next.length - 1; index += 2) {
-    compacted.push(next[index]);
-  }
-  compacted.push(next[next.length - 1]);
-  return compacted;
+  return appendTimeSample(prev, sample, interval);
 }

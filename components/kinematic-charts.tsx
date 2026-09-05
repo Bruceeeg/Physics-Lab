@@ -2,10 +2,14 @@
 
 import { memo, useMemo } from "react";
 
-import type { KinematicSample } from "@/lib/models/pull-friction";
-
 const WIDTH = 320;
 const HEIGHT = 90;
+
+export type TimeSeriesPoint = { t: number };
+
+type NumericKeys<T> = { [K in keyof T]-?: T[K] extends number ? K : never }[keyof T];
+
+export type SeriesValueKey<T extends TimeSeriesPoint> = Exclude<NumericKeys<T>, "t">;
 
 function formatNumber(value: number) {
   return value.toFixed(2);
@@ -24,9 +28,13 @@ function axisRange(values: number[]) {
   return { min: min - pad, max: max + pad };
 }
 
-function buildLinePath(
-  points: KinematicSample[],
-  valueKey: keyof Omit<KinematicSample, "t">,
+function valueOf<T extends TimeSeriesPoint>(point: T, key: SeriesValueKey<T>): number {
+  return point[key] as unknown as number;
+}
+
+function buildLinePath<T extends TimeSeriesPoint>(
+  points: readonly T[],
+  valueKey: SeriesValueKey<T>,
   valueMin: number,
   valueMax: number,
   timeMax: number,
@@ -41,13 +49,24 @@ function buildLinePath(
   return points
     .map((point, index) => {
       const px = (point.t / timeSpan) * WIDTH;
-      const py = HEIGHT - ((point[valueKey] - valueMin) / range) * HEIGHT;
+      const py = HEIGHT - ((valueOf(point, valueKey) - valueMin) / range) * HEIGHT;
       return `${index === 0 ? "M" : "L"} ${px.toFixed(2)} ${py.toFixed(2)}`;
     })
     .join(" ");
 }
 
-export const TimeSeriesChart = memo(function TimeSeriesChart({
+type TimeSeriesChartProps<T extends TimeSeriesPoint> = {
+  title: string;
+  quantity: string;
+  unit: string;
+  strokeColor: string;
+  valueKey: SeriesValueKey<T>;
+  points: readonly T[];
+  currentTime: number;
+  currentValue: number;
+};
+
+function TimeSeriesChartInner<T extends TimeSeriesPoint>({
   title,
   quantity,
   unit,
@@ -56,19 +75,10 @@ export const TimeSeriesChart = memo(function TimeSeriesChart({
   points,
   currentTime,
   currentValue,
-}: {
-  title: string;
-  quantity: string;
-  unit: string;
-  strokeColor: string;
-  valueKey: keyof Omit<KinematicSample, "t">;
-  points: KinematicSample[];
-  currentTime: number;
-  currentValue: number;
-}) {
+}: TimeSeriesChartProps<T>) {
   const timeMax = Math.max(10, currentTime);
   const { min, max, range } = useMemo(() => {
-    const values = [...points.map((point) => point[valueKey]), currentValue];
+    const values = [...points.map((point) => valueOf(point, valueKey)), currentValue];
     const next = axisRange(values);
     return { ...next, range: next.max - next.min || 1 };
   }, [currentValue, points, valueKey]);
@@ -165,4 +175,6 @@ export const TimeSeriesChart = memo(function TimeSeriesChart({
       </div>
     </figure>
   );
-});
+}
+
+export const TimeSeriesChart = memo(TimeSeriesChartInner) as typeof TimeSeriesChartInner;
