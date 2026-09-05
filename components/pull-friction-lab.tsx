@@ -1,10 +1,12 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { TimeSeriesChart } from "@/components/kinematic-charts";
 import { ParameterControl } from "@/components/parameter-control";
+import { PullFrictionDiagram2D } from "@/components/pull-friction-diagram-2d";
 import type { TrailPoint } from "@/components/pull-friction-scene";
 import {
   appendKinematicSample,
@@ -290,7 +292,15 @@ export function PullFrictionLab() {
     <div className="lab-shell bg-paper text-ink">
       <header className="lab-commandbar border-b border-line bg-surface">
         <div className="min-w-0">
-          <p className="truncate text-base font-medium text-ink">斜向拉力实验台</p>
+          <p className="truncate text-base font-medium text-ink">
+            <Link
+              href="/"
+              className="mr-2 text-[11px] font-normal text-quiet hover:text-navy focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy"
+            >
+              目录
+            </Link>
+            斜向拉力实验台
+          </p>
           <p className="font-mono text-[10px] text-quiet">Physics Lab / 牛顿第二定律</p>
         </div>
         <div className="grid min-w-0 grid-cols-3">
@@ -401,7 +411,13 @@ export function PullFrictionLab() {
             </p>
           </div>
           <div className="relative min-h-0 flex-1">
-            <SceneCanvas state={state} derived={derived} trail={trail} />
+            <SceneCanvas
+              state={state}
+              derived={derived}
+              trail={trail}
+              params={effectiveParams}
+            />
+            <PullFrictionDiagram2D derived={derived} z={state.z} />
           </div>
           <dl className="grid h-12 grid-cols-5 border-t border-line font-mono text-[11px] tabular-nums">
             {[

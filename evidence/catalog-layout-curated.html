@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>Physics Lab 布局示意图 · 参考 curated.design 结构</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        background: #d9dee6;
+        color: #111;
+        font-family: "IBM Plex Sans", "Noto Sans SC", "PingFang SC", sans-serif;
+      }
+      .board {
+        width: 1440px;
+        height: 900px;
+        margin: 20px auto;
+        background: #fff;
+        border: 1px solid #111;
+        display: flex;
+        flex-direction: column;
+      }
+      .caption {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        padding: 10px 18px;
+        border-bottom: 1px solid #111;
+        font-size: 13px;
+      }
+      .caption h1 { margin: 0; font-size: 15px; font-weight: 600; }
+      .caption p { margin: 0; color: #333; }
+      .page {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 0 48px 28px;
+      }
+      .band {
+        position: relative;
+      }
+      .tag {
+        position: absolute;
+        left: -40px;
+        top: 8px;
+        width: 22px;
+        height: 22px;
+        border: 1px solid #111;
+        background: #fff;
+        font-size: 12px;
+        font-weight: 600;
+        display: grid;
+        place-items: center;
+      }
+      header.band {
+        display: grid;
+        grid-template-columns: 140px 1fr auto;
+        align-items: center;
+        height: 56px;
+        border-bottom: 1px solid #111;
+      }
+      .logo { font-size: 14px; font-weight: 600; }
+      .nav {
+        display: flex;
+        justify-content: flex-end;
+        gap: 22px;
+        font-size: 13px;
+        margin-right: 28px;
+      }
+      .nav span { color: #111; }
+      .utils {
+        display: flex;
+        gap: 8px;
+        font-size: 12px;
+      }
+      .utils i {
+        width: 28px;
+        height: 28px;
+        border: 1px solid #111;
+        display: grid;
+        place-items: center;
+        font-style: normal;
+      }
+      .hero.band {
+        padding: 48px 0 36px;
+        text-align: center;
+      }
+      .hero h2 {
+        margin: 0;
+        font-size: 42px;
+        font-weight: 600;
+        letter-spacing: -0.03em;
+        line-height: 1.15;
+      }
+      .hero p {
+        margin: 12px 0 0;
+        font-size: 15px;
+      }
+      .filters.band {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 0 18px;
+      }
+      .chip {
+        display: inline-block;
+        padding: 5px 12px;
+        border: 1px solid #111;
+        font-size: 12px;
+        margin-right: 8px;
+      }
+      .chip.on { background: #111; color: #fff; }
+      .grid.band {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 28px 22px;
+        min-height: 0;
+        flex: 1;
+      }
+      .item { min-width: 0; }
+      .media {
+        height: 220px;
+        border: 1px solid #111;
+        border-radius: 14px;
+        background: repeating-linear-gradient(
+          -45deg,
+          #f3f4f6,
+          #f3f4f6 7px,
+          #fff 7px,
+          #fff 14px
+        );
+        position: relative;
+      }
+      .media .lab {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        padding: 1px 7px;
+        border: 1px solid #111;
+        background: #fff;
+        font-size: 11px;
+      }
+      .scene {
+        height: 100%;
+        display: grid;
+        place-items: center;
+        font-size: 13px;
+      }
+      .block {
+        width: 72px;
+        height: 42px;
+        border: 1.5px solid #111;
+        background: rgb(0 0 0 / 0.08);
+      }
+      .track {
+        width: 70%;
+        height: 8px;
+        border: 1px solid #111;
+        position: relative;
+      }
+      .dot {
+        position: absolute;
+        top: -10px;
+        left: 46%;
+        width: 24px;
+        height: 24px;
+        border: 1px solid #111;
+        background: #fff;
+      }
+      .ghost {
+        border-style: dashed;
+        display: grid;
+        place-items: center;
+        color: #555;
+        font-size: 13px;
+      }
+      .cap { margin-top: 10px; }
+      .cap h3 { margin: 0; font-size: 14px; font-weight: 600; }
+      .cap p {
+        margin: 4px 0 0;
+        font-family: ui-monospace, "IBM Plex Mono", Menlo, monospace;
+        font-size: 12px;
+      }
+      .foot {
+        margin-top: 10px;
+        font-size: 12px;
+        color: #333;
+      }
+    </style>
+  </head>
+  <body>
+    <section class="board" id="scheme-curated">
+      <div class="caption">
+        <h1>结构示意图 · 学自参考站的分区，不是颜色</h1>
+        <p>卡片：圆角预览框在上，名称和公式在框外下方。整卡点击进入详情。</p>
+      </div>
+      <div class="page">
+        <header class="band">
+          <span class="tag">1</span>
+          <div class="logo">Physics Lab</div>
+          <div class="nav">
+            <span>实验</span>
+            <span>关于</span>
+          </div>
+          <div class="utils"><i>搜</i><i>停</i></div>
+        </header>
+
+        <section class="hero band">
+          <span class="tag">2</span>
+          <h2>可交互力学实验</h2>
+          <p>点一张卡片进入对应实验台</p>
+        </section>
+
+        <div class="filters band">
+          <span class="tag">3</span>
+          <span style="font-size: 12px">分类</span>
+          <div>
+            <span class="chip on">全部</span>
+            <span class="chip">力学</span>
+            <span class="chip">运动学</span>
+          </div>
+          <span class="chip">筛选</span>
+        </div>
+
+        <div class="grid band">
+          <span class="tag">4</span>
+          <article class="item">
+            <div class="media">
+              <span class="lab">动态预览</span>
+              <div class="scene"><div class="block"></div></div>
+            </div>
+            <div class="cap">
+              <h3>斜向拉力实验台</h3>
+              <p>N = mg − |F|sinθ</p>
+            </div>
+          </article>
+          <article class="item">
+            <div class="media">
+              <span class="lab">动态预览</span>
+              <div class="scene"><div class="track"><div class="dot"></div></div></div>
+            </div>
+            <div class="cap">
+              <h3>匀变速直线运动</h3>
+              <p>x = x₀ + v₀t + ½at²</p>
+            </div>
+          </article>
+          <article class="item">
+            <div class="media ghost">第三项有内容时再占此格</div>
+            <div class="cap">
+              <h3>空位，不放广告卡</h3>
+              <p>保持三列网格节奏</p>
+            </div>
+          </article>
+        </div>
+        <p class="foot">1 顶栏三区：标识 / 少量链接 / 工具。2 居中标题 + 一句说明，上下留白。3 横向分类。4 三列：圆角媒体框 + 框外左对齐名称和公式。参考站底栏悬浮搜索本站不做。</p>
+      </div>
+    </section>
+  </body>
+</html>

@@ -1,8 +1,16 @@
 "use client";
 
-import { Grid, OrbitControls } from "@react-three/drei";
-import { useFrame } from "@react-three/fiber";
-import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Grid, Html, OrbitControls, useCursor } from "@react-three/drei";
+import { useFrame, type ThreeEvent } from "@react-three/fiber";
+import {
+  memo,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import {
   BoxGeometry,
   BufferAttribute,
@@ -24,7 +32,12 @@ import {
   type ForceMark,
   type ForceMarkStyle,
 } from "@/lib/models/force-display";
-import type { PullDerived, PullState } from "@/lib/models/pull-friction";
+import {
+  forceExplanation,
+  type ExplainedForceName,
+  type ForceExplanation,
+} from "@/lib/models/force-explanation";
+import type { PullDerived, PullParams, PullState } from "@/lib/models/pull-friction";
 
 export type TrailPoint = { x: number; z: number };
 
@@ -36,6 +49,14 @@ const FORCE_RENDER_ORDER = 20;
 const LABEL_RENDER_ORDER = FORCE_RENDER_ORDER + 1;
 const TRAIL_MAX_POINTS = 400;
 const UP = new Vector3(0, 1, 0);
+const FORCE_HIGHLIGHT_COLORS: Record<ExplainedForceName, string> = {
+  F: "#0B6CFF",
+  Fx: "#38BDF8",
+  Fz: "#38BDF8",
+  G: "#00A86B",
+  N: "#8B5CF6",
+  f: "#F59E0B",
+};
 
 // Force labels are rasterised once per distinct text/colour and drawn as camera-facing sprites in
 // the same WebGL pass as the arrows. They therefore share the arrow's transform exactly and scale
@@ -253,7 +274,15 @@ function ForceLabel({
   );
 }
 
-function DashedShaft({ length, color }: { length: number; color: string }) {
+function DashedShaft({
+  length,
+  color,
+  active,
+}: {
+  length: number;
+  color: string;
+  active: boolean;
+}) {
   const segments = useMemo(() => {
     const dash = 0.1;
     const gap = 0.07;
@@ -279,11 +308,60 @@ function DashedShaft({ length, color }: { length: number; color: string }) {
           renderOrder={FORCE_RENDER_ORDER}
           frustumCulled={false}
         >
-          <cylinderGeometry args={[0.008, 0.008, segment.height, 6]} />
+          <cylinderGeometry args={[active ? 0.013 : 0.008, active ? 0.013 : 0.008, segment.height, 6]} />
           <meshBasicMaterial color={color} depthTest={false} />
         </mesh>
       ))}
     </group>
+  );
+}
+
+function ForceMessage({
+  explanation,
+  accent,
+  direction,
+  tipDistance,
+  onClose,
+}: {
+  explanation: ForceExplanation;
+  accent: string;
+  direction: Vec3;
+  tipDistance: number;
+  onClose: () => void;
+}) {
+  const position: Vec3 = [
+    direction[0] * (tipDistance + 0.12),
+    direction[1] * (tipDistance + 0.12),
+    direction[2] * (tipDistance + 0.12),
+  ];
+  const style = { "--force-accent": accent } as CSSProperties;
+
+  return (
+    <Html position={position} zIndexRange={[80, 20]} pointerEvents="auto">
+      <section
+        role="dialog"
+        aria-label={`${explanation.title}的计算说明`}
+        className="force-message"
+        style={style}
+        onPointerDown={(event) => event.stopPropagation()}
+      >
+        <div className="force-message__header">
+          <div>
+            <p className="force-message__source">力线说明</p>
+            <h3>{explanation.title}</h3>
+          </div>
+          <button type="button" onClick={onClose} aria-label="关闭计算说明">
+            关闭
+          </button>
+        </div>
+        <div className="force-message__math">
+          <p>{explanation.formula}</p>
+          <p>{explanation.substitution}</p>
+          <strong>= {explanation.result}</strong>
+        </div>
+        <p className="force-message__detail">{explanation.detail}</p>
+      </section>
+    </Html>
   );
 }
 
@@ -297,6 +375,11 @@ function ForceArrow({
   name,
   magnitude,
   style,
+  params,
+  derived,
+  selected,
+  onSelect,
+  onClose,
 }: {
   origin: Vec3;
   vector: Vec3;
@@ -304,10 +387,16 @@ function ForceArrow({
   color: string;
   labelColor: string;
   labelSide: number;
-  name: string;
+  name: ExplainedForceName;
   magnitude: number;
   style: ForceMarkStyle;
+  params: PullParams;
+  derived: PullDerived;
+  selected: boolean;
+  onSelect: (name: ExplainedForceName) => void;
+  onClose: () => void;
 }) {
+  const [hovered, setHovered] = useState(false);
   const [vx, vy, vz] = vector;
   const { length, direction } = useMemo(() => unitOf([vx, vy, vz]), [vx, vy, vz]);
   const quaternion = useMemo(
@@ -318,6 +407,7 @@ function ForceArrow({
       ),
     [direction],
   );
+  useCursor(hovered);
 
   if (length < 1e-6) {
     return null;
@@ -327,16 +417,34 @@ function ForceArrow({
   const shaft = shaftLength(length);
   const coneHeight = coneHeightFor(style);
   const coneRadius = dashed ? 0.028 : 0.036;
+  const active = hovered || selected;
+  const activeColor = active ? FORCE_HIGHLIGHT_COLORS[name] : color;
+  const activeLabelColor = active ? FORCE_HIGHLIGHT_COLORS[name] : labelColor;
+  const explanation = forceExplanation(name, params, derived);
+  const handlePointerOver = (event: ThreeEvent<PointerEvent>) => {
+    event.stopPropagation();
+    setHovered(true);
+  };
+  const handlePointerOut = (event: ThreeEvent<PointerEvent>) => {
+    event.stopPropagation();
+    setHovered(false);
+  };
+  const handleClick = (event: ThreeEvent<MouseEvent>) => {
+    event.stopPropagation();
+    onSelect(name);
+  };
 
   return (
     <group position={[origin[0] + offset[0], origin[1] + offset[1], origin[2] + offset[2]]}>
       <group quaternion={quaternion} renderOrder={FORCE_RENDER_ORDER}>
         {dashed ? (
-          <DashedShaft length={shaft} color={color} />
+          <DashedShaft length={shaft} color={activeColor} active={active} />
         ) : (
           <mesh position={[0, shaft / 2, 0]} renderOrder={FORCE_RENDER_ORDER} frustumCulled={false}>
-            <cylinderGeometry args={[0.012, 0.012, shaft, 8]} />
-            <meshBasicMaterial color={color} depthTest={false} />
+            <cylinderGeometry
+              args={[active ? 0.019 : 0.012, active ? 0.019 : 0.012, shaft, 8]}
+            />
+            <meshBasicMaterial color={activeColor} depthTest={false} />
           </mesh>
         )}
         <mesh
@@ -344,18 +452,38 @@ function ForceArrow({
           renderOrder={FORCE_RENDER_ORDER}
           frustumCulled={false}
         >
-          <coneGeometry args={[coneRadius, coneHeight, 8]} />
-          <meshBasicMaterial color={color} depthTest={false} />
+          <coneGeometry args={[active ? coneRadius * 1.22 : coneRadius, coneHeight, 8]} />
+          <meshBasicMaterial color={activeColor} depthTest={false} />
+        </mesh>
+        <mesh
+          position={[0, (shaft + coneHeight) / 2, 0]}
+          renderOrder={FORCE_RENDER_ORDER + 2}
+          frustumCulled={false}
+          onPointerOver={handlePointerOver}
+          onPointerOut={handlePointerOut}
+          onClick={handleClick}
+        >
+          <cylinderGeometry args={[0.075, 0.075, shaft + coneHeight, 8]} />
+          <meshBasicMaterial transparent opacity={0} depthTest={false} depthWrite={false} />
         </mesh>
       </group>
       <ForceLabel
         name={name}
         magnitude={magnitude}
-        color={labelColor}
+        color={activeLabelColor}
         direction={direction}
         tipDistance={shaft + coneHeight}
         side={labelSide}
       />
+      {selected ? (
+        <ForceMessage
+          explanation={explanation}
+          accent={FORCE_HIGHLIGHT_COLORS[name]}
+          direction={direction}
+          tipDistance={shaft + coneHeight}
+          onClose={onClose}
+        />
+      ) : null}
     </group>
   );
 }
@@ -429,7 +557,17 @@ function TrailLine({ points }: { points: TrailPoint[] }) {
   return <primitive object={line} visible={points.length >= 2} />;
 }
 
-function FollowOrbit({ x, y, z }: { x: number; y: number; z: number }) {
+function FollowOrbit({
+  x,
+  y,
+  z,
+  interactive,
+}: {
+  x: number;
+  y: number;
+  z: number;
+  interactive: boolean;
+}) {
   const controlsRef = useRef<OrbitControlsImpl>(null);
   const prev = useRef({ x, y, z });
   const ready = useRef(false);
@@ -471,8 +609,9 @@ function FollowOrbit({ x, y, z }: { x: number; y: number; z: number }) {
     <OrbitControls
       ref={controlsRef}
       makeDefault
-      enablePan
-      enableDamping
+      enabled={interactive}
+      enablePan={interactive}
+      enableDamping={interactive}
       dampingFactor={0.08}
       rotateSpeed={0.45}
       zoomSpeed={0.65}
@@ -515,14 +654,35 @@ export function PullFrictionScene({
   state,
   derived,
   trail,
+  params,
+  interactive = true,
 }: {
   state: PullState;
   derived: PullDerived;
   trail: TrailPoint[];
+  params: PullParams;
+  interactive?: boolean;
 }) {
+  const [selectedForce, setSelectedForce] = useState<ExplainedForceName | null>(null);
   const origin: Vec3 = [state.x, 0.25 + state.z, 0];
   const marks = useMemo(() => forceMarks(derived), [derived]);
   const sides = useMemo(() => labelSides(marks), [marks]);
+  const visibleSelection = marks.some((mark) => mark.name === selectedForce)
+    ? selectedForce
+    : null;
+
+  useEffect(() => {
+    if (!visibleSelection) {
+      return;
+    }
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setSelectedForce(null);
+      }
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [visibleSelection]);
 
   return (
     <>
@@ -548,12 +708,22 @@ export function PullFrictionScene({
           color={mark.color}
           labelColor={mark.labelColor}
           labelSide={sides[mark.name] ?? 0}
-          name={mark.name}
+          name={mark.name as ExplainedForceName}
           magnitude={mark.magnitude}
           style={mark.style}
+          params={params}
+          derived={derived}
+          selected={interactive && visibleSelection === mark.name}
+          onSelect={
+            interactive
+              ? (name) =>
+                  setSelectedForce((current) => (current === name ? null : name))
+              : () => {}
+          }
+          onClose={() => setSelectedForce(null)}
         />
       ))}
-      <FollowOrbit x={state.x} y={0.4 + state.z} z={0} />
+      <FollowOrbit x={state.x} y={0.4 + state.z} z={0} interactive={interactive} />
     </>
   );
 }

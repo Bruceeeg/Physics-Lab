@@ -58,10 +58,134 @@ body {
   flex-direction: column;
 }
 
+.scene-pip {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 4;
+  width: 128px;
+  overflow: hidden;
+  border: 1px solid var(--color-line);
+  background: rgb(248 250 252 / 96%);
+  pointer-events: auto;
+}
+
+.scene-pip__title {
+  margin: 0;
+  border-bottom: 1px solid var(--color-line);
+  padding: 2px 6px;
+  color: var(--color-quiet);
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
 .lab-charts {
   display: grid;
   grid-template-rows: repeat(4, minmax(0, 1fr));
   gap: 6px;
+}
+
+.force-message {
+  position: relative;
+  width: min(272px, calc(100vw - 28px));
+  transform: translate(-50%, calc(-100% - 14px));
+  border: 1px solid var(--color-line);
+  border-left: 3px solid var(--force-accent);
+  background: rgb(248 250 252 / 96%);
+  padding: 10px 11px;
+  color: var(--color-ink);
+  font-family: var(--font-plex-sans), var(--font-noto), sans-serif;
+  pointer-events: auto;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.force-message::after {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  content: "";
+  transform: translateX(-50%) rotate(45deg);
+  border-right: 1px solid var(--color-line);
+  border-bottom: 1px solid var(--color-line);
+  background: #f8fafc;
+}
+
+.force-message__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.force-message__source {
+  margin: 0 0 1px;
+  color: var(--force-accent);
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.force-message h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.force-message button {
+  min-width: 36px;
+  min-height: 28px;
+  cursor: pointer;
+  border: 1px solid var(--color-line);
+  background: var(--color-surface);
+  color: var(--color-quiet);
+  font-size: 10px;
+}
+
+.force-message button:hover {
+  border-color: var(--force-accent);
+  color: var(--color-ink);
+}
+
+.force-message button:focus-visible {
+  outline: 2px solid var(--force-accent);
+  outline-offset: 2px;
+}
+
+.force-message__math {
+  display: grid;
+  gap: 2px;
+  margin-top: 8px;
+  border-left: 2px solid var(--force-accent);
+  background: var(--color-muted);
+  padding: 6px 8px;
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 11px;
+  line-height: 1.45;
+  tab-size: 2;
+}
+
+.force-message__math p,
+.force-message__detail {
+  margin: 0;
+}
+
+.force-message__math strong {
+  color: var(--force-accent);
+  font-size: 12px;
+}
+
+.force-message__detail {
+  margin-top: 7px;
+  color: var(--color-quiet);
+  font-size: 10px;
+  line-height: 1.5;
 }
 
 @media (min-width: 1280px) and (min-height: 720px) {
@@ -124,6 +248,10 @@ body {
     min-height: 480px;
   }
 
+  .scene-pip {
+    width: 116px;
+  }
+
   .lab-charts {
     grid-template-columns: 1fr;
     grid-template-rows: repeat(4, 180px);
@@ -173,6 +301,311 @@ input[type="range"]::-moz-range-thumb {
   border: 2px solid var(--color-navy);
   background: var(--color-surface);
   border-radius: 2px;
+}
+
+.catalog-preview--paused,
+.catalog-preview--paused * {
+  animation-play-state: paused !important;
+}
+
+.catalog-preview * {
+  transform-box: view-box;
+}
+
+@keyframes catalog-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes catalog-swing {
+  0%,
+  100% {
+    transform: rotate(-22deg);
+  }
+  50% {
+    transform: rotate(22deg);
+  }
+}
+
+@keyframes catalog-offset {
+  from {
+    offset-distance: 0%;
+  }
+  to {
+    offset-distance: 100%;
+  }
+}
+
+@keyframes catalog-cart-a {
+  0% {
+    transform: translateX(22px);
+  }
+  45% {
+    transform: translateX(64px);
+  }
+  100% {
+    transform: translateX(22px);
+  }
+}
+
+@keyframes catalog-cart-b {
+  0% {
+    transform: translateX(118px);
+  }
+  45% {
+    transform: translateX(78px);
+  }
+  100% {
+    transform: translateX(118px);
+  }
+}
+
+@keyframes catalog-roll {
+  0% {
+    transform: translate(28px, 64px) rotate(0deg);
+  }
+  100% {
+    transform: translate(118px, 40px) rotate(360deg);
+  }
+}
+
+@keyframes catalog-flow {
+  to {
+    stroke-dashoffset: -22;
+  }
+}
+
+@keyframes catalog-atwood {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(8px);
+  }
+}
+
+@keyframes catalog-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(6px);
+  }
+}
+
+@keyframes catalog-piston {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(14px);
+  }
+}
+
+@keyframes catalog-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes catalog-charge {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes catalog-magnet {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(46px);
+  }
+}
+
+@keyframes catalog-photon {
+  0% {
+    transform: translate(0, 0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(48px, 0);
+    opacity: 0;
+  }
+}
+
+@keyframes catalog-repel-a {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(-8px);
+  }
+}
+
+@keyframes catalog-repel-b {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(8px);
+  }
+}
+
+@keyframes catalog-wave {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-20px);
+  }
+}
+
+@keyframes catalog-heat {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes catalog-plate {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(10px);
+  }
+}
+
+@keyframes catalog-bullet {
+  0% {
+    transform: translate(18px, 58px);
+    opacity: 1;
+  }
+  70% {
+    transform: translate(72px, 58px);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(72px, 58px);
+    opacity: 0;
+  }
+}
+
+.catalog-preview__orbit {
+  animation: catalog-orbit 3.6s linear infinite;
+}
+
+.catalog-preview__swing {
+  animation: catalog-swing 1.8s ease-in-out infinite;
+}
+
+.catalog-preview__ramp-cart {
+  offset-path: path("M18 68 L84 68 L136 36");
+  offset-rotate: 0deg;
+  animation: catalog-offset 3.4s linear infinite;
+}
+
+.catalog-preview__cart-a {
+  animation: catalog-cart-a 2.4s ease-in-out infinite;
+}
+
+.catalog-preview__cart-b {
+  animation: catalog-cart-b 2.4s ease-in-out infinite;
+}
+
+.catalog-preview__roll {
+  animation: catalog-roll 3.2s linear infinite;
+}
+
+.catalog-preview__flow {
+  animation: catalog-flow 1.2s linear infinite;
+}
+
+.catalog-preview__atwood {
+  animation: catalog-atwood 1.6s ease-in-out infinite;
+}
+
+.catalog-preview__bob {
+  animation: catalog-bob 1.8s ease-in-out infinite;
+}
+
+.catalog-preview__piston {
+  animation: catalog-piston 2s ease-in-out infinite;
+}
+
+.catalog-preview__pulse {
+  animation: catalog-pulse 1.6s ease-in-out infinite;
+}
+
+.catalog-preview__charge {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: catalog-charge 2s ease-in-out infinite;
+}
+
+.catalog-preview__magnet {
+  animation: catalog-magnet 2.2s ease-in-out infinite;
+}
+
+.catalog-preview__photon {
+  animation: catalog-photon 1.5s linear infinite;
+}
+
+.catalog-preview__repel-a {
+  animation: catalog-repel-a 1.7s ease-in-out infinite;
+}
+
+.catalog-preview__repel-b {
+  animation: catalog-repel-b 1.7s ease-in-out infinite;
+}
+
+.catalog-preview__wave {
+  animation: catalog-wave 1.4s linear infinite;
+}
+
+.catalog-preview__heat {
+  animation: catalog-heat 1.8s ease-in-out infinite;
+}
+
+.catalog-preview__plate {
+  animation: catalog-plate 2s ease-in-out infinite;
+}
+
+.catalog-preview__projectile {
+  offset-path: path("M18 78 C58 18, 108 18, 148 78");
+  animation: catalog-offset 2.6s linear infinite;
+}
+
+.catalog-preview__spin {
+  animation: catalog-orbit 2.8s linear infinite;
+}
+
+.catalog-preview__bullet {
+  animation: catalog-bullet 1.8s ease-in infinite;
+}
+
+.catalog-preview__delay {
+  animation-delay: 0.45s;
 }
 
 @media (prefers-reduced-motion: reduce) {

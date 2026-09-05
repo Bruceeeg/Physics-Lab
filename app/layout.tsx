@@ -23,8 +23,11 @@ const notoSansSC = Noto_Sans_SC({
 });
 
 export const metadata: Metadata = {
-  title: "斜向拉力实验台 | Physics Lab",
-  description: "水平面上斜向拉力与摩擦的三维受力实验：可配置 F、θ、m、μs、μk、g。",
+  title: {
+    default: "Physics Lab",
+    template: "%s | Physics Lab",
+  },
+  description: "AP 物理可交互实验：按课程浏览，点已开放的卡片进入实验台。",
 };
 
 export default function RootLayout({

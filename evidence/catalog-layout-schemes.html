@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Physics Lab 首页布局示意图</title>
+    <style>
+      :root {
+        --paper: #f8fafc;
+        --ink: #0f172a;
+        --navy: #1e3a5f;
+        --quiet: #475569;
+        --line: #cbd5e1;
+        --muted: #e9eef5;
+        --surface: #ffffff;
+        --hatch: repeating-linear-gradient(
+          -45deg,
+          #e9eef5,
+          #e9eef5 6px,
+          #f8fafc 6px,
+          #f8fafc 12px
+        );
+        --f: #2563eb;
+        --g: #047857;
+        --fr: #b45309;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        background: #e2e8f0;
+        color: var(--ink);
+        font-family: "IBM Plex Sans", "Noto Sans SC", "PingFang SC", sans-serif;
+      }
+
+      .board {
+        width: 1440px;
+        height: 900px;
+        margin: 24px auto;
+        background: var(--paper);
+        border: 1px solid var(--line);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .caption {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 14px 20px 12px;
+        border-bottom: 1px solid var(--line);
+        background: var(--surface);
+      }
+
+      .caption h1 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+        letter-spacing: 0;
+      }
+
+      .caption p {
+        margin: 0;
+        font-size: 13px;
+        color: var(--quiet);
+      }
+
+      .page {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 18px 22px 16px;
+      }
+
+      .site-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 52px;
+        padding: 0 14px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+      }
+
+      .brand {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+      }
+
+      .brand strong {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--navy);
+      }
+
+      .brand span {
+        font-size: 11px;
+        color: var(--quiet);
+      }
+
+      .ghost {
+        height: 28px;
+        padding: 0 10px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--ink);
+        font: inherit;
+        font-size: 12px;
+        line-height: 26px;
+      }
+
+      .note {
+        margin-top: 12px;
+        font-size: 12px;
+        color: var(--quiet);
+      }
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-top: 16px;
+        min-height: 0;
+        flex: 1;
+      }
+
+      .card {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        background: var(--surface);
+        border: 1px solid var(--line);
+      }
+
+      .preview {
+        position: relative;
+        background: var(--hatch);
+        border-bottom: 1px dashed var(--navy);
+        min-height: 0;
+      }
+
+      .preview-label,
+      .meta-label {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 2;
+        padding: 2px 7px;
+        background: var(--surface);
+        border: 1px solid var(--navy);
+        color: var(--navy);
+        font-size: 11px;
+        font-weight: 500;
+      }
+
+      .preview.tall {
+        flex: 1;
+      }
+
+      .preview.a {
+        height: 62%;
+      }
+
+      .scene {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+      }
+
+      .block {
+        width: 88px;
+        height: 52px;
+        background: rgb(61 90 128 / 0.35);
+        border: 1.5px solid #0f172a;
+      }
+
+      .arrow {
+        position: absolute;
+        font-size: 12px;
+        font-weight: 600;
+        pointer-events: none;
+      }
+
+      .track {
+        width: 78%;
+        height: 10px;
+        background: var(--muted);
+        border: 1px solid var(--line);
+        position: relative;
+      }
+
+      .slider {
+        position: absolute;
+        top: -11px;
+        left: 42%;
+        width: 28px;
+        height: 28px;
+        background: var(--navy);
+      }
+
+      .meta {
+        position: relative;
+        padding: 16px 16px 14px;
+        background: var(--surface);
+      }
+
+      .meta h2 {
+        margin: 0 0 6px;
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      .formula {
+        margin: 0;
+        font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+        font-size: 14px;
+        color: var(--quiet);
+      }
+
+      .bar {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        height: 56px;
+        padding: 0 16px;
+        border-top: 1px solid var(--line);
+      }
+
+      .split {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 16px;
+        margin-top: 16px;
+        min-height: 0;
+        flex: 1;
+      }
+
+      .index {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .row {
+        position: relative;
+        padding: 14px 12px 12px 16px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+      }
+
+      .row.on {
+        background: var(--muted);
+        border-left: 3px solid var(--navy);
+        padding-left: 14px;
+      }
+
+      .row h2 {
+        margin: 0 0 4px;
+        font-size: 15px;
+        font-weight: 600;
+      }
+
+      .stage {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        border: 1px solid var(--line);
+        background: var(--surface);
+      }
+
+      .enter {
+        height: 32px;
+        padding: 0 14px;
+        border: 0;
+        background: var(--navy);
+        color: #fff;
+        font: inherit;
+        font-size: 13px;
+      }
+
+      .click {
+        position: absolute;
+        right: 10px;
+        bottom: 10px;
+        padding: 3px 8px;
+        background: var(--ink);
+        color: #fff;
+        font-size: 11px;
+      }
+    </style>
+  </head>
+  <body>
+    <section class="board" id="scheme-a">
+      <div class="caption">
+        <h1>方案 A · 双卡网格（上预览，下名称 + 公式）</h1>
+        <p>整张卡片是链接，点击进入对应实验详情页</p>
+      </div>
+      <div class="page">
+        <header class="site-header">
+          <div class="brand">
+            <strong>Physics Lab</strong>
+            <span>可交互力学实验</span>
+          </div>
+          <div class="ghost">暂停预览</div>
+        </header>
+        <div class="grid-2">
+          <article class="card">
+            <div class="preview a">
+              <span class="preview-label">动态预览</span>
+              <div class="scene">
+                <div class="block"></div>
+                <span class="arrow" style="color: var(--f); top: 28%; left: 58%">F</span>
+                <span class="arrow" style="color: var(--g); bottom: 28%; left: 46%">mg</span>
+                <span class="arrow" style="color: var(--fr); top: 52%; left: 28%">f</span>
+              </div>
+            </div>
+            <div class="meta">
+              <span class="meta-label">实验名称 / 核心公式</span>
+              <h2>斜向拉力实验台</h2>
+              <p class="formula">N = mg − |F|sinθ</p>
+            </div>
+            <span class="click">点击 → /labs/pull-friction</span>
+          </article>
+          <article class="card">
+            <div class="preview a">
+              <span class="preview-label">动态预览</span>
+              <div class="scene">
+                <div class="track"><div class="slider"></div></div>
+              </div>
+            </div>
+            <div class="meta">
+              <span class="meta-label">实验名称 / 核心公式</span>
+              <h2>匀变速直线运动</h2>
+              <p class="formula">x = x₀ + v₀t + ½at²</p>
+            </div>
+            <span class="click">点击 → /labs/linear-motion</span>
+          </article>
+        </div>
+        <p class="note">网格：手机 1 列，桌面 2 列。卡片等宽。悬停只改边框，不位移。</p>
+      </div>
+    </section>
+
+    <section class="board" id="scheme-b">
+      <div class="caption">
+        <h1>方案 B · 预览铺满（底栏一行：名称 + 公式）</h1>
+        <p>同样是网格卡片进详情，预览占比更大，文字收成底栏</p>
+      </div>
+      <div class="page">
+        <header class="site-header">
+          <div class="brand">
+            <strong>Physics Lab</strong>
+            <span>可交互力学实验</span>
+          </div>
+          <div class="ghost">暂停预览</div>
+        </header>
+        <div class="grid-2">
+          <article class="card">
+            <div class="preview tall">
+              <span class="preview-label">动态预览（铺满）</span>
+              <div class="scene">
+                <div class="block"></div>
+                <span class="arrow" style="color: var(--f); top: 30%; left: 58%">F</span>
+                <span class="arrow" style="color: var(--g); bottom: 34%; left: 46%">mg</span>
+                <span class="arrow" style="color: var(--fr); top: 54%; left: 30%">f</span>
+              </div>
+            </div>
+            <div class="bar">
+              <span class="meta-label" style="position: static">底栏</span>
+              <h2 style="margin: 0; font-size: 16px">斜向拉力实验台</h2>
+              <p class="formula">N = mg − |F|sinθ</p>
+            </div>
+            <span class="click">点击 → /labs/pull-friction</span>
+          </article>
+          <article class="card">
+            <div class="preview tall">
+              <span class="preview-label">动态预览（铺满）</span>
+              <div class="scene">
+                <div class="track"><div class="slider"></div></div>
+              </div>
+            </div>
+            <div class="bar">
+              <span class="meta-label" style="position: static">底栏</span>
+              <h2 style="margin: 0; font-size: 16px">匀变速直线运动</h2>
+              <p class="formula">x = x₀ + v₀t + ½at²</p>
+            </div>
+            <span class="click">点击 → /labs/linear-motion</span>
+          </article>
+        </div>
+        <p class="note">名称在左、公式在右，同一行。预览与文字分区，文字不叠在画面上。</p>
+      </div>
+    </section>
+
+    <section class="board" id="scheme-c">
+      <div class="caption">
+        <h1>方案 C · 左列表 + 右大预览</h1>
+        <p>左侧切换当前实验，右侧看大预览，再点「进入实验」才进详情页</p>
+      </div>
+      <div class="page">
+        <header class="site-header">
+          <div class="brand">
+            <strong>Physics Lab</strong>
+            <span>可交互力学实验</span>
+          </div>
+        </header>
+        <div class="split">
+          <aside class="index">
+            <div class="row on">
+              <span class="meta-label" style="position: static; display: inline-block; margin-bottom: 8px">实验列表</span>
+              <h2>斜向拉力实验台</h2>
+              <p class="formula">N = mg − |F|sinθ</p>
+            </div>
+            <div class="row">
+              <h2>匀变速直线运动</h2>
+              <p class="formula">x = x₀ + v₀t + ½at²</p>
+            </div>
+          </aside>
+          <div class="stage">
+            <div class="preview tall">
+              <span class="preview-label">当前实验大预览</span>
+              <div class="scene">
+                <div class="block" style="width: 120px; height: 70px"></div>
+                <span class="arrow" style="color: var(--f); top: 28%; left: 58%">F</span>
+                <span class="arrow" style="color: var(--g); bottom: 30%; left: 47%">mg</span>
+                <span class="arrow" style="color: var(--fr); top: 52%; left: 32%">f</span>
+              </div>
+            </div>
+            <div class="bar">
+              <h2 style="margin: 0; font-size: 16px">斜向拉力实验台</h2>
+              <div class="enter">进入实验</div>
+            </div>
+          </div>
+        </div>
+        <p class="note">点左侧只切换预览。点「进入实验」→ /labs/pull-friction。不是卡片网格。</p>
+      </div>
+    </section>
+  </body>
+</html>

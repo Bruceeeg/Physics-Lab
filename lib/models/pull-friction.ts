@@ -165,6 +165,7 @@ export function step(params: PullParams, state: PullState, dt: number): PullStat
 
 export type KinematicSample = {
   t: number;
+  x: number;
   vx: number;
   ax: number;
   fxNet: number;
@@ -178,6 +179,7 @@ export function kinematicSample(
 ): KinematicSample {
   return {
     t: state.t,
+    x: state.x,
     vx: state.vx,
     ax: derived.ax,
     fxNet: derived.forces.Fx + derived.forces.f,
