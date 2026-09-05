@@ -1,4 +1,4 @@
-export type ReadySlug = "pull-friction" | "linear-motion";
+export type ReadySlug = "pull-friction" | "linear-motion" | "projectile-motion";
 
 export type ExperimentSlug = ReadySlug | string;
 
@@ -86,6 +86,16 @@ export const EXPERIMENTS: readonly ExperimentEntry[] = [
     summary: "调节初位置、初速度与加速度，观察匀变速直线运动。",
   },
   {
+    slug: "projectile-motion",
+    title: "抛体落点",
+    formula: "x = v₀t, y = ½gt²",
+    course: "p1",
+    unit: "Unit 1 运动学",
+    preview: "projectile",
+    status: "ready",
+    summary: "平抛或斜抛：参数实验直接调 v₀、θ、h；预测模式先测初速度再预测落点。",
+  },
+  {
     slug: "circular-motion",
     title: "圆周运动",
     formula: "T = 2π√(r cosθ / g)",
@@ -154,16 +164,6 @@ export const EXPERIMENTS: readonly ExperimentEntry[] = [
     preview: "atwood",
     status: "pending",
     summary: "总质量、质量差与加速度的关系。",
-  },
-  {
-    slug: "projectile-motion",
-    title: "抛体落点",
-    formula: "x = v₀t, y = ½gt²",
-    course: "p1",
-    unit: "Unit 1 运动学",
-    preview: "projectile",
-    status: "pending",
-    summary: "平抛或斜抛，先测初速度再预测落点。",
   },
   {
     slug: "angular-momentum",

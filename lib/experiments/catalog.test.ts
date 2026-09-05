@@ -27,14 +27,19 @@ test("lists ready labs first within Physics 1", () => {
   const p1 = listExperiments("p1");
   assert.deepEqual(
     p1.filter((item) => item.status === "ready").map((item) => item.slug),
-    ["pull-friction", "linear-motion"],
+    ["pull-friction", "linear-motion", "projectile-motion"],
   );
   assert.equal(p1[0]?.slug, "pull-friction");
   assert.equal(p1[1]?.slug, "linear-motion");
+  assert.equal(p1[2]?.slug, "projectile-motion");
 });
 
 test("only ready labs have detail routes", () => {
-  assert.deepEqual(listExperimentSlugs(), ["pull-friction", "linear-motion"]);
+  assert.deepEqual(listExperimentSlugs(), [
+    "pull-friction",
+    "linear-motion",
+    "projectile-motion",
+  ]);
   const pending = listExperiments("all").find((item) => item.status === "pending");
   assert.ok(pending);
   assert.equal(isReadyExperiment(pending), false);

@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
 
 import { LinearMotionLab } from "@/components/linear-motion-lab";
+import { ProjectileLab } from "@/components/projectile-lab";
 import { PullFrictionLab } from "@/components/pull-friction-lab";
 import {
   getExperiment,
@@ -14,6 +15,7 @@ import { notFound } from "next/navigation";
 const LAB_PAGES: Record<ReadySlug, ComponentType> = {
   "pull-friction": PullFrictionLab,
   "linear-motion": LinearMotionLab,
+  "projectile-motion": ProjectileLab,
 };
 
 type LabPageProps = {
