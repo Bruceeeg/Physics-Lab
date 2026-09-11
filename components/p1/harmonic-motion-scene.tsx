@@ -2,7 +2,8 @@
 
 import { DoubleSide } from "three";
 
-import { BoxMass, LabLine, LabOrbit, LabScenery, SphereMass, TrailLine, VectorArrow } from "@/components/lab-3d";
+import { BoxMass, HelicalSpring, LabLine, LabOrbit, LabScenery, SphereMass, TrailLine, VectorArrow } from "@/components/lab-3d";
+import { helicalSpringPoints } from "@/lib/models/helical-spring";
 import { FORCE_COLORS } from "@/lib/models/force-display";
 import type { HarmonicMode, HarmonicParams, HarmonicSample } from "@/lib/models/harmonic-motion";
 
@@ -20,13 +21,13 @@ export function HarmonicMotionScene({
   if (mode === "spring") {
     const wallX = -params.A - 0.28;
     const block: [number, number, number] = [sample.x, 0.12, 0];
-    const coils: [number, number, number][] = [];
-    const steps = 40;
-    for (let index = 0; index <= steps; index += 1) {
-      const u = index / steps;
-      const x = wallX + 0.04 + u * (sample.x - 0.08 - wallX - 0.04);
-      coils.push([x, 0.12 + 0.03 * Math.cos(index * 0.9), 0.04 * Math.sin(index * 0.9)]);
-    }
+    const coils = helicalSpringPoints({
+      start: [wallX + 0.04, 0.12, 0],
+      end: [sample.x - 0.08, 0.12, 0],
+      coils: 10,
+      radius: 0.032,
+      pointsPerCoil: 14,
+    });
     return (
       <>
         <LabScenery />
@@ -38,7 +39,7 @@ export function HarmonicMotionScene({
           <boxGeometry args={[0.08, 0.4, 0.36]} />
           <meshStandardMaterial color="#475569" />
         </mesh>
-        {coils.length > 1 ? <LabLine points={coils} color="#b45309" lineWidth={1.6} /> : null}
+        {coils.length > 1 ? <HelicalSpring points={coils} color="#A16207" radius={0.007} /> : null}
         <TrailLine points={trail} />
         <BoxMass position={block} size={[0.16, 0.12, 0.14]} />
         <LabOrbit target={[0, 0.15, 0]} minDistance={1.2} />

@@ -364,7 +364,7 @@ export function ProjectileLab() {
             </Link>
             抛体落点实验台
           </p>
-          <p className="font-mono text-[10px] text-quiet">Physics Lab / 运动学</p>
+          <p className="font-mono text-[10px] text-quiet">Physics Lab / Unit 1 运动学</p>
         </div>
         <ModeSwitch mode={mode} onChange={switchMode} />
         <div className="grid min-w-0 grid-cols-3">

@@ -2,7 +2,8 @@
 
 import { DoubleSide } from "three";
 
-import { BoxMass, LabLine, LabOrbit, LabScenery, TrailLine } from "@/components/lab-3d";
+import { BoxMass, HelicalSpring, LabOrbit, LabScenery, TrailLine } from "@/components/lab-3d";
+import { helicalSpringPoints } from "@/lib/models/helical-spring";
 import { SpriteLabel } from "@/components/scene-label";
 import {
   attachedSMax,
@@ -18,33 +19,36 @@ import {
   type EnergySample,
 } from "@/lib/models/conservation-of-energy";
 
-function springPointsAlongTrack(
+function springPointsToCart(
   sCart: number,
   thetaDeg: number,
   wallX: number,
   connected: boolean,
 ): [number, number, number][] {
-  const sStart = wallX + 0.04;
-  const sEnd = connected ? sCart - CART_SIZE[0] / 2 : -0.02;
-  const actualEnd = Math.max(sStart + 0.03, sEnd);
-  const coils = 10;
-  const steps = coils * 4;
-  const theta = (thetaDeg * Math.PI) / 180;
-  const points: [number, number, number][] = [];
-  for (let index = 0; index <= steps; index += 1) {
-    const u = index / steps;
-    const s = sStart + u * (actualEnd - sStart);
-    const onRamp = s > 0;
-    const nx = onRamp ? -Math.sin(theta) : 0;
-    const ny = onRamp ? Math.cos(theta) : 1;
-    const x = onRamp ? s * Math.cos(theta) : s;
-    const y = TRACK_SURFACE_Y + (onRamp ? s * Math.sin(theta) : 0);
-    const lift = CART_HEIGHT * 0.45;
-    const wobble = 0.035 * Math.cos(index * 0.9);
-    const z = 0.048 * Math.sin(index * 0.9);
-    points.push([x + nx * (lift + wobble), y + ny * (lift + wobble), z]);
+  const hitchY = TRACK_SURFACE_Y + CART_HEIGHT * 0.45;
+  const start: [number, number, number] = [wallX + 0.04, hitchY, 0];
+  const cart = cartPlacement(connected ? sCart : Math.min(sCart, 0), thetaDeg);
+  const theta = cart.tilt;
+  const end: [number, number, number] = [
+    cart.position[0] - Math.cos(theta) * (CART_SIZE[0] / 2),
+    cart.position[1] - Math.sin(theta) * (CART_SIZE[0] / 2),
+    0,
+  ];
+  if (!connected) {
+    end[0] = Math.max(start[0] + 0.04, -0.04);
+    end[1] = hitchY;
   }
-  return points;
+  const span = Math.hypot(end[0] - start[0], end[1] - start[1]);
+  if (span < 0.04) {
+    return [start, end];
+  }
+  return helicalSpringPoints({
+    start,
+    end,
+    coils: 9,
+    radius: 0.02,
+    pointsPerCoil: 22,
+  });
 }
 
 export function ConservationOfEnergyScene({
@@ -61,8 +65,8 @@ export function ConservationOfEnergyScene({
   const rampLen = Math.max(1.2, Math.max(maxHeight(params) / sinT, attachedSMax(params)) + 0.3);
   const ramp = rampMeshPlacement(rampLen, params.thetaDeg);
   const onRamp = sample.s > 0;
-  const wallX = -params.A - 0.22;
-  const springPoints = springPointsAlongTrack(sample.s, params.thetaDeg, wallX, sample.connected);
+  const wallX = -params.A - 0.52;
+  const springPoints = springPointsToCart(sample.s, params.thetaDeg, wallX, sample.connected);
   const cartLocal = cartOnRampLocal(sample.s, rampLen);
   const worldCart = cartPlacement(sample.s, params.thetaDeg);
 
@@ -92,7 +96,9 @@ export function ConservationOfEnergyScene({
         <boxGeometry args={[0.08, 0.44, 0.4]} />
         <meshStandardMaterial color="#475569" />
       </mesh>
-      {springPoints.length > 1 ? <LabLine points={springPoints} color="#b45309" lineWidth={1.6} /> : null}
+      {springPoints.length > 1 ? (
+        <HelicalSpring points={springPoints} color="#A16207" radius={0.0048} />
+      ) : null}
       <TrailLine points={trail} />
       {onRamp ? null : (
         <>

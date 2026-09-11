@@ -3,6 +3,8 @@ import { test } from "node:test";
 
 import {
   COURSE_SECTIONS,
+  P1_CED_UNITS,
+  clusterByP1Unit,
   experimentHref,
   getExperiment,
   isReadyExperiment,
@@ -11,6 +13,23 @@ import {
   listExperiments,
   parseCourseFilter,
 } from "./catalog.ts";
+
+const P1_READY = [
+  "linear-motion",
+  "projectile-motion",
+  "pull-friction",
+  "incline-friction",
+  "atwood-machine",
+  "circular-motion",
+  "conservation-of-energy",
+  "impulse-momentum",
+  "torque-equilibrium",
+  "rotational-motion",
+  "angular-momentum",
+  "harmonic-motion",
+  "fluid-dynamics",
+  "archimedes",
+];
 
 test("exposes four AP course sections without inquiry or site-status groups", () => {
   assert.deepEqual(
@@ -23,44 +42,30 @@ test("exposes four AP course sections without inquiry or site-status groups", ()
   );
 });
 
-test("lists ready labs first within Physics 1", () => {
+test("lists Physics 1 labs in CED unit order", () => {
   const p1 = listExperiments("p1");
   assert.deepEqual(
     p1.filter((item) => item.status === "ready").map((item) => item.slug),
-    [
-      "pull-friction",
-      "linear-motion",
-      "projectile-motion",
-      "circular-motion",
-      "conservation-of-energy",
-      "impulse-momentum",
-      "harmonic-motion",
-      "rotational-motion",
-      "fluid-dynamics",
-      "atwood-machine",
-      "angular-momentum",
-      "archimedes",
-    ],
+    P1_READY,
   );
   assert.ok(p1.every((item) => item.status === "ready"));
-  assert.equal(p1[0]?.slug, "pull-friction");
+  assert.equal(p1[0]?.slug, "linear-motion");
+});
+
+test("Physics 1 unit labels match the eight CED units", () => {
+  const titles = new Set(P1_CED_UNITS.map((unit) => unit.title));
+  const p1 = listExperiments("p1");
+  assert.equal(P1_CED_UNITS.length, 8);
+  assert.ok(p1.every((item) => titles.has(item.unit)));
+  const clustered = clusterByP1Unit(p1);
+  assert.deepEqual(
+    clustered.flatMap((group) => group.experiments.map((item) => item.slug)),
+    P1_READY,
+  );
 });
 
 test("only ready labs have detail routes", () => {
-  assert.deepEqual(listExperimentSlugs(), [
-    "pull-friction",
-    "linear-motion",
-    "projectile-motion",
-    "circular-motion",
-    "conservation-of-energy",
-    "impulse-momentum",
-    "harmonic-motion",
-    "rotational-motion",
-    "fluid-dynamics",
-    "atwood-machine",
-    "angular-momentum",
-    "archimedes",
-  ]);
+  assert.deepEqual(listExperimentSlugs(), P1_READY);
   const pending = listExperiments("all").find((item) => item.status === "pending");
   assert.ok(pending);
   assert.equal(isReadyExperiment(pending), false);
@@ -93,6 +98,8 @@ test("looks up ready and pending experiments by slug", () => {
   assert.equal(found?.course, "p1");
   assert.equal(found?.status, "ready");
   assert.equal(getExperiment("circular-motion")?.status, "ready");
+  assert.equal(getExperiment("torque-equilibrium")?.unit, "Unit 5 力矩与转动动力学");
+  assert.equal(getExperiment("projectile-motion")?.formula, "x = (v₀ cosθ) t");
   assert.equal(getExperiment("no-such-lab"), undefined);
 });
 

@@ -9,7 +9,9 @@ import { ConservationOfEnergyLab } from "@/components/p1/conservation-of-energy-
 import { FluidDynamicsLab } from "@/components/p1/fluid-dynamics-lab";
 import { HarmonicMotionLab } from "@/components/p1/harmonic-motion-lab";
 import { ImpulseMomentumLab } from "@/components/p1/impulse-momentum-lab";
+import { InclineFrictionLab } from "@/components/p1/incline-friction-lab";
 import { RotationalMotionLab } from "@/components/p1/rotational-motion-lab";
+import { TorqueEquilibriumLab } from "@/components/p1/torque-equilibrium-lab";
 import { ProjectileLab } from "@/components/projectile-lab";
 import { PullFrictionLab } from "@/components/pull-friction-lab";
 import {
@@ -22,17 +24,19 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 const LAB_PAGES: Record<ReadySlug, ComponentType> = {
-  "pull-friction": PullFrictionLab,
   "linear-motion": LinearMotionLab,
   "projectile-motion": ProjectileLab,
+  "pull-friction": PullFrictionLab,
+  "incline-friction": InclineFrictionLab,
+  "atwood-machine": AtwoodMachineLab,
   "circular-motion": CircularMotionLab,
   "conservation-of-energy": ConservationOfEnergyLab,
   "impulse-momentum": ImpulseMomentumLab,
-  "harmonic-motion": HarmonicMotionLab,
+  "torque-equilibrium": TorqueEquilibriumLab,
   "rotational-motion": RotationalMotionLab,
-  "fluid-dynamics": FluidDynamicsLab,
-  "atwood-machine": AtwoodMachineLab,
   "angular-momentum": AngularMomentumLab,
+  "harmonic-motion": HarmonicMotionLab,
+  "fluid-dynamics": FluidDynamicsLab,
   archimedes: ArchimedesLab,
 };
 

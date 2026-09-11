@@ -78,6 +78,36 @@ function scene(kind: PreviewKind, running: boolean) {
           </g>
         </PreviewFrame>
       );
+    case "incline":
+      return (
+        <PreviewFrame running={running}>
+          <path
+            d="M22 30 L92 78 L148 78"
+            fill="none"
+            stroke="#94a3b8"
+            strokeWidth="3"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+          <rect
+            width="16"
+            height="10"
+            fill="#1E3A5F"
+            className="catalog-preview__incline-block"
+          />
+        </PreviewFrame>
+      );
+    case "torque":
+      return (
+        <PreviewFrame running={running}>
+          <polygon points="80,58 72,72 88,72" fill="#64748b" />
+          <g className="catalog-preview__seesaw" style={{ transformOrigin: "80px 58px" }}>
+            <line x1="24" y1="58" x2="136" y2="58" stroke="#1e3a5f" strokeWidth="3" />
+            <rect x="30" y="62" width="10" height="12" fill="#1e3a5f" />
+            <rect x="116" y="62" width="12" height="16" fill="#a16207" />
+          </g>
+        </PreviewFrame>
+      );
     case "fluids":
       return (
         <PreviewFrame running={running}>

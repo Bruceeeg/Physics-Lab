@@ -5,12 +5,31 @@ import { memo, useEffect, useLayoutEffect, useMemo } from "react";
 import {
   BufferAttribute,
   BufferGeometry,
+  Curve,
   DoubleSide,
   Line as LineObject,
   LineBasicMaterial,
   Quaternion,
+  TubeGeometry,
   Vector3,
 } from "three";
+
+class HelixPolylineCurve extends Curve<Vector3> {
+  constructor(private readonly pts: Vector3[]) {
+    super();
+  }
+
+  getPoint(t: number, optionalTarget = new Vector3()) {
+    const pts = this.pts;
+    const last = pts.length - 1;
+    if (last <= 0) {
+      return optionalTarget.copy(pts[0] ?? new Vector3());
+    }
+    const f = Math.min(1, Math.max(0, t)) * last;
+    const i = Math.min(last - 1, Math.floor(f));
+    return optionalTarget.copy(pts[i]).lerp(pts[i + 1], f - i);
+  }
+}
 
 import { SpriteLabel } from "@/components/scene-label";
 import { FORCE_COLORS } from "@/lib/models/force-display";
@@ -117,6 +136,43 @@ export function SphereMass({
         clearcoat={0.4}
         clearcoatRoughness={0.3}
       />
+    </mesh>
+  );
+}
+
+export function HelicalSpring({
+  points,
+  color = "#A16207",
+  radius = 0.008,
+}: {
+  points: Vec3[];
+  color?: string;
+  radius?: number;
+}) {
+  const valid = points.filter(
+    (point) => Number.isFinite(point[0]) && Number.isFinite(point[1]) && Number.isFinite(point[2]),
+  );
+  const geometry = useMemo(() => {
+    if (valid.length < 2) {
+      return null;
+    }
+    const curve = new HelixPolylineCurve(valid.map((point) => new Vector3(...point)));
+    return new TubeGeometry(curve, Math.max(64, valid.length * 2), radius, 8, false);
+  }, [radius, valid]);
+
+  useEffect(
+    () => () => {
+      geometry?.dispose();
+    },
+    [geometry],
+  );
+
+  if (!geometry) {
+    return null;
+  }
+  return (
+    <mesh geometry={geometry}>
+      <meshStandardMaterial color={color} metalness={0.62} roughness={0.28} />
     </mesh>
   );
 }

@@ -245,7 +245,7 @@ export function LinearMotionLab() {
             </Link>
             匀变速直线运动
           </p>
-          <p className="font-mono text-[10px] text-quiet">Physics Lab / 运动学</p>
+          <p className="font-mono text-[10px] text-quiet">Physics Lab / Unit 1 运动学</p>
         </div>
         <ModeSwitch
           value={mode}

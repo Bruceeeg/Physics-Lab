@@ -451,6 +451,31 @@ input[type="range"]::-moz-range-thumb {
   }
 }
 
+@keyframes catalog-incline {
+  0% {
+    offset-distance: 6%;
+  }
+  58% {
+    offset-distance: 60%;
+  }
+  90% {
+    offset-distance: 92%;
+  }
+  100% {
+    offset-distance: 92%;
+  }
+}
+
+@keyframes catalog-seesaw {
+  0%,
+  100% {
+    transform: rotate(-8deg);
+  }
+  50% {
+    transform: rotate(8deg);
+  }
+}
+
 @keyframes catalog-flow {
   to {
     stroke-dashoffset: -22;
@@ -645,6 +670,19 @@ input[type="range"]::-moz-range-thumb {
   animation: catalog-roll 3.2s linear infinite both;
 }
 
+.catalog-preview__incline-block {
+  transform-box: fill-box;
+  offset-path: path("M22 30 L92 78 L148 78");
+  offset-anchor: 50% 100%;
+  offset-distance: 6%;
+  offset-rotate: auto;
+  animation: catalog-incline 2.8s ease-in infinite both;
+}
+
+.catalog-preview__seesaw {
+  animation: catalog-seesaw 2.6s ease-in-out infinite;
+}
+
 .catalog-preview__flow {
   animation: catalog-flow 1.2s linear infinite;
 }
@@ -716,6 +754,11 @@ input[type="range"]::-moz-range-thumb {
 
   .catalog-preview__linear-cart {
     transform: translate(18px, 43px);
+  }
+
+  .catalog-preview__incline-block {
+    transform: translate(28px, 26px) rotate(36deg);
+    transform-origin: 8px 10px;
   }
 }
 

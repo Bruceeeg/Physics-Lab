@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { helixWire2D } from "@/lib/models/helical-spring";
 import {
   attachedLoopPeriod,
   DEFAULT_ENERGY,
@@ -40,22 +41,18 @@ function cartPose(s: number) {
   };
 }
 
-function springPoints(sCart: number) {
-  const sStart = -DEFAULT_ENERGY.A - 0.18;
-  const sEnd = sCart - CART_W / (2 * SCALE);
-  const steps = 28;
-  const points: string[] = [];
-  for (let index = 0; index <= steps; index += 1) {
-    const u = index / steps;
-    const s = sStart + u * (sEnd - sStart);
-    const surface = trackPoint(s);
-    const onRamp = s > 0;
-    const nx = onRamp ? -Math.sin(RAMP) : 0;
-    const ny = onRamp ? -Math.cos(RAMP) : -1;
-    const coil = (1 - u) * 4.2 * Math.sin(index * 1.15);
-    points.push(`${surface.x + nx * 6 + (onRamp ? 0 : 0)},${surface.y + ny * 6 + coil}`);
-  }
-  return points.join(" ");
+function cartHitch(cart: { x: number; y: number; rot: number }) {
+  const rad = (cart.rot * Math.PI) / 180;
+  const localX = -CART_W / 2;
+  const localY = -2.2;
+  return {
+    x: cart.x + localX * Math.cos(rad) - localY * Math.sin(rad),
+    y: cart.y + localX * Math.sin(rad) + localY * Math.cos(rad),
+  };
+}
+
+function polylinePoints(points: { x: number; y: number }[]) {
+  return points.map((point) => `${point.x.toFixed(2)},${point.y.toFixed(2)}`).join(" ");
 }
 
 export function ConservationOfEnergyPreview({ running }: { running: boolean }) {
@@ -91,17 +88,28 @@ export function ConservationOfEnergyPreview({ running }: { running: boolean }) {
 
   const sample = sampleAt(DEFAULT_ENERGY, (time / VISUAL_PERIOD) * physicsPeriod, "attached");
   const cart = cartPose(sample.s);
-  const wall = trackPoint(-DEFAULT_ENERGY.A - 0.22);
+  const hitch = cartHitch(cart);
+  const wallHitch = { x: 14, y: JUNCTION.y - CART_H / 2 - 2.2 };
+  const coils = helixWire2D(wallHitch, hitch, 8, 4.1, 24, 0.78);
+  const wire = polylinePoints(coils);
 
   return (
     <svg viewBox="0 0 160 100" className="h-full w-full bg-muted text-navy" aria-hidden="true">
       <path d="M16 80 L86 80 L142 36" fill="none" stroke="#cbd5e1" strokeWidth="2" />
-      <rect x={wall.x - 4} y={56} width="6" height="26" fill="#475569" />
+      <rect x={8} y={54} width="6" height="28" fill="#475569" />
       <polyline
-        points={springPoints(sample.s)}
+        points={wire}
+        fill="none"
+        stroke="#6b3f08"
+        strokeWidth="1.7"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+      <polyline
+        points={wire}
         fill="none"
         stroke="#A16207"
-        strokeWidth="1.6"
+        strokeWidth="1.05"
         strokeLinejoin="round"
         strokeLinecap="round"
       />

@@ -9,6 +9,7 @@ export type LabPoint = [number, number, number];
 export function useLabPlayback<T extends { t: number }>(
   compute: (time: number) => { sample: T; point: LabPoint },
   getLimit?: () => number | null,
+  options?: { rate?: number },
 ) {
   const [time, setTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -21,11 +22,13 @@ export function useLabPlayback<T extends { t: number }>(
   const lastStampRef = useRef(0);
   const computeRef = useRef(compute);
   const getLimitRef = useRef(getLimit);
+  const rateRef = useRef(options?.rate ?? 1);
 
   useEffect(() => {
     computeRef.current = compute;
     getLimitRef.current = getLimit;
-  }, [compute, getLimit]);
+    rateRef.current = options?.rate ?? 1;
+  }, [compute, getLimit, options?.rate]);
 
   useEffect(() => {
     return () => {
@@ -121,7 +124,7 @@ export function useLabPlayback<T extends { t: number }>(
       }
       const dt = Math.min(0.05, Math.max(0, (now - lastStampRef.current) / 1000));
       lastStampRef.current = now;
-      applyTime(timeRef.current + dt);
+      applyTime(timeRef.current + dt * Math.max(0.02, rateRef.current));
       if (playingRef.current) {
         frameRef.current = requestAnimationFrame(tick);
       }

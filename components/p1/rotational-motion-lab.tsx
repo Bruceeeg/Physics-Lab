@@ -23,7 +23,7 @@ import {
 const SceneCanvas = dynamic(() => import("@/components/lab-canvas"), { ssr: false });
 
 const PARAMETER_DEFINITIONS: {
-  key: Exclude<keyof RollingParams, "shape">;
+  key: Exclude<keyof RollingParams, "shape" | "contact">;
   label: string;
   symbol: string;
   unit: string;

@@ -10,7 +10,9 @@ import { ConservationOfEnergyScene } from "@/components/p1/conservation-of-energ
 import { useLabPlayback } from "@/components/use-lab-clock";
 import {
   DEFAULT_ENERGY,
+  attachedLoopPeriod,
   cartPlacement,
+  cyclePeriod,
   peakHeight,
   sampleAt,
   type EnergyMode,
@@ -47,7 +49,13 @@ export function ConservationOfEnergyLab() {
     const next = sampleAt(params, t, mode);
     return { sample: next, point: cartPlacement(next.s, params.thetaDeg).position };
   }, [mode, params]);
-  const { time, isPlaying, start, pause, reset, sample, series, trail } = useLabPlayback(compute);
+  const physicsPeriod = mode === "attached" ? attachedLoopPeriod(params) : cyclePeriod(params);
+  const visualRate = physicsPeriod / 3.2;
+  const { time, isPlaying, start, pause, reset, sample, series, trail } = useLabPlayback(
+    compute,
+    undefined,
+    { rate: visualRate },
+  );
   const hMax = peakHeight(params, mode);
   const n = formatLabNumber;
   const E0 = 0.5 * params.k * params.A * params.A;

@@ -8,6 +8,7 @@ import {
   flightTime,
   jetAt,
   range,
+  threeHoleYs,
 } from "./fluid-dynamics.ts";
 
 const close = (a: number, b: number, eps = 1e-9) => Math.abs(a - b) < eps;
@@ -24,4 +25,17 @@ test("jet lands at y = 0 at the flight time", () => {
   const landing = jetAt(params, flightTime(params));
   assert.ok(close(landing.y, 0, 1e-9));
   assert.ok(close(landing.x, range(params)));
+});
+
+test("three-hole ranges are symmetric in depth and peak at mid-height", () => {
+  const H = 1;
+  const g = 10;
+  const [low, mid, high] = threeHoleYs(H);
+  const rLow = range({ H, holeY: low, g });
+  const rMid = range({ H, holeY: mid, g });
+  const rHigh = range({ H, holeY: high, g });
+  assert.ok(close(low + high, H));
+  assert.ok(close(rLow, rHigh));
+  assert.ok(rMid > rLow);
+  assert.ok(rMid > rHigh);
 });

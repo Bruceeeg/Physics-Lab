@@ -10,6 +10,9 @@ export type FluidSample = {
   v: number;
   R: number;
   flight: number;
+  R1: number;
+  R2: number;
+  R3: number;
 };
 
 export type JetPoint = { x: number; y: number };
@@ -70,12 +73,36 @@ export function droplets(params: FluidParams, t: number, count = 8): JetPoint[] 
   return points;
 }
 
-export function sampleAt(params: FluidParams, t: number): FluidSample {
+export type FluidMode = "single" | "three";
+
+export function threeHoleYs(H: number): [number, number, number] {
+  return [0.22 * H, 0.5 * H, 0.78 * H];
+}
+
+export function holeYs(params: FluidParams, mode: FluidMode): number[] {
+  if (mode === "three") {
+    return [...threeHoleYs(params.H)];
+  }
+  return [params.holeY];
+}
+
+export function paramsAtHole(params: FluidParams, holeY: number): FluidParams {
+  return { ...params, holeY };
+}
+
+export function sampleAt(params: FluidParams, t: number, mode: FluidMode = "single"): FluidSample {
+  const holes = holeYs(params, mode);
+  const primaryY = holes[Math.min(1, holes.length - 1)] ?? params.holeY;
+  const primary = paramsAtHole(params, primaryY);
+  const ranges = holes.map((holeY) => range(paramsAtHole(params, holeY)));
   return {
     t: Math.max(0, t),
-    depth: depth(params),
-    v: exitSpeed(params),
-    R: range(params),
-    flight: flightTime(params),
+    depth: depth(primary),
+    v: exitSpeed(primary),
+    R: range(primary),
+    flight: flightTime(primary),
+    R1: ranges[0] ?? 0,
+    R2: ranges[1] ?? ranges[0] ?? 0,
+    R3: ranges[2] ?? ranges[0] ?? 0,
   };
 }

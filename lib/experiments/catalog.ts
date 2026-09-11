@@ -1,15 +1,17 @@
 export type ReadySlug =
-  | "pull-friction"
   | "linear-motion"
   | "projectile-motion"
+  | "pull-friction"
+  | "incline-friction"
+  | "atwood-machine"
   | "circular-motion"
   | "conservation-of-energy"
   | "impulse-momentum"
-  | "harmonic-motion"
+  | "torque-equilibrium"
   | "rotational-motion"
-  | "fluid-dynamics"
-  | "atwood-machine"
   | "angular-momentum"
+  | "harmonic-motion"
+  | "fluid-dynamics"
   | "archimedes";
 
 export type ExperimentSlug = ReadySlug | string;
@@ -29,6 +31,8 @@ export type PreviewKind =
   | "shm"
   | "rotation"
   | "fluids"
+  | "incline"
+  | "torque"
   | "atwood"
   | "projectile"
   | "angmom"
@@ -76,17 +80,20 @@ export const COURSE_SECTIONS: readonly CourseSection[] = [
   { id: "c-em", title: "AP Physics C 电磁" },
 ];
 
+export const P1_CED_UNITS = [
+  { id: "1", title: "Unit 1 运动学", weighting: "10%-15%", english: "Kinematics" },
+  { id: "2", title: "Unit 2 力与平动动力学", weighting: "18%-23%", english: "Force and Translational Dynamics" },
+  { id: "3", title: "Unit 3 功、能量与功率", weighting: "18%-23%", english: "Work, Energy, and Power" },
+  { id: "4", title: "Unit 4 线动量", weighting: "10%-15%", english: "Linear Momentum" },
+  { id: "5", title: "Unit 5 力矩与转动动力学", weighting: "10%-15%", english: "Torque and Rotational Dynamics" },
+  { id: "6", title: "Unit 6 转动系统的能量与动量", weighting: "5%-8%", english: "Energy and Momentum of Rotating Systems" },
+  { id: "7", title: "Unit 7 振动", weighting: "5%-8%", english: "Oscillations" },
+  { id: "8", title: "Unit 8 流体", weighting: "10%-15%", english: "Fluids" },
+] as const;
+
+export type P1CedUnit = (typeof P1_CED_UNITS)[number];
+
 export const EXPERIMENTS: readonly ExperimentEntry[] = [
-  {
-    slug: "pull-friction",
-    title: "斜向拉力实验台",
-    formula: "N = mg − |F|sinθ",
-    course: "p1",
-    unit: "Unit 2 力与平动",
-    preview: "pull-friction",
-    status: "ready",
-    summary: "水平面上斜向拉力与摩擦：可配置 F、θ、m、μs、μk、g。",
-  },
   {
     slug: "linear-motion",
     title: "匀变速直线运动",
@@ -95,12 +102,12 @@ export const EXPERIMENTS: readonly ExperimentEntry[] = [
     unit: "Unit 1 运动学",
     preview: "linear-motion",
     status: "ready",
-    summary: "单段匀变速，或先加速再匀速/再加速的两段运动，对应 x–t、v–t 图。",
+    summary: "单段匀变速，或先加速再匀速/再加速的两段运动，对应 x-t、v-t 图。",
   },
   {
     slug: "projectile-motion",
     title: "抛体落点",
-    formula: "x = v₀t, y = ½gt²",
+    formula: "x = (v₀ cosθ) t",
     course: "p1",
     unit: "Unit 1 运动学",
     preview: "projectile",
@@ -108,11 +115,41 @@ export const EXPERIMENTS: readonly ExperimentEntry[] = [
     summary: "平抛或斜抛：参数实验直接调 v₀、θ、h；预测模式先测初速度再预测落点。",
   },
   {
+    slug: "pull-friction",
+    title: "斜向拉力实验台",
+    formula: "N = mg − |F|sinθ",
+    course: "p1",
+    unit: "Unit 2 力与平动动力学",
+    preview: "pull-friction",
+    status: "ready",
+    summary: "水平面上斜向拉力与摩擦：可配置 F、θ、m、μs、μk、g。",
+  },
+  {
+    slug: "incline-friction",
+    title: "斜面摩擦",
+    formula: "a = g(sinθ − μk cosθ)",
+    course: "p1",
+    unit: "Unit 2 力与平动动力学",
+    preview: "incline",
+    status: "ready",
+    summary: "斜面下滑后进入可调长度的平面摩擦段。斜面 a = g(sinθ − μk cosθ)，平面 a = −μk g。",
+  },
+  {
+    slug: "atwood-machine",
+    title: "阿特伍德机",
+    formula: "a = gΔm / (m₁ + m₂)",
+    course: "p1",
+    unit: "Unit 2 力与平动动力学",
+    preview: "atwood",
+    status: "ready",
+    summary: "经典双吊，或桌上滑车（改进阿特伍德，可加摩擦）。",
+  },
+  {
     slug: "circular-motion",
     title: "圆周运动",
     formula: "T = 2π√(L cosθ / g)",
     course: "p1",
-    unit: "Unit 2 力与平动",
+    unit: "Unit 2 力与平动动力学",
     preview: "circular",
     status: "ready",
     summary: "圆锥摆、水平圆周或竖直圆周：比较周期、绳力和过顶条件。",
@@ -120,12 +157,12 @@ export const EXPERIMENTS: readonly ExperimentEntry[] = [
   {
     slug: "conservation-of-energy",
     title: "机械能守恒",
-    formula: "½kx² = mgy",
+    formula: "½kx² + mgy + ½mv² = E",
     course: "p1",
-    unit: "Unit 3 功、能、功率",
+    unit: "Unit 3 功、能量与功率",
     preview: "energy",
     status: "ready",
-    summary: "弹射上坡或弹簧始终连接：比较弹性势能与重力势能，连接时小车会被拉回。",
+    summary: "弹射上坡或弹簧始终连接：比较弹性势能、重力势能与动能。连接时小车会被拉回。",
   },
   {
     slug: "impulse-momentum",
@@ -135,27 +172,47 @@ export const EXPERIMENTS: readonly ExperimentEntry[] = [
     unit: "Unit 4 线动量",
     preview: "momentum",
     status: "ready",
-    summary: "对心碰撞（可调 e）或爆炸分离：由 F–t 图求冲量，检验动量守恒。",
+    summary: "对心碰撞（可调 e）或爆炸分离：由 F-t 图求冲量，检验动量守恒。",
   },
   {
-    slug: "harmonic-motion",
-    title: "简谐运动",
-    formula: "T = 2π√(L/g)",
+    slug: "torque-equilibrium",
+    title: "力矩平衡",
+    formula: "Στ = 0",
     course: "p1",
-    unit: "Unit 7 振动",
-    preview: "shm",
+    unit: "Unit 5 力矩与转动动力学",
+    preview: "torque",
     status: "ready",
-    summary: "单摆或水平弹簧振子：比较 T = 2π√(L/g) 与 T = 2π√(m/k)。",
+    summary: "均匀米尺支点与悬挂质量：调节支点和砝码位置，使净力矩为零。",
   },
   {
     slug: "rotational-motion",
     title: "滚动与转动",
     formula: "v = √(2mgh / (m + I/r²))",
     course: "p1",
-    unit: "Unit 5 力矩与转动",
+    unit: "Unit 6 转动系统的能量与动量",
     preview: "rotation",
     status: "ready",
     summary: "无滑滚动或无摩擦滑动：比较底端速率和转动动能。",
+  },
+  {
+    slug: "angular-momentum",
+    title: "角动量守恒",
+    formula: "I₁ω₁ = I₂ω₂",
+    course: "p1",
+    unit: "Unit 6 转动系统的能量与动量",
+    preview: "angmom",
+    status: "ready",
+    summary: "落物粘盘，或收臂减小转动惯量：检验 Iω 守恒。",
+  },
+  {
+    slug: "harmonic-motion",
+    title: "简谐运动",
+    formula: "T = 2π√(L/g) 或 2π√(m/k)",
+    course: "p1",
+    unit: "Unit 7 振动",
+    preview: "shm",
+    status: "ready",
+    summary: "单摆或水平弹簧振子：比较 T = 2π√(L/g) 与 T = 2π√(m/k)，周期与振幅无关。",
   },
   {
     slug: "fluid-dynamics",
@@ -165,27 +222,7 @@ export const EXPERIMENTS: readonly ExperimentEntry[] = [
     unit: "Unit 8 流体",
     preview: "fluids",
     status: "ready",
-    summary: "液面深度与底部小孔出流速率。",
-  },
-  {
-    slug: "atwood-machine",
-    title: "阿特伍德机",
-    formula: "a = gΔm / (m₁ + m₂)",
-    course: "p1",
-    unit: "Unit 2 力与平动",
-    preview: "atwood",
-    status: "ready",
-    summary: "经典双吊，或桌上滑车（改进阿特伍德，可加摩擦）。",
-  },
-  {
-    slug: "angular-momentum",
-    title: "角动量守恒",
-    formula: "I₁ω₁ = I₂ω₂",
-    course: "p1",
-    unit: "Unit 6 转动系统",
-    preview: "angmom",
-    status: "ready",
-    summary: "落物粘盘，或收臂减小转动惯量：检验 Iω 守恒。",
+    summary: "托里拆利单孔，或三孔罐比较射程与孔高。R = 2√(h · y孔)。",
   },
   {
     slug: "archimedes",
@@ -472,6 +509,13 @@ export function listCatalogGroups(filter: CourseFilter = "all"): {
     title: section.title,
     experiments: EXPERIMENTS.filter((item) => item.course === section.id),
   }));
+}
+
+export function clusterByP1Unit(experiments: readonly ExperimentEntry[]) {
+  return P1_CED_UNITS.map((unit) => ({
+    unit,
+    experiments: experiments.filter((item) => item.unit === unit.title),
+  })).filter((group) => group.experiments.length > 0);
 }
 
 export function getExperiment(slug: string): ExperimentEntry | undefined {
