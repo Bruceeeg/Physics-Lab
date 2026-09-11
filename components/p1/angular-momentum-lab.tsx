@@ -119,14 +119,14 @@ export function AngularMomentumLab() {
       formula={
         skater ? (
           <>
-            <p className="text-quiet">I₁ω₁ = I₂ω₂</p>
+            <p className="text-quiet">I = ∫ r² dm = ½MR²，I₁ω₁ = I₂ω₂</p>
             <p>I₁ = ½MR² = {n(IDisk(params))} kg·m²</p>
             <p>I₂ = {n(skaterI2(params))} kg·m²</p>
             <p className="text-navy">L = {n(sample.L)} kg·m²/s</p>
           </>
         ) : (
           <>
-            <p className="text-quiet">I₁ω₁ = I₂ω₂</p>
+            <p className="text-quiet">I = ∫ r² dm = ½MR²，I₁ω₁ = I₂ω₂</p>
             <p>I₁ = ½MR² = {n(IDisk(params))} kg·m²</p>
             <p>I₂ = I₁ + mr² = {n(IAfter(params))} kg·m²</p>
             <p className="text-navy">ω₂ = {n(omegaAfter(params))} rad/s</p>
@@ -134,7 +134,7 @@ export function AngularMomentumLab() {
         )
       }
       sceneTitle={skater ? "三维收臂转盘" : "三维落物转盘"}
-      sceneCaption={skater ? "收臂后加速　拖动旋转" : "落物粘住后减速　拖动旋转"}
+      sceneCaption={skater ? "收臂后加速　拖动旋转" : "落物重力沿竖直　拖动旋转"}
       scene={
         <SceneCanvas camera={[1.2, 1.1, 2.2]}>
           <AngularMomentumScene params={params} sample={sample} mode={mode} />

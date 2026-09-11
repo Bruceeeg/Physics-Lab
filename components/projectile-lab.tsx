@@ -31,6 +31,7 @@ import {
   submitV0Estimate,
   type PredictionState,
 } from "@/lib/models/projectile-prediction";
+import { formatLabNumber, formatLabSigned } from "@/lib/models/lab-format";
 import { appendTimeSample } from "@/lib/models/time-series";
 
 const SceneCanvas = dynamic(() => import("@/components/projectile-canvas"), {
@@ -59,11 +60,11 @@ const PARAMETER_DEFINITIONS: {
 const TRAIL_MAX_POINTS = 400;
 
 function formatNumber(value: number) {
-  return value.toFixed(2);
+  return formatLabNumber(value);
 }
 
 function formatSigned(value: number) {
-  return `${value >= 0 ? "+" : "-"}${Math.abs(value).toFixed(2)}`;
+  return formatLabSigned(value);
 }
 
 function Stat({ label, value, unit }: { label: string; value: string; unit: string }) {
@@ -369,8 +370,8 @@ export function ProjectileLab() {
         <ModeSwitch mode={mode} onChange={switchMode} />
         <div className="grid min-w-0 grid-cols-3">
           <Stat label="时间 t" value={formatNumber(time)} unit="s" />
-          <Stat label="速度 |v|" value={revealed ? formatNumber(speed) : "—"} unit="m/s" />
-          <Stat label="水平位移 x" value={formatNumber(sample.x)} unit="m" />
+          <Stat label="水平 x" value={formatNumber(sample.x)} unit="m" />
+          <Stat label="竖直 y" value={formatNumber(sample.y)} unit="m" />
         </div>
         <p role="status" className="min-w-0 truncate text-xs text-quiet" title={status}>
           {status}

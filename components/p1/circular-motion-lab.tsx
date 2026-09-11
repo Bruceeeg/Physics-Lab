@@ -114,7 +114,11 @@ export function CircularMotionLab() {
         )
       }
       sceneTitle={mode === "horizontal" ? "三维水平圆周" : mode === "vertical" ? "三维竖直圆周" : "三维圆锥摆"}
-      sceneCaption="拖动旋转"
+      sceneCaption={
+        mode === "horizontal"
+          ? "实线 T / mg / N　T 在水平面　拖动旋转"
+          : "实线 T / mg　虚线水平 / 竖直分量　拖动旋转"
+      }
       scene={
         <SceneCanvas camera={[2.4, 1.7, 3.6]}>
           <CircularMotionScene params={params} sample={sample} trail={trail} mode={mode} />
@@ -122,14 +126,14 @@ export function CircularMotionLab() {
       }
       readouts={[
         { label: "x", value: n(sample.x), unit: "m" },
-        { label: mode === "vertical" ? "y" : "z", value: n(mode === "vertical" ? sample.y : sample.z), unit: "m" },
+        { label: "y", value: n(sample.y), unit: "m" },
         { label: "v", value: n(sample.speed), unit: "m/s" },
         { label: "T绳", value: n(sample.tension), unit: "N" },
       ]}
       charts={
         <>
           <TimeSeriesChart title="水平位移 x" quantity="x" unit="m" strokeColor="#1E3A5F" valueKey="x" points={series} currentTime={time} currentValue={sample.x} minDuration={Math.max(Number.isFinite(T) ? T : 2, 2)} />
-          <TimeSeriesChart title={mode === "vertical" ? "高度 y" : "深度方向 z"} quantity={mode === "vertical" ? "y" : "z"} unit="m" strokeColor="#A16207" valueKey={mode === "vertical" ? "y" : "z"} points={series} currentTime={time} currentValue={mode === "vertical" ? sample.y : sample.z} minDuration={Math.max(Number.isFinite(T) ? T : 2, 2)} />
+          <TimeSeriesChart title="竖直位移 y" quantity="y" unit="m" strokeColor="#A16207" valueKey="y" points={series} currentTime={time} currentValue={sample.y} minDuration={Math.max(Number.isFinite(T) ? T : 2, 2)} />
           <TimeSeriesChart title="角速度" quantity="ω" unit="rad/s" strokeColor="#2563EB" valueKey="omega" points={series} currentTime={time} currentValue={sample.omega} minDuration={Math.max(Number.isFinite(T) ? T : 2, 2)} />
           <TimeSeriesChart title="速率" quantity="v" unit="m/s" strokeColor="#6D28D9" valueKey="speed" points={series} currentTime={time} currentValue={sample.speed} minDuration={Math.max(Number.isFinite(T) ? T : 2, 2)} />
         </>

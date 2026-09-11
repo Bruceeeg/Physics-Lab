@@ -8,6 +8,7 @@ import { LabFrame, formatLabNumber } from "@/components/lab-frame";
 import { ParameterControl } from "@/components/parameter-control";
 import { InclineFrictionScene } from "@/components/p1/incline-friction-scene";
 import { useLabPlayback } from "@/components/use-lab-clock";
+import { frictionForceLabel, frictionForceTitle } from "@/lib/models/lab-format";
 import {
   DEFAULT_INCLINE,
   acceleration,
@@ -69,14 +70,14 @@ export function InclineFrictionLab() {
       ]}
       status={
         isStuck
-          ? `tanθ = ${n(tanTheta)} ≤ μs = ${n(params.muS)}，静摩擦足以平衡下滑分力，滑块停在斜面上。`
+          ? `tanθ = ${n(tanTheta)} ≤ μs = ${n(params.muS)}，${frictionForceTitle("static")} 平衡下滑分力，滑块停在斜面上。`
           : sample.landed
             ? sample.sPlane >= params.plane - 1e-6
               ? `到达平面尽头。斜面 a = ${n(a)} m/s²，平面 a = ${n(aFlat)} m/s²。若平面足够长，停距约为 ${Number.isFinite(dStop) ? n(dStop) : "∞"} m。`
-              : `在平面上停下，滑行 d = ${n(sample.sPlane)} m。平面 a = −μk g = ${n(aFlat)} m/s²。`
+              : `在平面上停下，滑行 d = ${n(sample.sPlane)} m。${frictionForceTitle("static")} = 0.00 N。`
             : sample.onPlane
-              ? `已下到平面。a = −μk g = ${n(sample.a)} m/s²，平面长度 d = ${n(params.plane)} m。`
-              : `tanθ = ${n(tanTheta)} > μs，沿斜面下滑。a = g(sinθ − μk cosθ) = ${n(a)} m/s²。`
+              ? `已下到平面。${frictionForceTitle("kinetic")}，a = −μk g = ${n(sample.a)} m/s²。`
+              : `tanθ = ${n(tanTheta)} > μs，${frictionForceTitle("kinetic")}，a = g(sinθ − μk cosθ) = ${n(a)} m/s²。`
       }
       isPlaying={isPlaying}
       time={time}
@@ -113,38 +114,40 @@ export function InclineFrictionLab() {
       ))}
       formula={
         <>
-          <p className="text-quiet">静止条件 tanθ ≤ μs</p>
+          <p className="text-quiet">静止 tanθ ≤ μs　滑动后拆成水平 / 竖直</p>
           <p>斜面 a = g(sinθ − μk cosθ) = {n(a)} m/s²</p>
-          <p>平面 a = −μk g = {n(aFlat)} m/s²</p>
-          <p>N = {n(sample.N)} N, f = {n(sample.f)} N</p>
+          <p>ax = {n(sample.ax)} m/s²　ay = {n(sample.ay)} m/s²</p>
+          <p>
+            N = {n(sample.N)} N, {frictionForceLabel(sample.frictionKind)} = {n(sample.f)} N
+          </p>
           <p className="text-navy">
             {isStuck
-              ? "a = 0"
+              ? `${frictionForceTitle("static")}，a = 0.00`
               : sample.onPlane
-                ? `当前 a = ${n(sample.a)} m/s²（平面）`
-                : `当前 a = ${n(sample.a)} m/s²（斜面）`}
+                ? `${frictionForceTitle(sample.frictionKind)}　平面 a = ${n(sample.a)} m/s²`
+                : `${frictionForceTitle(sample.frictionKind)}　斜面 a = ${n(sample.a)} m/s²`}
           </p>
         </>
       }
       sceneTitle="斜面与平面"
-      sceneCaption="实线 mg / N / f　拖动旋转"
+      sceneCaption="实线 mg / N / f　虚线水平 / 竖直分量　拖动旋转"
       scene={
         <SceneCanvas camera={[1.8, 0.95, 2.8]} fov={42}>
           <InclineFrictionScene params={params} sample={sample} />
         </SceneCanvas>
       }
       readouts={[
-        { label: "s", value: n(sample.s), unit: "m" },
-        { label: "d", value: n(sample.sPlane), unit: "m" },
+        { label: "ax", value: n(sample.ax), unit: "m/s²" },
+        { label: "ay", value: n(sample.ay), unit: "m/s²" },
         { label: "N", value: n(sample.N), unit: "N" },
-        { label: "f", value: n(sample.f), unit: "N" },
+        { label: frictionForceLabel(sample.frictionKind), value: n(sample.f), unit: "N" },
       ]}
       charts={
         <>
           <TimeSeriesChart title="沿程位移" quantity="s" unit="m" strokeColor="#1E3A5F" valueKey="s" points={series} currentTime={time} currentValue={sample.s} />
           <TimeSeriesChart title="速率" quantity="v" unit="m/s" strokeColor="#A16207" valueKey="v" points={series} currentTime={time} currentValue={sample.v} />
           <TimeSeriesChart title="加速度" quantity="a" unit="m/s²" strokeColor="#2563EB" valueKey="a" points={series} currentTime={time} currentValue={sample.a} />
-          <TimeSeriesChart title="摩擦力" quantity="f" unit="N" strokeColor="#6D28D9" valueKey="f" points={series} currentTime={time} currentValue={sample.f} />
+          <TimeSeriesChart title={frictionForceTitle(sample.frictionKind)} quantity="f" unit="N" strokeColor="#6D28D9" valueKey="f" points={series} currentTime={time} currentValue={sample.f} />
         </>
       }
     />

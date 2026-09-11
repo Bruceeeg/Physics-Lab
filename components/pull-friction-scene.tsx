@@ -37,6 +37,7 @@ import {
   type ExplainedForceName,
   type ForceExplanation,
 } from "@/lib/models/force-explanation";
+import { formatLabNumber } from "@/lib/models/lab-format";
 import type { PullDerived, PullParams, PullState } from "@/lib/models/pull-friction";
 
 export type TrailPoint = { x: number; z: number };
@@ -68,10 +69,6 @@ const LABEL_SIDE_GAP = 0.04;
 const LABEL_HALO_OUTER = "#e2e8f0";
 const LABEL_HALO_INNER = "#f1f5f9";
 const FALLBACK_FONT = "ui-monospace, Menlo, monospace";
-
-function formatForce(value: number) {
-  return `${value.toFixed(2)} N`;
-}
 
 function shaftLength(magnitude: number) {
   return Math.min(2.4, Math.max(0.25, magnitude * 0.04));
@@ -231,7 +228,7 @@ function ForceLabel({
 }) {
   const fontsReady = useFontsReady();
   const family = fontsReady ? labelFontFamily() : FALLBACK_FONT;
-  const value = formatForce(magnitude);
+  const value = `${formatLabNumber(magnitude)} N`;
   const raster = useMemo(() => rasterLabel(name, value, color, family), [name, value, color, family]);
   useEffect(() => () => raster.texture.dispose(), [raster]);
 
@@ -373,6 +370,7 @@ function ForceArrow({
   labelColor,
   labelSide,
   name,
+  label,
   magnitude,
   style,
   params,
@@ -388,6 +386,7 @@ function ForceArrow({
   labelColor: string;
   labelSide: number;
   name: ExplainedForceName;
+  label: string;
   magnitude: number;
   style: ForceMarkStyle;
   params: PullParams;
@@ -468,7 +467,7 @@ function ForceArrow({
         </mesh>
       </group>
       <ForceLabel
-        name={name}
+        name={label}
         magnitude={magnitude}
         color={activeLabelColor}
         direction={direction}
@@ -709,6 +708,7 @@ export function PullFrictionScene({
           labelColor={mark.labelColor}
           labelSide={sides[mark.name] ?? 0}
           name={mark.name as ExplainedForceName}
+          label={mark.label}
           magnitude={mark.magnitude}
           style={mark.style}
           params={params}

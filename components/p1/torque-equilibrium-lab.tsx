@@ -108,7 +108,7 @@ export function TorqueEquilibriumLab() {
         </>
       }
       sceneTitle="三维米尺平衡"
-      sceneCaption="实线 重力　拖动旋转"
+      sceneCaption="实线 重力　水平分力 0.00 N　拖动旋转"
       scene={
         <SceneCanvas camera={[1.1, 0.7, 1.8]} fov={42}>
           <TorqueEquilibriumScene params={params} sample={sample} />

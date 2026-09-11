@@ -1,3 +1,5 @@
+import type { FrictionKind } from "./lab-format.ts";
+
 export type InclineParams = {
   m: number;
   thetaDeg: number;
@@ -19,9 +21,12 @@ export type InclineSample = {
   f: number;
   x: number;
   y: number;
+  ax: number;
+  ay: number;
   stuck: boolean;
   onPlane: boolean;
   landed: boolean;
+  frictionKind: FrictionKind;
 };
 
 export const DEFAULT_INCLINE: InclineParams = {
@@ -198,9 +203,12 @@ export function sampleAt(params: InclineParams, t: number): InclineSample {
       f: params.m * params.g * Math.sin(theta),
       x: top[0],
       y: top[1],
+      ax: 0,
+      ay: 0,
       stuck: true,
       onPlane: false,
       landed: false,
+      frictionKind: "static",
     };
   }
 
@@ -220,9 +228,12 @@ export function sampleAt(params: InclineParams, t: number): InclineSample {
       f: muK * rampNormalForce(params),
       x: point[0],
       y: point[1],
+      ax: aRamp * Math.cos(theta),
+      ay: -aRamp * Math.sin(theta),
       stuck: false,
       onPlane: false,
       landed: false,
+      frictionKind: "kinetic",
     };
   }
 
@@ -244,8 +255,11 @@ export function sampleAt(params: InclineParams, t: number): InclineSample {
     f: sliding ? muK * planeNormalForce(params) : 0,
     x: toeX(params) + sPlane,
     y: SURFACE_Y,
+    ax: sliding ? aFlat : 0,
+    ay: 0,
     stuck: false,
     onPlane: true,
     landed: finished,
+    frictionKind: sliding ? "kinetic" : "static",
   };
 }

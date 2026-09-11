@@ -110,7 +110,7 @@ export function ConservationOfEnergyLab() {
       formula={
         attached ? (
           <>
-            <p className="text-quiet">½ks² + mgy + ½mv² = ½kA²</p>
+            <p className="text-quiet">W = ∫ kx dx = ½kA²</p>
             <p>弹簧不松开，Us 在斜面上仍存在</p>
             <p>½kA² = {n(E0)} J</p>
             <p className="text-navy">y_max = {n(hMax)} m</p>
@@ -118,7 +118,7 @@ export function ConservationOfEnergyLab() {
           </>
         ) : (
           <>
-            <p className="text-quiet">½kA² = mgy_max</p>
+            <p className="text-quiet">W = ∫ kx dx = ½kA² = mgy_max</p>
             <p>½kA² = {n(E0)} J</p>
             <p className="text-navy">y_max = {n(hMax)} m</p>
             <p>E = K + Us + Ug = {n(sample.E)} J</p>
@@ -126,7 +126,7 @@ export function ConservationOfEnergyLab() {
         )
       }
       sceneTitle="三维弹簧斜面"
-      sceneCaption={attached ? "弹簧连接　拖动旋转" : "松开后上坡　拖动旋转"}
+      sceneCaption="实线 mg / N　虚线水平 / 竖直分量　拖动旋转"
       scene={
         <SceneCanvas camera={[1.6, 1.1, 2.8]}>
           <ConservationOfEnergyScene params={params} sample={sample} trail={trail} />

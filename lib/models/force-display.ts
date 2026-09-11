@@ -1,3 +1,4 @@
+import { frictionForceLabel } from "./lab-format.ts";
 import type { PullDerived } from "./pull-friction";
 
 export const FORCE_COLORS = {
@@ -20,6 +21,7 @@ export type ForceMarkStyle = "solid" | "dashed";
 
 export type ForceMark = {
   name: string;
+  label: string;
   vector: [number, number, number];
   magnitude: number;
   style: ForceMarkStyle;
@@ -94,6 +96,7 @@ export function forceMarks(derived: PullDerived): ForceMark[] {
   if (pull > EPS) {
     marks.push({
       name: "F",
+      label: "F",
       vector: [Fx, Fz, 0],
       magnitude: pull,
       style: "solid",
@@ -104,6 +107,7 @@ export function forceMarks(derived: PullDerived): ForceMark[] {
     if (Math.abs(Fx) > EPS) {
       marks.push({
         name: "Fx",
+        label: "Fx",
         vector: [Fx, 0, 0],
         magnitude: Fx,
         style: "dashed",
@@ -115,6 +119,7 @@ export function forceMarks(derived: PullDerived): ForceMark[] {
     if (Math.abs(Fz) > EPS) {
       marks.push({
         name: "Fz",
+        label: "Fy",
         vector: [0, Fz, 0],
         magnitude: Fz,
         style: "dashed",
@@ -127,6 +132,7 @@ export function forceMarks(derived: PullDerived): ForceMark[] {
 
   marks.push({
     name: "G",
+    label: "G",
     vector: [0, -G, 0],
     magnitude: G,
     style: "solid",
@@ -139,6 +145,7 @@ export function forceMarks(derived: PullDerived): ForceMark[] {
   if (showN) {
     marks.push({
       name: "N",
+      label: "N",
       vector: [0, N, 0],
       magnitude: N,
       style: "solid",
@@ -149,8 +156,10 @@ export function forceMarks(derived: PullDerived): ForceMark[] {
   }
 
   if (Math.abs(f) > EPS) {
+    const kind = derived.mode === "static" ? "static" : "kinetic";
     marks.push({
       name: "f",
+      label: frictionForceLabel(kind),
       vector: [f, 0, 0],
       magnitude: f,
       style: "solid",

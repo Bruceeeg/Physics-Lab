@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { ParameterControl } from "@/components/parameter-control";
+import { formatLabNumber, formatLabSigned } from "@/lib/models/lab-format";
 import {
   PREDICTION_G,
   PREDICTION_H_MAX,
@@ -20,11 +21,11 @@ const STEPS: { phase: PredictionPhase; label: string }[] = [
 ];
 
 function formatNumber(value: number) {
-  return value.toFixed(2);
+  return formatLabNumber(value);
 }
 
 function formatSigned(value: number) {
-  return `${value >= 0 ? "+" : "-"}${Math.abs(value).toFixed(2)}`;
+  return formatLabSigned(value);
 }
 
 function StepBar({ phase }: { phase: PredictionPhase }) {

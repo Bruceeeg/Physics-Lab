@@ -11,6 +11,8 @@ import { useLabPlayback } from "@/components/use-lab-clock";
 import {
   DEFAULT_HARMONIC,
   period,
+  physicalInertia,
+  physicalPivotDistance,
   sampleAt,
   type HarmonicMode,
   type HarmonicParams,
@@ -21,11 +23,12 @@ const SceneCanvas = dynamic(() => import("@/components/lab-canvas"), { ssr: fals
 const HARMONIC_MODES = [
   { id: "pendulum" as const, label: "单摆" },
   { id: "spring" as const, label: "弹簧振子" },
+  { id: "physical" as const, label: "复摆" },
 ];
 
-export function HarmonicMotionLab() {
+export function HarmonicMotionLab({ slug }: { slug?: string } = {}) {
   const [params, setParams] = useState(DEFAULT_HARMONIC);
-  const [mode, setMode] = useState<HarmonicMode>("pendulum");
+  const [mode, setMode] = useState<HarmonicMode>(slug === "physical-pendulum" ? "physical" : "pendulum");
   const compute = useCallback((t: number) => {
     const next = sampleAt(params, t, mode);
     return {
@@ -40,11 +43,12 @@ export function HarmonicMotionLab() {
   const T = period(params, mode);
   const n = formatLabNumber;
   const spring = mode === "spring";
+  const physical = mode === "physical";
 
   return (
     <LabFrame
-      title="简谐运动"
-      subtitle="Physics Lab / 振动"
+      title={physical ? "复摆" : "简谐运动"}
+      subtitle={physical ? "Physics Lab / T = 2π√(I/mgd)" : "Physics Lab / 振动"}
       modes={
         <ModeSwitch
           value={mode}
@@ -63,7 +67,9 @@ export function HarmonicMotionLab() {
       status={
         spring
           ? `水平弹簧振子，T = 2π√(m/k) = ${n(T)} s，与振幅无关。`
-          : `小角近似 T = 2π√(L/g) = ${n(T)} s，与质量和振幅无关。`
+          : physical
+            ? `复摆 T = 2π√(I/mgd) = ${n(T)} s。I = I_cm + md² = ${n(sample.I)} kg·m²。`
+            : `小角近似 T = 2π√(L/g) = ${n(T)} s，与质量和振幅无关。`
       }
       isPlaying={isPlaying}
       time={time}
@@ -76,6 +82,14 @@ export function HarmonicMotionLab() {
             <ParameterControl id="k" label="劲度系数" symbol="k" unit="N/m" value={params.k} min={10} max={120} step={1} onChange={(value) => { reset(); setParams((current) => ({ ...current, k: value })); }} />
             <ParameterControl id="m" label="质量" symbol="m" unit="kg" value={params.m} min={0.1} max={2} step={0.05} onChange={(value) => { reset(); setParams((current) => ({ ...current, m: value })); }} />
             <ParameterControl id="A" label="振幅" symbol="A" unit="m" value={params.A} min={0.05} max={0.35} step={0.01} onChange={(value) => { reset(); setParams((current) => ({ ...current, A: value })); }} />
+          </>
+        ) : physical ? (
+          <>
+            <ParameterControl id="L" label="米尺长度" symbol="L" unit="m" value={params.L} min={0.4} max={1.5} step={0.02} onChange={(value) => { reset(); setParams((current) => ({ ...current, L: value })); }} />
+            <ParameterControl id="pivot" label="支点位置" symbol="x/L" unit="" value={params.pivotFrac ?? 0} min={0} max={0.4} step={0.02} onChange={(value) => { reset(); setParams((current) => ({ ...current, pivotFrac: value })); }} />
+            <ParameterControl id="m" label="质量" symbol="m" unit="kg" value={params.m} min={0.1} max={2} step={0.05} onChange={(value) => { reset(); setParams((current) => ({ ...current, m: value })); }} />
+            <ParameterControl id="theta0Deg" label="振幅" symbol="θ₀" unit="°" value={params.theta0Deg} min={2} max={20} step={0.5} onChange={(value) => { reset(); setParams((current) => ({ ...current, theta0Deg: value })); }} />
+            <ParameterControl id="g" label="重力加速度" symbol="g" unit="m/s²" value={params.g} min={1} max={20} step={0.01} onChange={(value) => { reset(); setParams((current) => ({ ...current, g: value })); }} />
           </>
         ) : (
           <>
@@ -93,6 +107,14 @@ export function HarmonicMotionLab() {
             <p className="text-navy">T = {n(T)} s</p>
             <p>½kA² = {n(0.5 * params.k * params.A * params.A)} J</p>
             <p>E = K + Us = {n(sample.E)} J</p>
+            <p>y = 0.00 m　vy = 0.00 m/s　ay = 0.00 m/s²</p>
+          </>
+        ) : physical ? (
+          <>
+            <p className="text-quiet">T = 2π√(I / mgd)，I = I_cm + md²</p>
+            <p>d = {n(physicalPivotDistance(params))} m</p>
+            <p>I = {n(physicalInertia(params))} kg·m²</p>
+            <p className="text-navy">T = {n(T)} s</p>
           </>
         ) : (
           <>
@@ -103,8 +125,8 @@ export function HarmonicMotionLab() {
           </>
         )
       }
-      sceneTitle={spring ? "三维弹簧振子" : "三维单摆"}
-      sceneCaption={spring ? "水平桌面　拖动旋转" : "小角简谐　拖动旋转"}
+      sceneTitle={spring ? "三维弹簧振子" : physical ? "三维复摆" : "三维单摆"}
+      sceneCaption={spring ? "实线 Fs / mg / N　竖直分力 0.00　拖动旋转" : physical ? "重力提供回复力矩　拖动旋转" : "实线 T / mg　虚线水平 / 竖直分量　拖动旋转"}
       scene={
         <SceneCanvas camera={[1.6, 1.2, 2.8]}>
           <HarmonicMotionScene params={params} sample={sample} trail={trail} mode={mode} />
@@ -114,13 +136,13 @@ export function HarmonicMotionLab() {
         spring
           ? [
               { label: "x", value: n(sample.x), unit: "m" },
+              { label: "y", value: n(sample.y), unit: "m" },
               { label: "v", value: n(sample.v), unit: "m/s" },
               { label: "K", value: n(sample.K), unit: "J" },
-              { label: "Us", value: n(sample.Us), unit: "J" },
             ]
           : [
-              { label: "θ", value: n((sample.theta * 180) / Math.PI), unit: "°" },
-              { label: "ω", value: n(sample.omega), unit: "rad/s" },
+              { label: "x", value: n(sample.x), unit: "m" },
+              { label: "y", value: n(sample.y), unit: "m" },
               { label: "K", value: n(sample.K), unit: "J" },
               { label: "U", value: n(sample.Ug), unit: "J" },
             ]

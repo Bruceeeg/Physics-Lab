@@ -1,4 +1,4 @@
-export type ImpulseMode = "collision" | "explosion";
+export type ImpulseMode = "collision" | "explosion" | "ballistic";
 
 export type ImpulseParams = {
   m1: number;
@@ -7,6 +7,8 @@ export type ImpulseParams = {
   v2: number;
   e: number;
   U?: number;
+  L?: number;
+  g?: number;
 };
 
 export type ImpulseSample = {
@@ -19,6 +21,8 @@ export type ImpulseSample = {
   p1: number;
   p2: number;
   pTotal: number;
+  theta: number;
+  y: number;
 };
 
 export const CART_HALF = 0.12;
@@ -33,7 +37,44 @@ export const DEFAULT_IMPULSE: ImpulseParams = {
   v2: 0,
   e: 1,
   U: 0.8,
+  L: 0.8,
+  g: 9.81,
 };
+
+export function ballisticVelocityAfter(params: ImpulseParams) {
+  const M = params.m2;
+  const m = params.m1;
+  const sum = M + m;
+  return sum > 1e-12 ? (m * params.v1) / sum : 0;
+}
+
+export function ballisticMaxAngle(params: ImpulseParams) {
+  const L = params.L ?? 0.8;
+  const g = params.g ?? 9.81;
+  const V = ballisticVelocityAfter(params);
+  const arg = 1 - (V * V) / (2 * g * L);
+  if (arg <= -1) {
+    return Math.PI;
+  }
+  if (arg >= 1) {
+    return 0;
+  }
+  return Math.acos(arg);
+}
+
+export function ballisticPeriod(params: ImpulseParams) {
+  const L = params.L ?? 0.8;
+  const g = params.g ?? 9.81;
+  return g > 0 && L > 0 ? 2 * Math.PI * Math.sqrt(L / g) : Number.POSITIVE_INFINITY;
+}
+
+export function hitTime(params: ImpulseParams) {
+  const closing = params.v1;
+  if (closing <= 1e-9) {
+    return Number.POSITIVE_INFINITY;
+  }
+  return 0.45 / closing;
+}
 
 export function explosionVelocities(params: ImpulseParams) {
   const U = Math.max(0, params.U ?? 0.8);
@@ -113,6 +154,53 @@ export function sampleAt(
       p1: params.m1 * u1,
       p2: params.m2 * u2,
       pTotal: params.m1 * u1 + params.m2 * u2,
+      theta: 0,
+      y: 0,
+    };
+  }
+  if (mode === "ballistic") {
+    const L = params.L ?? 0.8;
+    const g = params.g ?? 9.81;
+    const time = Math.max(0, t);
+    const th = hitTime(params);
+    const thMax = ballisticMaxAngle(params);
+    const w = g > 0 && L > 0 ? Math.sqrt(g / L) : 0;
+    const bulletX0 = -0.55;
+    if (!Number.isFinite(th) || time < th) {
+      const x1 = bulletX0 + params.v1 * time;
+      return {
+        t: time,
+        x1,
+        x2: 0,
+        v1: params.v1,
+        v2: 0,
+        F: 0,
+        p1: params.m1 * params.v1,
+        p2: 0,
+        pTotal: params.m1 * params.v1,
+        theta: 0,
+        y: 0,
+      };
+    }
+    const tau = time - th;
+    const theta = thMax * Math.cos(w * tau);
+    const omega = -thMax * w * Math.sin(w * tau);
+    const x2 = L * Math.sin(theta);
+    const y = L * (1 - Math.cos(theta));
+    const vBob = L * omega;
+    const mass = params.m1 + params.m2;
+    return {
+      t: time,
+      x1: x2,
+      x2,
+      v1: vBob,
+      v2: vBob,
+      F: 0,
+      p1: params.m1 * vBob,
+      p2: params.m2 * vBob,
+      pTotal: mass * vBob,
+      theta,
+      y,
     };
   }
   const time = Math.max(0, t);
@@ -162,5 +250,7 @@ export function sampleAt(
     p1: params.m1 * u1,
     p2: params.m2 * u2,
     pTotal: params.m1 * u1 + params.m2 * u2,
+    theta: 0,
+    y: 0,
   };
 }

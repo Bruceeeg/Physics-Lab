@@ -8,6 +8,9 @@ import {
   postVelocities,
   explosionVelocities,
   sampleAt,
+  ballisticMaxAngle,
+  ballisticVelocityAfter,
+  hitTime,
 } from "./impulse-momentum.ts";
 
 const close = (a: number, b: number, eps = 1e-9) => Math.abs(a - b) < eps;
@@ -43,4 +46,17 @@ test("impulse on cart 2 equals its change in momentum", () => {
   const params = DEFAULT_IMPULSE;
   const after = sampleAt(params, contactTime(params) + 0.2);
   assert.ok(close(impulseOn2(params), after.p2 - params.m2 * params.v2));
+});
+
+test("ballistic pendulum conserves momentum then converts KE to height", () => {
+  const params = { ...DEFAULT_IMPULSE, m1: 0.02, v1: 80, m2: 0.5, L: 0.8, g: 10 };
+  const V = ballisticVelocityAfter(params);
+  assert.ok(close(V, (0.02 * 80) / 0.52));
+  const thMax = ballisticMaxAngle(params);
+  const h = params.L * (1 - Math.cos(thMax));
+  assert.ok(close(0.5 * V * V, 10 * h, 1e-8));
+  const before = sampleAt(params, 0, "ballistic");
+  assert.ok(before.x1 < 0);
+  const after = sampleAt(params, hitTime(params) + 0.001, "ballistic");
+  assert.ok(after.theta > 0);
 });

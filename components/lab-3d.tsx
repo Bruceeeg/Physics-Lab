@@ -33,6 +33,7 @@ class HelixPolylineCurve extends Curve<Vector3> {
 
 import { SpriteLabel } from "@/components/scene-label";
 import { FORCE_COLORS } from "@/lib/models/force-display";
+import { DISPLAY_EPS, formatLabNumber } from "@/lib/models/lab-format";
 
 type Vec3 = [number, number, number];
 
@@ -353,11 +354,78 @@ export function VectorArrow({
         </mesh>
       </group>
       <SpriteLabel
-        text={`${label} ${value.toFixed(2)} ${unit}`}
+        text={`${label} ${formatLabNumber(value)} ${unit}`}
         color={color}
         position={labelPosition}
         height={0.18 * scale}
       />
     </group>
+  );
+}
+
+export function ForceWithXY({
+  origin,
+  vector,
+  value,
+  label,
+  color,
+  unitLength,
+  scale = 1,
+  unit = "N",
+}: {
+  origin: Vec3;
+  vector: Vec3;
+  value: number;
+  label: string;
+  color: string;
+  unitLength: number;
+  scale?: number;
+  unit?: string;
+}) {
+  const [vx, vy, vz] = vector;
+  const horizMag = Math.hypot(vx, vz);
+  const vertMag = Math.abs(vy);
+  const oblique = horizMag >= DISPLAY_EPS && vertMag >= DISPLAY_EPS;
+  const horizLabel = Math.abs(vz) >= DISPLAY_EPS ? `${label}h` : `${label}x`;
+
+  return (
+    <>
+      <VectorArrow
+        origin={origin}
+        vector={vector}
+        value={value}
+        unitLength={unitLength}
+        color={color}
+        label={label}
+        unit={unit}
+        scale={scale}
+      />
+      {oblique ? (
+        <>
+          <VectorArrow
+            origin={origin}
+            vector={[vx, 0, vz]}
+            value={Math.abs(vz) >= DISPLAY_EPS ? horizMag : vx}
+            unitLength={unitLength}
+            color={FORCE_COLORS.Fdash}
+            label={horizLabel}
+            unit={unit}
+            dashed
+            scale={scale}
+          />
+          <VectorArrow
+            origin={origin}
+            vector={[0, vy, 0]}
+            value={vy}
+            unitLength={unitLength}
+            color={FORCE_COLORS.Fdash}
+            label={`${label}y`}
+            unit={unit}
+            dashed
+            scale={scale}
+          />
+        </>
+      ) : null}
+    </>
   );
 }

@@ -94,6 +94,32 @@ test("kinetic friction is clamped so μk cannot exceed μs", () => {
   assert.ok(close(planeAccel(params), -2));
 });
 
+test("stuck samples report static friction and zero lab-frame acceleration", () => {
+  const params = { m: 1, thetaDeg: 20, muS: 0.5, muK: 0.3, g: 10, travel: 0.8, plane: 0.6 };
+  const sample = sampleAt(params, 1);
+  assert.equal(sample.frictionKind, "static");
+  assert.ok(close(sample.ax, 0));
+  assert.ok(close(sample.ay, 0));
+});
+
+test("sliding on the ramp splits acceleration into horizontal and vertical", () => {
+  const params = { m: 2, thetaDeg: 30, muS: 0.4, muK: 0.3, g: 10, travel: 0.8, plane: 1 };
+  const mid = sampleAt(params, timeToBottom(params) * 0.4);
+  const theta = Math.PI / 6;
+  assert.equal(mid.frictionKind, "kinetic");
+  assert.ok(close(mid.ax, mid.a * Math.cos(theta)));
+  assert.ok(close(mid.ay, -mid.a * Math.sin(theta)));
+});
+
+test("after stopping on the plane friction returns to the static branch", () => {
+  const params = { m: 2, thetaDeg: 30, muS: 0.4, muK: 0.3, g: 10, travel: 0.8, plane: 1.5 };
+  const end = sampleAt(params, timeToLimit(params) + 1);
+  assert.equal(end.landed, true);
+  assert.equal(end.frictionKind, "static");
+  assert.ok(close(end.f, 0));
+  assert.ok(close(end.ax, 0));
+});
+
 test("on the ramp the cube underside rests on the slope", () => {
   const params = DEFAULT_INCLINE;
   const sample = sampleAt(params, 0.05);

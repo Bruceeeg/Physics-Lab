@@ -3,9 +3,10 @@
 import { Line } from "@react-three/drei";
 import { DoubleSide } from "three";
 
-import { LabOrbit, LabScenery, SphereMass } from "@/components/lab-3d";
+import { LabOrbit, LabScenery, SphereMass, VectorArrow } from "@/components/lab-3d";
 import { SpriteLabel } from "@/components/scene-label";
 import { FORCE_COLORS } from "@/lib/models/force-display";
+import { formatLabNumber } from "@/lib/models/lab-format";
 import {
   droplets,
   holeYs,
@@ -70,7 +71,7 @@ export function FluidDynamicsScene({
               <SphereMass key={dropIndex} position={drop} radius={0.024} color="#1e3a5f" />
             ))}
             <SpriteLabel
-              text={`R = ${R.toFixed(2)} m`}
+              text={`R = ${formatLabNumber(R)} m`}
               color="#b45309"
               position={[tankW / 2 + R, 0.12 + index * 0.11, 0]}
               height={0.12}
@@ -79,12 +80,30 @@ export function FluidDynamicsScene({
         );
       })}
       {mode === "single" ? (
-        <SpriteLabel
-          text={`v = ${sample.v.toFixed(2)} m/s`}
-          color={FORCE_COLORS.F}
-          position={[tankW / 2 + 0.18, params.holeY + 0.12, 0]}
-          height={0.14}
-        />
+        <>
+          <SpriteLabel
+            text={`v = ${formatLabNumber(sample.v)} m/s`}
+            color={FORCE_COLORS.F}
+            position={[tankW / 2 + 0.18, params.holeY + 0.12, 0]}
+            height={0.14}
+          />
+          <VectorArrow
+            origin={[tankW / 2, params.holeY, 0]}
+            vector={[sample.v, 0, 0]}
+            value={sample.v}
+            unitLength={0.08}
+            color={FORCE_COLORS.F}
+            label="vx"
+            unit="m/s"
+            scale={0.7}
+          />
+          <SpriteLabel
+            text={`vy = 0.00 m/s`}
+            color={FORCE_COLORS.Fdash}
+            position={[tankW / 2 + 0.18, params.holeY - 0.12, 0]}
+            height={0.12}
+          />
+        </>
       ) : null}
       <LabOrbit target={[0.4, params.H * 0.4, 0]} />
     </>

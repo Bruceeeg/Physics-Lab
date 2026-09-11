@@ -1,0 +1,19 @@
+---
+description: 学生可见的计算结果一律保留两位小数
+globs: lib/models/**/*.ts,components/**/*.tsx
+alwaysApply: false
+---
+
+# 计算显示两位小数
+
+学生看见的物理量（stats、readouts、公式代入、力图标签、图表当前值、状态栏数字）一律走 `formatLabNumber`（`lib/models/lab-format.ts`），显示为 `0.00`。
+
+```ts
+formatLabNumber(9.81) // "9.81"
+formatLabNumber(4)    // "4.00"
+```
+
+- 内部 `step` / 闭式解保持全精度，只在显示时四舍五入。
+- `|value| < 0.005` 显示 `0.00`；非有限值显示 `—`。
+- 参数滑块仍按 `step` 位数，不算计算结果。
+- 不要再写平行的 `value.toFixed(2)` 或本地 `formatNumber`。

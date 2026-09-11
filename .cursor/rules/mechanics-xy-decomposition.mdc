@@ -1,0 +1,15 @@
+---
+description: 力学实验必须拆出水平和竖直分量
+globs: lib/models/**/*.ts,components/**/*.tsx
+alwaysApply: false
+---
+
+# 水平 / 竖直分离
+
+力学实验（`p1`、`c-mech`）对学生使用 x 水平、y 竖直向上。位移、速度、加速度和斜向力都要给出两支。
+
+- 斜向力：实线画合力，虚线画水平投影和竖直投影。用 `ForceWithXY`（`components/lab-3d.tsx`）。
+- 已经沿轴的力（G、水平轨道上的 N/f）只画实线，不再拆虚线。
+- 沿斜面公式可以保留，但不能代替实验室坐标的 ax、ay 或 Nx、Ny。
+- 一维实验也要写明 y = 0.00、vy = 0.00。
+- 斜向拉力场景内部竖直轴是模型里的 z，标签仍写 Fy / ay。

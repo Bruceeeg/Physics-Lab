@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
+  accel,
   kappa,
   sampleAt,
   speedAtBottom,
@@ -60,4 +61,25 @@ test("translational plus rotational KE equals the lost gravitational PE", () => 
   const end = sampleAt(params, timeToBottom(params));
   assert.ok(close(start.E, end.E, 1e-8));
   assert.ok(close(end.Ktrans + end.Krot, start.Ug - end.Ug, 1e-8));
+});
+
+test("rolling uses static friction and splits acceleration in the lab frame", () => {
+  const params = {
+    shape: "disk" as const,
+    m: 1,
+    r: 0.1,
+    h: 0.5,
+    thetaDeg: 30,
+    g: 10,
+  };
+  const mid = sampleAt(params, timeToBottom(params) * 0.4);
+  const theta = Math.PI / 6;
+  const a = accel(params);
+  assert.equal(mid.frictionKind, "static");
+  assert.ok(mid.f > 0);
+  assert.ok(close(mid.ax, a * Math.cos(theta)));
+  assert.ok(close(mid.ay, -a * Math.sin(theta)));
+  const slide = sampleAt({ ...params, contact: "slide" }, 0.1);
+  assert.equal(slide.frictionKind, "none");
+  assert.ok(close(slide.f, 0));
 });

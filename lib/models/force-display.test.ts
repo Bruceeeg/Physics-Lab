@@ -98,6 +98,30 @@ test("same-direction vertical forces offset a little from center", () => {
   }
 });
 
+test("static friction uses the fs label and sliding uses fk", () => {
+  const stuck = derive(
+    { F: 4, thetaDeg: 0, m: 2, muS: 0.4, muK: 0.3, g: 10 },
+    rest,
+  );
+  const sliding = derive(
+    { F: 20, thetaDeg: 30, m: 2, muS: 0.4, muK: 0.3, g: 9.81 },
+    rest,
+  );
+  assert.equal(stuck.mode, "static");
+  assert.equal(forceMarks(stuck).find((mark) => mark.name === "f")?.label, "fs");
+  assert.equal(sliding.mode, "sliding");
+  assert.equal(forceMarks(sliding).find((mark) => mark.name === "f")?.label, "fk");
+});
+
+test("vertical pull component is labeled Fy for students", () => {
+  const derived = derive(
+    { F: 20, thetaDeg: 30, m: 2, muS: 0.4, muK: 0.3, g: 9.81 },
+    rest,
+  );
+  const vertical = forceMarks(derived).find((mark) => mark.name === "Fz");
+  assert.equal(vertical?.label, "Fy");
+});
+
 test("horizontal F and Fx sit slightly apart", () => {
   const derived = derive(
     { F: 10, thetaDeg: 0, m: 2, muS: 0, muK: 0, g: 9.81 },

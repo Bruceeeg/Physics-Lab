@@ -2,6 +2,8 @@
 
 import { memo, useMemo } from "react";
 
+import { formatLabNumber, formatLabSci } from "@/lib/models/lab-format";
+
 const WIDTH = 320;
 const HEIGHT = 90;
 
@@ -10,10 +12,6 @@ export type TimeSeriesPoint = { t: number };
 type NumericKeys<T> = { [K in keyof T]-?: T[K] extends number ? K : never }[keyof T];
 
 export type SeriesValueKey<T extends TimeSeriesPoint> = Exclude<NumericKeys<T>, "t">;
-
-function formatNumber(value: number) {
-  return value.toFixed(2);
-}
 
 function axisRange(values: number[]) {
   if (values.length === 0) {
@@ -100,11 +98,11 @@ function TimeSeriesChartInner<T extends TimeSeriesPoint>({
         <figcaption>
           <h3 className="text-[13px] font-medium text-ink">{title}</h3>
           <p className="font-mono text-[11px] text-quiet">
-            {quantity}({formatNumber(currentTime)} s)
+            {quantity}({formatLabNumber(currentTime)} s)
           </p>
         </figcaption>
         <p className="font-mono text-[15px] font-medium tabular-nums" style={{ color: strokeColor }}>
-          {formatNumber(currentValue)}{" "}
+          {formatLabSci(currentValue)}{" "}
           <span className="text-[11px] font-normal text-quiet">{unit}</span>
         </p>
       </div>
@@ -115,7 +113,7 @@ function TimeSeriesChartInner<T extends TimeSeriesPoint>({
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         className="min-h-0 flex-1 w-full bg-paper"
         role="img"
-        aria-label={`${title}，当前 ${formatNumber(currentValue)} ${unit}`}
+        aria-label={`${title}，当前 ${formatLabSci(currentValue)} ${unit}`}
       >
         {[0.25, 0.5, 0.75].map((fraction) => (
           <line
@@ -168,11 +166,11 @@ function TimeSeriesChartInner<T extends TimeSeriesPoint>({
 
       <div className="mt-1 flex justify-between font-mono text-[10px] tabular-nums text-quiet">
         <span>
-          min {formatNumber(min)} {unit}
+          min {formatLabSci(min)} {unit}
         </span>
-        <span>0-{formatNumber(timeMax)} s</span>
+        <span>0-{formatLabNumber(timeMax)} s</span>
         <span>
-          max {formatNumber(max)} {unit}
+          max {formatLabSci(max)} {unit}
         </span>
       </div>
     </figure>

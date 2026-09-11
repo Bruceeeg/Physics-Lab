@@ -1,3 +1,5 @@
+import type { FrictionKind } from "./lab-format.ts";
+
 export type RollingShape = "disk" | "hoop" | "solid-sphere" | "hollow-sphere";
 
 export type RollingContact = "roll" | "slide";
@@ -23,6 +25,11 @@ export type RollingSample = {
   Krot: number;
   Ug: number;
   E: number;
+  N: number;
+  f: number;
+  ax: number;
+  ay: number;
+  frictionKind: FrictionKind;
   landed: boolean;
 };
 
@@ -53,6 +60,18 @@ export function accel(params: RollingParams) {
     return params.g * Math.sin(theta);
   }
   return (params.g * Math.sin(theta)) / (1 + kappa(params.shape));
+}
+
+export function contactForces(params: RollingParams) {
+  const theta = (params.thetaDeg * Math.PI) / 180;
+  const N = params.m * params.g * Math.cos(theta);
+  const sliding = (params.contact ?? "roll") === "slide";
+  if (sliding) {
+    return { N, f: 0, frictionKind: "none" as const };
+  }
+  const k = kappa(params.shape);
+  const f = (k / (1 + k)) * params.m * params.g * Math.sin(theta);
+  return { N, f, frictionKind: "static" as const };
 }
 
 export function pathLength(params: RollingParams) {
@@ -93,6 +112,7 @@ export function sampleAt(params: RollingParams, t: number): RollingSample {
   const Ktrans = 0.5 * params.m * v * v;
   const Krot = sliding ? 0 : 0.5 * I * omega * omega;
   const Ug = params.m * params.g * y;
+  const contact = contactForces(params);
   return {
     t: tc,
     s,
@@ -104,6 +124,11 @@ export function sampleAt(params: RollingParams, t: number): RollingSample {
     Krot,
     Ug,
     E: Ktrans + Krot + Ug,
+    N: contact.N,
+    f: contact.f,
+    ax: landed ? 0 : a * Math.cos(theta),
+    ay: landed ? 0 : -a * Math.sin(theta),
+    frictionKind: contact.frictionKind,
     landed,
   };
 }

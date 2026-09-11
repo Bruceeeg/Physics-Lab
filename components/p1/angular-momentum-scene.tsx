@@ -1,7 +1,9 @@
 "use client";
 
-import { BoxMass, LabOrbit, LabScenery, SphereMass } from "@/components/lab-3d";
+import { BoxMass, LabOrbit, LabScenery, SphereMass, VectorArrow } from "@/components/lab-3d";
 import { SpriteLabel } from "@/components/scene-label";
+import { FORCE_COLORS } from "@/lib/models/force-display";
+import { formatLabNumber } from "@/lib/models/lab-format";
 import type { AngMomMode, AngMomParams, AngMomSample } from "@/lib/models/angular-momentum";
 
 export function AngularMomentumScene({
@@ -39,10 +41,24 @@ export function AngularMomentumScene({
           <BoxMass position={[params.r, seatY, 0]} size={[0.1, 0.08, 0.1]} color="#a16207" />
         ) : null}
       </group>
-      {mode === "drop" && !sample.stuck ? <BoxMass position={drop} size={[0.1, 0.08, 0.1]} color="#a16207" /> : null}
+      {mode === "drop" && !sample.stuck ? (
+        <>
+          <BoxMass position={drop} size={[0.1, 0.08, 0.1]} color="#a16207" />
+          <VectorArrow
+            origin={drop}
+            vector={[0, -params.m * params.g, 0]}
+            value={params.m * params.g}
+            unitLength={0.05}
+            color={FORCE_COLORS.G}
+            label="mg"
+            unit="N"
+            scale={0.7}
+          />
+        </>
+      ) : null}
       <SphereMass position={[0, diskY, 0]} radius={0.03} color="#334155" />
       <SpriteLabel
-        text={`ω = ${sample.omega.toFixed(2)} rad/s`}
+        text={`ω = ${formatLabNumber(sample.omega)} rad/s`}
         color="#1e3a5f"
         position={[0, 0.55, 0]}
         height={0.16}

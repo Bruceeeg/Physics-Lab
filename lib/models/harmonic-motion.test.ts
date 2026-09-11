@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { DEFAULT_HARMONIC, period, sampleAt } from "./harmonic-motion.ts";
+import { DEFAULT_HARMONIC, period, physicalInertia, sampleAt } from "./harmonic-motion.ts";
 
 const close = (a: number, b: number, eps = 1e-9) => Math.abs(a - b) < eps;
 
@@ -35,4 +35,17 @@ test("bob returns after one period and energy stays at the amplitude value", () 
   const mid = sampleAt(params, T / 4);
   assert.ok(Math.abs(mid.theta) < 1e-8);
   assert.ok(close(start.E, mid.E, 1e-8));
+});
+
+test("physical pendulum period is 2π √(I / mgd) for a rod pivoted at the end", () => {
+  const params = { ...DEFAULT_HARMONIC, L: 1, m: 0.4, g: 10, pivotFrac: 0, theta0Deg: 8 };
+  const d = 0.5;
+  const I = physicalInertia(params);
+  assert.ok(close(I, params.m / 3));
+  const T = period(params, "physical");
+  assert.ok(close(T, 2 * Math.PI * Math.sqrt(I / (params.m * params.g * d))));
+  const start = sampleAt(params, 0, "physical");
+  const later = sampleAt(params, T, "physical");
+  assert.ok(close(start.theta, later.theta, 1e-8));
+  assert.ok(close(start.E, later.E, 1e-8));
 });

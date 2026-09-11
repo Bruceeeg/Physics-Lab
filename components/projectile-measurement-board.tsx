@@ -1,13 +1,14 @@
 "use client";
 
+import { formatLabNumber, formatLabSigned } from "@/lib/models/lab-format";
 import { PREDICTION_G, type PredictionState } from "@/lib/models/projectile-prediction";
 
 function formatNumber(value: number) {
-  return value.toFixed(2);
+  return formatLabNumber(value);
 }
 
 function formatSigned(value: number) {
-  return `${value >= 0 ? "+" : "-"}${Math.abs(value).toFixed(2)}`;
+  return formatLabSigned(value);
 }
 
 // What a real bench gives the student: heights, angles, and where the ball
@@ -15,7 +16,7 @@ function formatSigned(value: number) {
 export function ProjectileMeasurementBoard({ state }: { state: PredictionState }) {
   const rows: [string, string, string][] = [
     ["h", "发射高度", `${formatNumber(state.h)} m`],
-    ["θ", "发射角", `${state.thetaDeg.toFixed(0)} °`],
+    ["θ", "发射角", `${formatNumber(state.thetaDeg)} °`],
     ["g", "重力加速度", `${formatNumber(PREDICTION_G)} m/s²`],
     ["R", "落点", state.lastLandingX !== null ? `${formatNumber(state.lastLandingX)} m` : "—"],
   ];

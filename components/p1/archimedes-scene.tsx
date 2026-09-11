@@ -61,6 +61,18 @@ export function ArchimedesScene({
           scale={0.7}
         />
       ) : null}
+      {sample.T > 0.02 ? (
+        <VectorArrow
+          origin={[cube[0], cube[1] + params.side / 2, 0]}
+          vector={[0, sample.T, 0]}
+          value={sample.T}
+          unitLength={0.012}
+          color={FORCE_COLORS.F}
+          label="T"
+          unit="N"
+          scale={0.7}
+        />
+      ) : null}
       <VectorArrow
         origin={cube}
         vector={[0, -sample.W, 0]}

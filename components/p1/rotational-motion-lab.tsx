@@ -116,14 +116,16 @@ export function RotationalMotionLab() {
       }
       formula={
         <>
-          <p className="text-quiet">{sliding ? "v = √(2gh)" : "v = √(2mgh / (m + I/r²))"}</p>
+          <p className="text-quiet">I = ∫ r² dm = κmr²</p>
+          <p>{sliding ? "v = √(2gh)" : "v = √(2mgh / (m + I/r²))"}</p>
           <p>κ = I/(mr²) = {n(kappa(params.shape))}</p>
+          <p>ax = {n(sample.ax)} m/s²　ay = {n(sample.ay)} m/s²</p>
           <p className="text-navy">v_底 = {n(vBottom)} m/s</p>
           <p>K平 + K转 = {n(sample.Ktrans + sample.Krot)} J</p>
         </>
       }
       sceneTitle="三维斜面滚动"
-      sceneCaption={sliding ? "只平动　拖动旋转" : "无滑滚动　拖动旋转"}
+      sceneCaption={sliding ? "无摩擦滑动　mg / N　虚线水平 / 竖直" : "静摩擦维持纯滚动　虚线水平 / 竖直"}
       scene={
         <SceneCanvas camera={[1.8, 1.2, 2.8]}>
           <RotationalMotionScene params={params} sample={sample} trail={trail} />

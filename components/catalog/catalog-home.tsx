@@ -5,7 +5,10 @@ import { useMemo, useState } from "react";
 import { ExperimentCard } from "@/components/catalog/experiment-card";
 import { SiteHeader } from "@/components/catalog/site-header";
 import {
+  clusterByCEmUnit,
+  clusterByCMechUnit,
   clusterByP1Unit,
+  clusterByP2Unit,
   listCatalogGroups,
   parseCourseFilter,
   type CourseFilter,
@@ -57,7 +60,7 @@ export function CatalogHome() {
             AP 物理实验
           </h1>
           <p className="mt-3 max-w-2xl text-sm text-quiet md:text-base">
-            Physics 1 按考纲八个单元排列，从运动学到流体。探究实验约占课时的四分之一。已开放的实验可点进实验台；Physics 2 与 C 中未开发的预览会变暗，并标成等待开发。
+            Physics 1 按考纲八个单元排列，从运动学到流体。Physics 2 按热力学到近代物理排列。C 力学与 C 电磁列出与 1、2 重合的实验台，并补上考纲要求的微积分内容。已开放的实验可点进实验台改参数、看读数和运动。
           </p>
         </section>
 
@@ -84,8 +87,24 @@ export function CatalogHome() {
         </div>
 
         {groups.map((group) => {
-          const p1Clusters =
-            group.course === "p1" ? clusterByP1Unit(group.experiments) : null;
+          const clustered =
+            group.course === "p1"
+              ? clusterByP1Unit(group.experiments)
+              : group.course === "p2"
+                ? clusterByP2Unit(group.experiments)
+                : group.course === "c-mech"
+                  ? clusterByCMechUnit(group.experiments)
+                  : group.course === "c-em"
+                    ? clusterByCEmUnit(group.experiments)
+                    : null;
+          const blurb =
+            group.course === "p1"
+              ? "选择题占比见各单元。本课程含流体，不含电路、波动或静电。"
+              : group.course === "p2"
+                ? "选择题占比见各单元。本课程含电路、电场、波动与近代物理，不含流体。"
+                : group.course === "c-mech"
+                  ? "选择题占比见各单元。与 Physics 1 重合的力学实验已开放，并补上滑轮惯量、转动惯量、τ = Iα、弹道摆与复摆。不含流体。"
+                  : "选择题占比见各单元。与 Physics 2 重合的电学实验已开放，并补上高斯定理、库仑悬挂、等势线、电容、螺线管与 RL。不含光学与近代物理。";
           return (
             <section key={group.course} className="mb-14" aria-labelledby={`course-${group.course}`}>
               <h2
@@ -94,15 +113,9 @@ export function CatalogHome() {
               >
                 {group.title}
               </h2>
-              {p1Clusters ? (
-                <p className="mb-8 max-w-2xl text-sm text-quiet">
-                  选择题占比见各单元。本课程含流体，不含电路、波动或静电。
-                </p>
-              ) : (
-                <div className="mb-6" />
-              )}
-              {p1Clusters ? (
-                p1Clusters.map((cluster) => (
+              <p className="mb-8 max-w-2xl text-sm text-quiet">{blurb}</p>
+              {clustered ? (
+                clustered.map((cluster) => (
                   <div key={cluster.unit.id} className="mb-10">
                     <div className="mb-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
                       <h3 className="text-sm font-medium text-ink">{cluster.unit.title}</h3>

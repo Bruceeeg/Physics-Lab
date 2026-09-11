@@ -3,9 +3,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-export function formatLabNumber(value: number) {
-  return value.toFixed(2);
-}
+export { formatLabNumber, formatLabSci, formatLabSigned } from "@/lib/models/lab-format";
 
 export function LabStat({
   label,

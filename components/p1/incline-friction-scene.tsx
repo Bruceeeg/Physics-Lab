@@ -3,9 +3,10 @@
 import { useEffect, useMemo } from "react";
 import { DoubleSide, ExtrudeGeometry, Shape } from "three";
 
-import { BoxMass, LabOrbit, LabScenery, VectorArrow } from "@/components/lab-3d";
+import { BoxMass, ForceWithXY, LabOrbit, LabScenery, VectorArrow } from "@/components/lab-3d";
 import { SpriteLabel } from "@/components/scene-label";
 import { FORCE_COLORS } from "@/lib/models/force-display";
+import { formatLabNumber, frictionForceLabel } from "@/lib/models/lab-format";
 import {
   BLOCK_HEIGHT,
   BLOCK_SIZE,
@@ -61,6 +62,13 @@ export function InclineFrictionScene({
   const foot = toeX(params);
   const table = Math.max(params.plane, 0.08);
   const onRamp = !sample.onPlane && !sample.landed;
+  const nVec: [number, number, number] = onRamp
+    ? [Math.sin(theta) * sample.N, Math.cos(theta) * sample.N, 0]
+    : [0, sample.N, 0];
+  const fVec: [number, number, number] = onRamp
+    ? [-Math.cos(theta) * sample.f, Math.sin(theta) * sample.f, 0]
+    : [-sample.f, 0, 0];
+  const fLabel = frictionForceLabel(sample.frictionKind);
 
   return (
     <>
@@ -87,45 +95,35 @@ export function InclineFrictionScene({
         unit="N"
         scale={0.7}
       />
-      <VectorArrow
+      <ForceWithXY
         origin={body}
-        vector={
-          onRamp
-            ? [Math.sin(theta) * sample.N, Math.cos(theta) * sample.N, 0]
-            : [0, sample.N, 0]
-        }
+        vector={nVec}
         value={sample.N}
         unitLength={0.04}
         color={FORCE_COLORS.N}
         label="N"
-        unit="N"
         scale={0.7}
       />
-      <VectorArrow
+      <ForceWithXY
         origin={body}
-        vector={
-          onRamp
-            ? [-Math.cos(theta) * sample.f, Math.sin(theta) * sample.f, 0]
-            : [-sample.f, 0, 0]
-        }
+        vector={fVec}
         value={sample.f}
         unitLength={0.04}
         color={FORCE_COLORS.f}
-        label="f"
-        unit="N"
+        label={fLabel}
         scale={0.7}
       />
       <SpriteLabel
         text={
           sample.stuck
-            ? "静止"
+            ? "静止　静摩擦平衡"
             : sample.landed
               ? sample.sPlane >= params.plane - 1e-6
                 ? "到达平面尽头"
                 : "平面上停下"
               : sample.onPlane
-                ? `a = ${sample.a.toFixed(2)} m/s²`
-                : `a = ${sample.a.toFixed(2)} m/s²`
+                ? `fk　a = ${formatLabNumber(sample.a)} m/s²`
+                : `fk　a = ${formatLabNumber(sample.a)} m/s²`
         }
         color="#1e3a5f"
         position={[body[0], body[1] + BLOCK_HEIGHT / 2 + 0.16, 0]}

@@ -71,10 +71,25 @@ function scene(kind: PreviewKind, running: boolean) {
     case "inertia":
       return (
         <PreviewFrame running={running}>
-          <path d="M18 78 L118 78 L148 42" fill="none" stroke="#cbd5e1" strokeWidth="2" />
+          <path
+            d="M18 78 L108.63 78 C114.57 78, 120.2 75.36, 124 70.8 L148 42"
+            fill="none"
+            stroke="#cbd5e1"
+            strokeWidth="2"
+          />
           <g className="catalog-preview__roll">
-            <circle cx="0" cy="0" r="9" fill="none" stroke="#1e3a5f" strokeWidth="2" />
-            <line x1="-9" y1="0" x2="9" y2="0" stroke="#1e3a5f" strokeWidth="1.2" />
+            <circle
+              cx="0"
+              cy="0"
+              r="9"
+              fill="#1e3a5f"
+              fillOpacity="0.12"
+              stroke="#1e3a5f"
+              strokeWidth="2"
+            />
+            <g className="catalog-preview__roll-spin">
+              <line x1="-9" y1="0" x2="9" y2="0" stroke="#1e3a5f" strokeWidth="1.2" />
+            </g>
           </g>
         </PreviewFrame>
       );
@@ -119,14 +134,26 @@ function scene(kind: PreviewKind, running: boolean) {
     case "atwood":
       return (
         <PreviewFrame running={running}>
-          <line x1="80" y1="10" x2="80" y2="22" stroke="currentColor" />
+          <line x1="80" y1="10" x2="80" y2="20" stroke="currentColor" />
           <circle cx="80" cy="28" r="8" fill="none" stroke="currentColor" strokeWidth="1.5" />
-          <g className="catalog-preview__atwood">
-            <line x1="72" y1="28" x2="72" y2="58" stroke="currentColor" />
-            <rect x="66" y="58" width="12" height="14" fill="#1e3a5f" />
-            <line x1="88" y1="28" x2="88" y2="42" stroke="currentColor" />
-            <rect x="82" y="42" width="12" height="10" fill="#a16207" />
-          </g>
+          <line
+            x1="72"
+            y1="28"
+            x2="72"
+            y2="62"
+            stroke="currentColor"
+            className="catalog-preview__atwood-left-string"
+          />
+          <rect x="66" y="62" width="12" height="14" fill="#1e3a5f" className="catalog-preview__atwood-left" />
+          <line
+            x1="88"
+            y1="28"
+            x2="88"
+            y2="46"
+            stroke="currentColor"
+            className="catalog-preview__atwood-right-string"
+          />
+          <rect x="82" y="46" width="12" height="10" fill="#a16207" className="catalog-preview__atwood-right" />
         </PreviewFrame>
       );
     case "projectile":

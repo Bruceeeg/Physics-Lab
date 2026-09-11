@@ -2,8 +2,10 @@
 
 import { DoubleSide } from "three";
 
-import { LabOrbit, LabScenery, SphereMass, TrailLine } from "@/components/lab-3d";
+import { ForceWithXY, LabOrbit, LabScenery, SphereMass, TrailLine, VectorArrow } from "@/components/lab-3d";
 import { SpriteLabel } from "@/components/scene-label";
+import { FORCE_COLORS } from "@/lib/models/force-display";
+import { formatLabNumber, frictionForceLabel } from "@/lib/models/lab-format";
 import type { RollingParams, RollingSample } from "@/lib/models/rotational-motion";
 import { pathLength } from "@/lib/models/rotational-motion";
 
@@ -20,6 +22,9 @@ export function RotationalMotionScene({
   const length = pathLength(params);
   const body: [number, number, number] = [sample.x, sample.y + params.r, 0];
   const roll = -sample.s / params.r;
+  const nVec: [number, number, number] = [Math.sin(theta) * sample.N, Math.cos(theta) * sample.N, 0];
+  const fVec: [number, number, number] = [-Math.cos(theta) * sample.f, Math.sin(theta) * sample.f, 0];
+  const weight = params.m * params.g;
 
   return (
     <>
@@ -56,10 +61,38 @@ export function RotationalMotionScene({
         </mesh>
       </group>
       <SpriteLabel
-        text={`v = ${sample.v.toFixed(2)} m/s`}
+        text={`v = ${formatLabNumber(sample.v)} m/s`}
         color="#1e3a5f"
         position={[body[0], body[1] + params.r + 0.16, 0]}
         height={0.14}
+      />
+      <VectorArrow
+        origin={body}
+        vector={[0, -weight, 0]}
+        value={weight}
+        unitLength={0.04}
+        color={FORCE_COLORS.G}
+        label="mg"
+        unit="N"
+        scale={0.65}
+      />
+      <ForceWithXY
+        origin={body}
+        vector={nVec}
+        value={sample.N}
+        unitLength={0.04}
+        color={FORCE_COLORS.N}
+        label="N"
+        scale={0.65}
+      />
+      <ForceWithXY
+        origin={body}
+        vector={fVec}
+        value={sample.f}
+        unitLength={0.04}
+        color={FORCE_COLORS.f}
+        label={frictionForceLabel(sample.frictionKind)}
+        scale={0.65}
       />
       <LabOrbit target={[length * 0.35, params.h * 0.4, 0]} />
     </>

@@ -28,6 +28,7 @@ import {
   type ProjectileSample,
 } from "@/lib/models/projectile";
 import { TARGET_HALF_WIDTH } from "@/lib/models/projectile-prediction";
+import { formatLabNumber, formatLabSigned } from "@/lib/models/lab-format";
 
 export type TrailPoint2D = { x: number; y: number };
 
@@ -59,11 +60,11 @@ const UP = new Vector3(0, 1, 0);
 const DEFAULT_VIEW_DIRECTION = new Vector3(0.18, 0.28, 1).normalize();
 
 function formatMeters(value: number) {
-  return `${value.toFixed(2)} m`;
+  return `${formatLabNumber(value)} m`;
 }
 
 function formatSigned(value: number) {
-  return `${value >= 0 ? "+" : "-"}${Math.abs(value).toFixed(2)}`;
+  return formatLabSigned(value);
 }
 
 const Scenery = memo(function Scenery() {
@@ -417,7 +418,7 @@ function VectorArrow({
         </mesh>
       </group>
       <SpriteLabel
-        text={`${label} ${value.toFixed(2)} ${unit}`}
+        text={`${label} ${formatLabNumber(value)} ${unit}`}
         color={labelColor}
         position={labelPosition}
         height={0.2 * scale}

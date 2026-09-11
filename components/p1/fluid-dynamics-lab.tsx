@@ -136,7 +136,7 @@ export function FluidDynamicsLab() {
         )
       }
       sceneTitle={three ? "三维三孔罐" : "三维水箱出流"}
-      sceneCaption="虚线 射流　水滴　拖动旋转"
+      sceneCaption="出流水平 vx，竖直 vy = 0.00　拖动旋转"
       scene={
         <SceneCanvas camera={[1.4, 0.9, 2.6]}>
           <FluidDynamicsScene params={params} sample={sample} mode={mode} />
@@ -151,8 +151,8 @@ export function FluidDynamicsLab() {
               { label: "v中", value: n(sample.v), unit: "m/s" },
             ]
           : [
-              { label: "h", value: n(sample.depth), unit: "m" },
-              { label: "v", value: n(sample.v), unit: "m/s" },
+              { label: "vx", value: n(sample.v), unit: "m/s" },
+              { label: "vy", value: n(0), unit: "m/s" },
               { label: "R", value: n(sample.R), unit: "m" },
               { label: "t飞", value: n(sample.flight), unit: "s" },
             ]

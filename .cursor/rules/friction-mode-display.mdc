@@ -1,0 +1,18 @@
+---
+description: 静摩擦和滑动摩擦按物体接触状态切换展示
+globs: "**/*friction*,**/atwood*,**/rotational*"
+alwaysApply: false
+---
+
+# 静摩擦 / 动摩擦切换
+
+含摩擦的实验同一时刻只展示当前分支。模型导出 `frictionKind: "static" | "kinetic" | "none"`，标签用 `frictionForceLabel` / `frictionForceTitle`。
+
+| 状态 | 展示 |
+|---|---|
+| 接触、近静止、切向驱动力 ≤ μs N | 静摩擦力 fs，并给出 fs,max = μs N |
+| 正在滑 | 滑动摩擦力 fk = μk N，与速度反向 |
+| 无接触或 N = 0 | f = 0.00，不谈 μs/μk |
+| 无滑滚动 | 静摩擦（不是滑动摩擦） |
+
+参数栏可以同时放 μs、μk。读数、公式高亮、力图标签不能把两种摩擦同时当成「当前摩擦力」。μk 不得超过 μs。

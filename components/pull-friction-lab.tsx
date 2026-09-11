@@ -20,6 +20,7 @@ import {
   type PullParams,
   type PullState,
 } from "@/lib/models/pull-friction";
+import { formatLabNumber, frictionForceLabel } from "@/lib/models/lab-format";
 
 const SceneCanvas = dynamic(() => import("@/components/pull-friction-canvas"), {
   ssr: false,
@@ -82,10 +83,6 @@ const PARAMETER_DEFINITIONS: {
     step: 0.01,
   },
 ];
-
-function formatNumber(value: number) {
-  return value.toFixed(2);
-}
 
 function alertCopy(alert: ReturnType<typeof derive>["alert"]) {
   switch (alert) {
@@ -304,9 +301,9 @@ export function PullFrictionLab() {
           <p className="font-mono text-[10px] text-quiet">Physics Lab / 牛顿第二定律</p>
         </div>
         <div className="grid min-w-0 grid-cols-3">
-          <Stat label="时间 t" value={formatNumber(state.t)} unit="s" />
-          <Stat label="速度 |v|" value={formatNumber(speed)} unit="m/s" />
-          <Stat label="位移 Δx" value={formatNumber(displacement)} unit="m" />
+          <Stat label="时间 t" value={formatLabNumber(state.t)} unit="s" />
+          <Stat label="速度 |v|" value={formatLabNumber(speed)} unit="m/s" />
+          <Stat label="位移 Δx" value={formatLabNumber(displacement)} unit="m" />
         </div>
         <p
           role="status"
@@ -389,7 +386,7 @@ export function PullFrictionLab() {
           <section className="mx-2 mt-2 border-t border-line pt-2">
             <h2 className="text-[13px] font-medium text-ink">公式与当前分支</h2>
             <div className="mt-1 space-y-1 font-mono text-[11px] leading-5">
-              <p>N = mg - |F|sinθ = {formatNumber(contactExpression)} N</p>
+              <p>N = mg - |F|sinθ = {formatLabNumber(contactExpression)} N</p>
               <p className={formulaId === "static" ? "bg-muted text-navy" : "text-quiet"}>
                 |Fx| ≤ μsN → static
               </p>
@@ -407,7 +404,7 @@ export function PullFrictionLab() {
           <div className="flex h-8 items-center justify-between border-b border-line px-2.5">
             <h2 className="text-xs font-medium text-ink">三维受力与运动</h2>
             <p className="font-mono text-[10px] text-quiet">
-              实线 F/G/N/f　虚线 Fx/Fz　拖动旋转
+              实线 F/G/N/f　虚线 Fx/Fy　拖动旋转
             </p>
           </div>
           <div className="relative min-h-0 flex-1">
@@ -424,15 +421,21 @@ export function PullFrictionLab() {
           <dl className="grid h-12 grid-cols-5 border-t border-line font-mono text-[11px] tabular-nums">
             {[
               ["N", derived.forces.N, "N"],
-              ["f", derived.forces.f, "N"],
-              ["aₓ", derived.ax, "m/s²"],
-              ["aᶻ", derived.az, "m/s²"],
-              ["ΣFₓ", fxNet, "N"],
+              [
+                frictionForceLabel(
+                  derived.mode === "static" ? "static" : derived.mode === "sliding" ? "kinetic" : "none",
+                ),
+                derived.forces.f,
+                "N",
+              ],
+              ["ax", derived.ax, "m/s²"],
+              ["ay", derived.az, "m/s²"],
+              ["ΣFx", fxNet, "N"],
             ].map(([label, value, unit]) => (
               <div key={String(label)} className="border-r border-line px-2 py-1 last:border-r-0">
                 <dt className="text-quiet">{label}</dt>
                 <dd className="truncate text-ink">
-                  {formatNumber(Number(value))} {unit}
+                  {formatLabNumber(Number(value))} {unit}
                 </dd>
               </div>
             ))}

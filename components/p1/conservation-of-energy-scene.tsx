@@ -2,9 +2,11 @@
 
 import { DoubleSide } from "three";
 
-import { BoxMass, HelicalSpring, LabOrbit, LabScenery, TrailLine } from "@/components/lab-3d";
+import { BoxMass, ForceWithXY, HelicalSpring, LabOrbit, LabScenery, TrailLine, VectorArrow } from "@/components/lab-3d";
 import { helicalSpringPoints } from "@/lib/models/helical-spring";
 import { SpriteLabel } from "@/components/scene-label";
+import { FORCE_COLORS } from "@/lib/models/force-display";
+import { formatLabNumber } from "@/lib/models/lab-format";
 import {
   attachedSMax,
   CART_HEIGHT,
@@ -69,6 +71,11 @@ export function ConservationOfEnergyScene({
   const springPoints = springPointsToCart(sample.s, params.thetaDeg, wallX, sample.connected);
   const cartLocal = cartOnRampLocal(sample.s, rampLen);
   const worldCart = cartPlacement(sample.s, params.thetaDeg);
+  const weight = params.m * params.g;
+  const nMag = onRamp ? weight * Math.cos(theta) : weight;
+  const nVec: [number, number, number] = onRamp
+    ? [-Math.sin(theta) * nMag, Math.cos(theta) * nMag, 0]
+    : [0, nMag, 0];
 
   return (
     <>
@@ -85,7 +92,7 @@ export function ConservationOfEnergyScene({
         {onRamp ? <BoxMass position={cartLocal} size={CART_SIZE} /> : null}
         {onRamp ? (
           <SpriteLabel
-            text={`h = ${sample.y.toFixed(2)} m`}
+            text={`h = ${formatLabNumber(sample.y)} m`}
             color="#1e3a5f"
             position={[cartLocal[0], cartLocal[1] + CART_HEIGHT / 2 + 0.12, 0]}
             height={0.14}
@@ -104,13 +111,32 @@ export function ConservationOfEnergyScene({
         <>
           <BoxMass position={worldCart.position} size={CART_SIZE} />
           <SpriteLabel
-            text={`h = ${sample.y.toFixed(2)} m`}
+            text={`h = ${formatLabNumber(sample.y)} m`}
             color="#1e3a5f"
             position={[worldCart.position[0], worldCart.position[1] + 0.2, 0]}
             height={0.14}
           />
         </>
       )}
+      <VectorArrow
+        origin={worldCart.position}
+        vector={[0, -weight, 0]}
+        value={weight}
+        unitLength={0.04}
+        color={FORCE_COLORS.G}
+        label="mg"
+        unit="N"
+        scale={0.65}
+      />
+      <ForceWithXY
+        origin={worldCart.position}
+        vector={nVec}
+        value={nMag}
+        unitLength={0.04}
+        color={FORCE_COLORS.N}
+        label="N"
+        scale={0.65}
+      />
       <LabOrbit target={[0.3, 0.25, 0]} minDistance={1} />
     </>
   );

@@ -16,6 +16,7 @@ import {
   TIME_MAX,
   TIME_MIN,
 } from "@/lib/models/linear-motion";
+import { formatLabNumber } from "@/lib/models/lab-format";
 import type { KinematicSample } from "@/lib/models/pull-friction";
 
 const PARAMETER_DEFINITIONS = [
@@ -36,7 +37,7 @@ const PARAMETER_DEFINITIONS = [
 type ParamKey = (typeof PARAMETER_DEFINITIONS)[number]["key"];
 
 function formatNumber(value: number) {
-  return value.toFixed(2);
+  return formatLabNumber(value);
 }
 
 function Stat({
@@ -367,9 +368,9 @@ export function LinearMotionLab() {
                   x = {formatNumber(x0)} + {formatNumber(v0)}t + ½{formatNumber(a)}t²
                 </p>
               )}
-              <p className="text-navy">x = {formatNumber(currentPosition)} m</p>
-              <p className="text-gold">v = {formatNumber(currentVelocity)} m/s</p>
-              <p>当前 a = {formatNumber(currentA)} m/s²</p>
+              <p className="text-navy">x = {formatNumber(currentPosition)} m　y = 0.00 m</p>
+              <p className="text-gold">vx = {formatNumber(currentVelocity)} m/s　vy = 0.00 m/s</p>
+              <p>ax = {formatNumber(currentA)} m/s²　ay = 0.00 m/s²</p>
             </div>
           </section>
         </aside>
@@ -377,7 +378,7 @@ export function LinearMotionLab() {
         <section className="lab-scene min-h-0 border border-line bg-surface">
           <div className="flex h-8 items-center justify-between border-b border-line px-2.5">
             <h2 className="text-xs font-medium text-ink">一维运动轨道</h2>
-            <p className="font-mono text-[10px] text-quiet">竖线为 x = 0</p>
+            <p className="font-mono text-[10px] text-quiet">水平运动　y = 0.00 m　vy = 0.00 m/s</p>
           </div>
           <div className="relative min-h-0 flex-1 bg-paper px-5 py-8">
             <div className="absolute inset-x-5 top-1/2 h-px -translate-y-1/2 bg-line" />

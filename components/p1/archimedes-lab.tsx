@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useCallback, useState } from "react";
 
 import { TimeSeriesChart } from "@/components/kinematic-charts";
-import { LabFrame, formatLabNumber } from "@/components/lab-frame";
+import { LabFrame, formatLabNumber, formatLabSci } from "@/components/lab-frame";
 import { ParameterControl } from "@/components/parameter-control";
 import { ArchimedesScene } from "@/components/p1/archimedes-scene";
 import { useLabPlayback } from "@/components/use-lab-clock";
@@ -17,17 +17,6 @@ import {
 } from "@/lib/models/archimedes";
 
 const SceneCanvas = dynamic(() => import("@/components/lab-canvas"), { ssr: false });
-
-function formatVolume(value: number) {
-  if (Math.abs(value) < 1e-12) {
-    return "0";
-  }
-  if (Math.abs(value) >= 0.01) {
-    return formatLabNumber(value);
-  }
-  const [mantissa, exponent] = value.toExponential(2).split("e");
-  return `${mantissa}×10^${Number(exponent)}`;
-}
 
 const PARAMETER_DEFINITIONS: {
   key: keyof ArchimedesParams;
@@ -94,13 +83,13 @@ export function ArchimedesLab() {
       formula={
         <>
           <p className="text-quiet">Fb = ρ V_排 g</p>
-          <p>V = a³ = {formatVolume(volume(params))} m³</p>
-          <p>V_排 = {formatVolume(sample.Vsub)} m³</p>
+          <p>V = a³ = {formatLabSci(volume(params))} m³</p>
+          <p>V_排 = {formatLabSci(sample.Vsub)} m³</p>
           <p className="text-navy">Fb = {n(sample.Fb)} N</p>
         </>
       }
       sceneTitle="三维测密度"
-      sceneCaption="实线 Fb / mg　拖动旋转"
+      sceneCaption="实线 Fb / mg / T　力沿竖直，水平分力 0.00 N"
       scene={
         <SceneCanvas camera={[0.55, 0.45, 1.15]} fov={42}>
           <ArchimedesScene params={params} sample={sample} />
@@ -109,7 +98,7 @@ export function ArchimedesLab() {
       readouts={[
         { label: "T", value: n(sample.T), unit: "N" },
         { label: "Fb", value: n(sample.Fb), unit: "N" },
-        { label: "V排", value: formatVolume(sample.Vsub), unit: "m³" },
+        { label: "V排", value: formatLabSci(sample.Vsub), unit: "m³" },
         { label: "ρ测", value: sample.fullyIn ? n(sample.rhoMeas) : "-", unit: "kg/m³" },
       ]}
       charts={

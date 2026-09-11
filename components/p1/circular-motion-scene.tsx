@@ -2,9 +2,10 @@
 
 import { DoubleSide } from "three";
 
-import { LabLine, LabOrbit, LabScenery, SphereMass, TrailLine, VectorArrow } from "@/components/lab-3d";
+import { ForceWithXY, LabLine, LabOrbit, LabScenery, SphereMass, TrailLine, VectorArrow } from "@/components/lab-3d";
 import { SpriteLabel } from "@/components/scene-label";
 import { FORCE_COLORS } from "@/lib/models/force-display";
+import { formatLabNumber } from "@/lib/models/lab-format";
 import type { CircularMode, CircularParams, CircularSample } from "@/lib/models/circular-motion";
 
 export function CircularMotionScene({
@@ -18,6 +19,8 @@ export function CircularMotionScene({
   trail: [number, number, number][];
   mode?: CircularMode;
 }) {
+  const weight = params.m * params.g;
+
   if (mode === "horizontal") {
     const bob: [number, number, number] = [sample.x, 0.09, sample.z];
     const ring = Array.from({ length: 65 }, (_, index) => {
@@ -44,7 +47,27 @@ export function CircularMotionScene({
           color={FORCE_COLORS.F}
           label="T"
           unit="N"
-          scale={0.9}
+          scale={0.8}
+        />
+        <VectorArrow
+          origin={bob}
+          vector={[0, -weight, 0]}
+          value={weight}
+          unitLength={0.06}
+          color={FORCE_COLORS.G}
+          label="mg"
+          unit="N"
+          scale={0.7}
+        />
+        <VectorArrow
+          origin={bob}
+          vector={[0, weight, 0]}
+          value={weight}
+          unitLength={0.06}
+          color={FORCE_COLORS.N}
+          label="N"
+          unit="N"
+          scale={0.7}
         />
         <LabOrbit target={[0, 0.15, 0]} />
       </>
@@ -59,6 +82,7 @@ export function CircularMotionScene({
       const phi = (index / 64) * Math.PI * 2;
       return [params.r * Math.sin(phi), lift - params.r * Math.cos(phi), 0] as [number, number, number];
     });
+    const tVec: [number, number, number] = [-sample.x, -sample.y, 0];
     return (
       <>
         <LabScenery />
@@ -67,7 +91,31 @@ export function CircularMotionScene({
         <LabLine points={ring} color="#94a3b8" lineWidth={1} dashed />
         <TrailLine points={trail} />
         <SphereMass position={bob} radius={0.07} />
-        <SpriteLabel text={`v = ${sample.speed.toFixed(2)} m/s`} color="#1e3a5f" position={[0, lift + params.r + 0.22, 0]} height={0.16} />
+        <ForceWithXY
+          origin={bob}
+          vector={tVec}
+          value={sample.tension}
+          unitLength={0.08}
+          color={FORCE_COLORS.F}
+          label="T"
+          scale={0.8}
+        />
+        <VectorArrow
+          origin={bob}
+          vector={[0, -weight, 0]}
+          value={weight}
+          unitLength={0.06}
+          color={FORCE_COLORS.G}
+          label="mg"
+          unit="N"
+          scale={0.7}
+        />
+        <SpriteLabel
+          text={`v = ${formatLabNumber(sample.speed)} m/s`}
+          color="#1e3a5f"
+          position={[0, lift + params.r + 0.22, 0]}
+          height={0.16}
+        />
         <LabOrbit target={[0, lift, 0]} />
       </>
     );
@@ -81,6 +129,7 @@ export function CircularMotionScene({
     const phi = (index / 64) * Math.PI * 2;
     return [sample.r * Math.cos(phi), orbitY, sample.r * Math.sin(phi)] as [number, number, number];
   });
+  const tVec: [number, number, number] = [-sample.x, -sample.y, -sample.z];
 
   return (
     <>
@@ -98,17 +147,31 @@ export function CircularMotionScene({
       {sample.r > 0.02 ? <LabLine points={ring} color="#94a3b8" lineWidth={1} dashed /> : null}
       <TrailLine points={trail} />
       <SphereMass position={bob} radius={0.07} />
-      <VectorArrow
+      <ForceWithXY
         origin={bob}
-        vector={[-sample.x, -sample.y, -sample.z]}
+        vector={tVec}
         value={sample.tension}
         unitLength={0.08}
         color={FORCE_COLORS.F}
         label="T"
-        unit="N"
-        scale={0.9}
+        scale={0.8}
       />
-      <SpriteLabel text={`T = ${sample.T.toFixed(2)} s`} color="#1e3a5f" position={[0, pivotY + 0.18, 0]} height={0.16} />
+      <VectorArrow
+        origin={bob}
+        vector={[0, -weight, 0]}
+        value={weight}
+        unitLength={0.06}
+        color={FORCE_COLORS.G}
+        label="mg"
+        unit="N"
+        scale={0.7}
+      />
+      <SpriteLabel
+        text={`T = ${formatLabNumber(sample.T)} s`}
+        color="#1e3a5f"
+        position={[0, pivotY + 0.18, 0]}
+        height={0.16}
+      />
       <LabOrbit target={[0, pivotY * 0.45, 0]} />
     </>
   );

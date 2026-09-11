@@ -3,6 +3,7 @@
 import { BoxMass, LabLine, LabOrbit, LabScenery, VectorArrow } from "@/components/lab-3d";
 import { SpriteLabel } from "@/components/scene-label";
 import { FORCE_COLORS } from "@/lib/models/force-display";
+import { formatLabNumber } from "@/lib/models/lab-format";
 import {
   leverHang,
   leverStick,
@@ -78,7 +79,7 @@ export function TorqueEquilibriumScene({
         scale={0.65}
       />
       <SpriteLabel
-        text={`Στ = ${sample.tau.toFixed(2)} N·m`}
+        text={`Στ = ${formatLabNumber(sample.tau)} N·m`}
         color="#1e3a5f"
         position={[0.15, fulcrum[1] + 0.28, 0]}
         height={0.14}
