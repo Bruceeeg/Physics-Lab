@@ -1,23 +1,24 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { TimeSeriesChart } from "@/components/kinematic-charts";
 import { LabFrame, ModeSwitch, formatLabNumber, formatLabSci } from "@/components/lab-frame";
 import { ParameterControl } from "@/components/parameter-control";
 import { AtwoodMachineScene } from "@/components/p1/atwood-machine-scene";
 import { useLabPlayback } from "@/components/use-lab-clock";
-import { frictionForceLabel, frictionForceTitle } from "@/lib/models/lab-format";
+import { frictionForceTitle } from "@/lib/models/lab-format";
 import {
   acceleration,
   DEFAULT_ATWOOD,
+  hangingPositions,
+  lightKinematics,
+  lightMass,
   pulleyInertia,
   sampleAt,
-  tension,
   timeToStop,
   type AtwoodMode,
-  type AtwoodParams,
 } from "@/lib/models/atwood-machine";
 
 const SceneCanvas = dynamic(() => import("@/components/lab-canvas"), { ssr: false });
@@ -33,7 +34,9 @@ export function AtwoodMachineLab() {
   const [mode, setMode] = useState<AtwoodMode>("classic");
   const compute = useCallback((t: number) => {
     const next = sampleAt(params, t, mode);
-    return { sample: next, point: [0.12, 1.25 - 0.45 + next.y2, 0] as [number, number, number] };
+    const pos = hangingPositions(params, next, mode);
+    const id = lightMass(params);
+    return { sample: next, point: id === "A" ? pos.A : pos.B };
   }, [mode, params]);
   const getLimit = useCallback(() => {
     const limit = timeToStop(params, mode);
@@ -41,11 +44,22 @@ export function AtwoodMachineLab() {
   }, [mode, params]);
   const { time, isPlaying, start, pause, reset, sample, series } = useLabPlayback(compute, getLimit);
   const n = formatLabNumber;
-  const a = acceleration(params, mode);
-  const T = tension(params, mode);
+  const aSys = acceleration(params, mode);
   const modified = mode === "modified";
   const pulley = mode === "pulley";
-  const stuck = Math.abs(a) < 1e-9;
+  const stuck = Math.abs(aSys) < 1e-9;
+  const light = lightKinematics(params, sample);
+  const lightSeries = useMemo(
+    () =>
+      series.map((point) => {
+        const kinematics = lightKinematics(params, point);
+        return { t: point.t, s: kinematics.s, v: kinematics.v, a: kinematics.a, T: kinematics.T };
+      }),
+    [params, series],
+  );
+  const net = light.T - light.mg;
+  const heavier = light.id === "A" ? "B" : "A";
+  const lightIsCart = modified && light.id === "A";
 
   return (
     <LabFrame
@@ -62,22 +76,22 @@ export function AtwoodMachineLab() {
         />
       }
       stats={[
-        { label: "时间 t", value: n(time), unit: "s" },
-        { label: "加速度 a", value: n(a), unit: "m/s²" },
-        { label: "张力 T", value: n(T), unit: "N" },
+        { label: `轻物 ${light.id} 位移`, value: n(light.s), unit: "m" },
+        { label: `轻物 ${light.id} 速度`, value: n(light.v), unit: "m/s" },
+        { label: `轻物 ${light.id} 加速度`, value: n(light.a), unit: "m/s²" },
       ]}
       status={
         stuck
           ? modified
             ? sample.frictionKind === "static"
-              ? `静摩擦平衡悬挂重量。fs = ${n(sample.f)} N，fs,max = ${n((params.muS ?? params.mu ?? 0) * sample.N)} N。`
-              : "两质量使系统保持静止。"
-            : "两质量相等，系统保持静止。"
+              ? `静摩擦平衡悬挂重量。轻物为 ${light.id}。fs = ${n(sample.f)} N，fs,max = ${n((params.muS ?? params.mu ?? 0) * sample.N)} N。`
+              : `两质量使系统保持静止。轻物为 ${light.id}。`
+            : `两质量相等，系统保持静止。轻物为 ${light.id}。`
           : modified
-            ? `桌上滑车。${frictionForceTitle(sample.frictionKind)} = ${n(sample.f)} N。a = ${n(a)} m/s²。`
+            ? `桌上滑车。轻物 ${light.id}。${frictionForceTitle(sample.frictionKind)} = ${n(sample.f)} N。a = ${n(light.a)} m/s²。`
             : pulley
-            ? `计入滑轮 I = ½MR² = ${formatLabSci(pulleyInertia(params))} kg·m²。两侧张力不同，a = ${n(a)} m/s²。`
-            : `a = gΔm/(m₁+m₂) = ${n(a)} m/s²。右侧为 m₂，较重则下降。`
+            ? `计入滑轮 I = ½MR² = ${formatLabSci(pulleyInertia(params))} kg·m²。仪表针对轻物 ${light.id}。`
+            : `较重的是 ${heavier}，轻物 ${light.id} 上升。T − mg = ma。`
       }
       isPlaying={isPlaying}
       time={time}
@@ -89,8 +103,8 @@ export function AtwoodMachineLab() {
         <>
           <ParameterControl
             id="m1"
-            label={modified ? "车上质量" : "左侧质量"}
-            symbol="m₁"
+            label={modified ? "质量 A 车上" : "质量 A"}
+            symbol="mA"
             unit="kg"
             value={params.m1}
             min={0.2}
@@ -103,8 +117,8 @@ export function AtwoodMachineLab() {
           />
           <ParameterControl
             id="m2"
-            label={modified ? "悬挂质量" : "右侧质量"}
-            symbol="m₂"
+            label={modified ? "质量 B 悬挂" : "质量 B"}
+            symbol="mB"
             unit="kg"
             value={params.m2}
             min={0.2}
@@ -189,7 +203,7 @@ export function AtwoodMachineLab() {
             unit="m"
             value={params.travel}
             min={0.2}
-            max={0.8}
+            max={1.2}
             step={0.01}
             onChange={(value) => {
               reset();
@@ -215,51 +229,57 @@ export function AtwoodMachineLab() {
       formula={
         modified ? (
           <>
-            <p className="text-quiet">静止：m₂g ≤ μs m₁g　滑动：a = (m₂g − μk m₁g)/(m₁+m₂)</p>
-            <p className="text-navy">a = {n(a)} m/s²</p>
-            <p>T = m₂(g − a) = {n(T)} N</p>
+            <p className="text-quiet">A 深蓝车上　B 金色悬挂　读数针对轻物 {light.id}</p>
+            <p>静止：mB g ≤ μs mA g　滑动：a = (mB g − μk mA g)/(mA+mB)</p>
+            <p>mg{light.id} = {n(light.mg)} N　T = {n(light.T)} N</p>
+            <p className="text-navy">
+              {lightIsCart
+                ? `轻物 A 水平：T − f = m a`
+                : `轻物 B：mg − T = m |a|（下降为正时）`}
+            </p>
             <p>
               {frictionForceTitle(sample.frictionKind)} = {n(sample.f)} N
             </p>
           </>
         ) : pulley ? (
           <>
-            <p className="text-quiet">a = gΔm / (m₁+m₂+I/R²)，I = ½MR²</p>
+            <p className="text-quiet">A 深蓝　B 金色　读数针对轻物 {light.id}</p>
+            <p>a = gΔm / (mA+mB+I/R²)，I = ½MR²</p>
             <p>I = {formatLabSci(sample.I)} kg·m²</p>
-            <p>T₁ = m₁(g+a) = {n(sample.T1)} N</p>
-            <p className="text-navy">T₂ = m₂(g−a) = {n(sample.T)} N</p>
+            <p>mg{light.id} = {n(light.mg)} N　T{light.id} = {n(light.T)} N</p>
+            <p className="text-navy">轻物 {light.id}：T − mg = ma = {n(net)} N</p>
+            <p>TA = {n(sample.T1)} N　TB = {n(sample.T)} N</p>
           </>
         ) : (
           <>
-            <p className="text-quiet">a = g(m₂−m₁)/(m₁+m₂)</p>
-            <p className="text-navy">a = {n(a)} m/s²</p>
-            <p>T = 2 m₁ m₂ g / (m₁+m₂) = {n(T)} N</p>
-            <p>s₂ = {n(sample.s)} m</p>
+            <p className="text-quiet">A 深蓝　B 金色　读数针对轻物 {light.id}</p>
+            <p>mgA = mA g　mgB = mB g　均竖直向下</p>
+            <p>系统 a = g(mB−mA)/(mA+mB) = {n(aSys)} m/s²</p>
+            <p>轻物 {light.id}：T 向上，mg 向下</p>
+            <p className="text-navy">T − mg = ma</p>
+            <p>T = {n(light.T)} N　mg = {n(light.mg)} N　ma = {n(light.m * light.a)} N</p>
           </>
         )
       }
       sceneTitle={modified ? "三维桌上滑车" : pulley ? "三维滑轮惯量" : "三维阿特伍德机"}
-      sceneCaption={modified ? "实线 T / mg / N / f　车上水平，悬挂竖直" : pulley ? "两侧张力不同　T₂ > T₁" : "实线 T / mg　力沿竖直方向"}
+      sceneCaption={modified ? "A 车上深蓝　B 悬挂金色　实线 T / mg / N / f" : pulley ? "A 深蓝　B 金色　两侧张力不同" : "A 深蓝　B 金色　实线 T / mg"}
       scene={
         <SceneCanvas camera={[1.6, 1.1, 2.8]}>
           <AtwoodMachineScene sample={sample} params={params} mode={mode} />
         </SceneCanvas>
       }
       readouts={[
-        { label: modified ? "x车" : "y₁", value: n(sample.y1), unit: "m" },
-        { label: modified ? "y挂" : "y₂", value: n(sample.y2), unit: "m" },
-        { label: "T", value: n(sample.T), unit: "N" },
-        { label: pulley ? "T₁" : modified ? frictionForceLabel(sample.frictionKind) : "ax",
-          value: n(pulley ? sample.T1 : modified ? sample.f : 0),
-          unit: pulley || modified ? "N" : "m/s²",
-        },
+        { label: `T${light.id}`, value: n(light.T), unit: "N" },
+        { label: `mg${light.id}`, value: n(light.mg), unit: "N" },
+        { label: "T−mg", value: n(net), unit: "N" },
+        { label: `v${light.id}`, value: n(light.v), unit: "m/s" },
       ]}
       charts={
         <>
-          <TimeSeriesChart title={modified ? "车位移" : "右侧位移"} quantity="s" unit="m" strokeColor="#1E3A5F" valueKey="s" points={series} currentTime={time} currentValue={sample.s} minDuration={Math.max(1, Number.isFinite(timeToStop(params, mode)) ? timeToStop(params, mode) : 4)} />
-          <TimeSeriesChart title="速度" quantity="v₂" unit="m/s" strokeColor="#A16207" valueKey="v2" points={series} currentTime={time} currentValue={sample.v2} />
-          <TimeSeriesChart title="加速度" quantity="a" unit="m/s²" strokeColor="#2563EB" valueKey="a" points={series} currentTime={time} currentValue={sample.a} />
-          <TimeSeriesChart title="张力" quantity="T" unit="N" strokeColor="#6D28D9" valueKey="T" points={series} currentTime={time} currentValue={sample.T} />
+          <TimeSeriesChart title={`轻物 ${light.id} 位移`} quantity="s" unit="m" strokeColor="#1E3A5F" valueKey="s" points={lightSeries} currentTime={time} currentValue={light.s} minDuration={Math.max(1, Number.isFinite(timeToStop(params, mode)) ? timeToStop(params, mode) : 4)} />
+          <TimeSeriesChart title={`轻物 ${light.id} 速度`} quantity="v" unit="m/s" strokeColor="#A16207" valueKey="v" points={lightSeries} currentTime={time} currentValue={light.v} />
+          <TimeSeriesChart title={`轻物 ${light.id} 加速度`} quantity="a" unit="m/s²" strokeColor="#2563EB" valueKey="a" points={lightSeries} currentTime={time} currentValue={light.a} />
+          <TimeSeriesChart title={`轻物 ${light.id} 张力`} quantity="T" unit="N" strokeColor="#6D28D9" valueKey="T" points={lightSeries} currentTime={time} currentValue={light.T} />
         </>
       }
     />

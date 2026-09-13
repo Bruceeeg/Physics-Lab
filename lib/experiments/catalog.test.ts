@@ -28,7 +28,9 @@ const P1_READY = [
   "pull-friction",
   "incline-friction",
   "atwood-machine",
-  "circular-motion",
+  "conical-pendulum",
+  "horizontal-circular",
+  "vertical-circular",
   "conservation-of-energy",
   "impulse-momentum",
   "torque-equilibrium",
@@ -45,7 +47,9 @@ const C_MECH_READY = [
   "pull-friction",
   "incline-friction",
   "atwood-machine",
-  "circular-motion",
+  "conical-pendulum",
+  "horizontal-circular",
+  "vertical-circular",
   "conservation-of-energy",
   "impulse-momentum",
   "torque-equilibrium",
@@ -194,7 +198,9 @@ test("Physics C unit labels match the CED units", () => {
       "pull-friction",
       "incline-friction",
       "atwood-machine",
-      "circular-motion",
+      "conical-pendulum",
+      "horizontal-circular",
+      "vertical-circular",
       "conservation-of-energy",
       "impulse-momentum",
       "ballistic-pendulum",
@@ -248,7 +254,10 @@ test("looks up ready and pending experiments by slug", () => {
   assert.equal(found?.formula, "N = mg − |F|sinθ");
   assert.equal(found?.course, "p1");
   assert.equal(found?.status, "ready");
-  assert.equal(getExperiment("circular-motion")?.status, "ready");
+  assert.equal(getExperiment("conical-pendulum")?.status, "ready");
+  assert.equal(getExperiment("horizontal-circular")?.status, "ready");
+  assert.equal(getExperiment("vertical-circular")?.status, "ready");
+  assert.equal(getExperiment("circular-motion"), undefined);
   assert.equal(getExperiment("torque-equilibrium")?.unit, "Unit 5 力矩与转动动力学");
   assert.equal(getExperiment("projectile-motion")?.formula, "x = (v₀ cosθ) t");
   assert.equal(getExperiment("boyles-law")?.status, "ready");

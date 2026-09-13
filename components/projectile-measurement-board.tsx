@@ -2,6 +2,7 @@
 
 import { formatLabNumber, formatLabSigned } from "@/lib/models/lab-format";
 import { PREDICTION_G, type PredictionState } from "@/lib/models/projectile-prediction";
+import { sampleAt, type ProjectileSample } from "@/lib/models/projectile";
 
 function formatNumber(value: number) {
   return formatLabNumber(value);
@@ -11,30 +12,33 @@ function formatSigned(value: number) {
   return formatLabSigned(value);
 }
 
-// What a real bench gives the student: heights, angles, and where the ball
-// landed. No live charts here; they would expose v0 before the check.
-export function ProjectileMeasurementBoard({ state }: { state: PredictionState }) {
+export function ProjectileMeasurementBoard({
+  state,
+  sample,
+}: {
+  state: PredictionState;
+  sample: ProjectileSample;
+}) {
   const rows: [string, string, string][] = [
     ["h", "发射高度", `${formatNumber(state.h)} m`],
     ["θ", "发射角", `${formatNumber(state.thetaDeg)} °`],
+    ["v₀", "初速度", `${formatNumber(state.v0)} m/s`],
     ["g", "重力加速度", `${formatNumber(PREDICTION_G)} m/s²`],
-    ["R", "落点", state.lastLandingX !== null ? `${formatNumber(state.lastLandingX)} m` : "—"],
+    ["x̂", "预估落点", state.xPredicted !== null ? `${formatNumber(state.xPredicted)} m` : "—"],
+    ["R", "测量落点", state.lastLandingX !== null ? `${formatNumber(state.lastLandingX)} m` : "—"],
+    ["K", "动能", `${formatNumber(sample.K)} J`],
+    ["U", "重力势能", `${formatNumber(sample.U)} J`],
+    ["E", "机械能", `${formatNumber(sample.E)} J`],
   ];
-  if (state.phase !== "measure") {
-    rows.push([
-      "x̂",
-      "预测落点",
-      state.xPredicted !== null ? `${formatNumber(state.xPredicted)} m` : "—",
-    ]);
-    rows.push(["x", "实际落点", state.outcome ? `${formatNumber(state.outcome.landingX)} m` : "—"]);
-    rows.push(["Δx", "偏差", state.outcome ? `${formatSigned(state.outcome.deltaX)} m` : "—"]);
+  if (state.outcome) {
+    rows.push(["Δx", "偏差", `${formatSigned(state.outcome.deltaX)} m`]);
   }
 
   return (
     <section className="flex h-full flex-col border border-line bg-surface">
       <div className="flex h-8 items-center justify-between border-b border-line px-2.5">
         <h2 className="text-xs font-medium text-ink">测量板</h2>
-        <p className="font-mono text-[10px] text-quiet">真实实验只能量到这些</p>
+        <p className="font-mono text-[10px] text-quiet">对照预估落点，误差 ≤ 1%</p>
       </div>
       <dl className="divide-y divide-line font-mono text-[12px] tabular-nums">
         {rows.map(([symbol, label, value]) => (
@@ -47,8 +51,23 @@ export function ProjectileMeasurementBoard({ state }: { state: PredictionState }
           </div>
         ))}
       </dl>
-      <p className="mt-auto border-t border-line px-2.5 py-2 text-[11px] leading-4 text-quiet">
-        落地判定后，这里换成 x、y、vₓ、vᵧ 四张运动学图。
+      <p
+        role="status"
+        className={`mt-auto border-t border-line px-2.5 py-3 text-[16px] font-medium ${
+          state.outcome
+            ? state.outcome.hit
+              ? "text-emerald-700"
+              : "text-red-700"
+            : "text-quiet"
+        }`}
+      >
+        {state.outcome
+          ? state.outcome.hit
+            ? "正确"
+            : "失败"
+          : state.lastLandingX !== null
+            ? "已落地，等待对照"
+            : "发射后在此读出落点，并与预估值对照"}
       </p>
     </section>
   );

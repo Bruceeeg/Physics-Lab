@@ -1,14 +1,15 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { TimeSeriesChart } from "@/components/kinematic-charts";
 import { ModeSwitch } from "@/components/lab-frame";
+import { LinearMotionScene } from "@/components/linear-motion-scene";
 import { ParameterControl } from "@/components/parameter-control";
 import {
   clampTime,
-  elapsedTrail,
   motionSample,
   motionSamplePhased,
   predictedSamples,
@@ -18,6 +19,8 @@ import {
 } from "@/lib/models/linear-motion";
 import { formatLabNumber } from "@/lib/models/lab-format";
 import type { KinematicSample } from "@/lib/models/pull-friction";
+
+const SceneCanvas = dynamic(() => import("@/components/lab-canvas"), { ssr: false });
 
 const PARAMETER_DEFINITIONS = [
   { key: "x0", label: "初位置", symbol: "x₀", unit: "m", min: -10, max: 10, step: 0.1 },
@@ -191,8 +194,6 @@ export function LinearMotionLab() {
         : predictedSamples(x0, v0, a, chartDomain),
     [a, a2, chartDomain, tSwitch, twoPhase, v0, x0],
   );
-  const trail = elapsedTrail(samples, live);
-  const trailPoints = trail.path;
   const chartSeries = samples.map((sample) =>
     toChartSample(sample, x0, twoPhase && sample.t > tSwitch ? a2 : a),
   );
@@ -209,28 +210,7 @@ export function LinearMotionLab() {
     };
   }, [samples]);
 
-  const toTrackPercent = (x: number) => {
-    const span = trackBounds.max - trackBounds.min || 1;
-    return ((x - trackBounds.min) / span) * 100;
-  };
-
-  const span = trackBounds.max - trackBounds.min || 1;
-  const trackTrailPath =
-    trailPoints.length === 0
-      ? ""
-      : trailPoints
-          .map((point, index) => {
-            const left = Math.max(
-              0,
-              Math.min(100, ((point.x - trackBounds.min) / span) * 100),
-            );
-            return `${index === 0 ? "M" : "L"} ${left} 50`;
-          })
-          .join(" ");
-
   const paramValues: Record<ParamKey, number> = { x0, v0, a, t: time };
-  const originPercent = Math.max(0, Math.min(100, toTrackPercent(0)));
-  const particlePercent = Math.max(0, Math.min(100, toTrackPercent(currentPosition)));
   const status = isPlaying ? "正在播放" : time > 0 ? "已暂停" : "待开始";
 
   return (
@@ -377,61 +357,19 @@ export function LinearMotionLab() {
 
         <section className="lab-scene min-h-0 border border-line bg-surface">
           <div className="flex h-8 items-center justify-between border-b border-line px-2.5">
-            <h2 className="text-xs font-medium text-ink">一维运动轨道</h2>
-            <p className="font-mono text-[10px] text-quiet">水平运动　y = 0.00 m　vy = 0.00 m/s</p>
+            <h2 className="text-xs font-medium text-ink">三维轨道</h2>
+            <p className="font-mono text-[10px] text-quiet">水平运动　y = 0.00 m　拖动旋转</p>
           </div>
-          <div className="relative min-h-0 flex-1 bg-paper px-5 py-8">
-            <div className="absolute inset-x-5 top-1/2 h-px -translate-y-1/2 bg-line" />
-            <div className="relative h-full min-h-40">
-              <div
-                className="pointer-events-none absolute inset-y-8 w-px bg-navy/35"
-                style={{ left: `${originPercent}%` }}
-              />
-              <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
-                {trailPoints.length >= 2 && trackTrailPath ? (
-                  <path
-                    d={trackTrailPath}
-                    fill="none"
-                    stroke="#1E3A5F"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    opacity="0.85"
-                    vectorEffect="non-scaling-stroke"
-                  />
-                ) : null}
-              </svg>
-              {trail.markers.map((point, index) => {
-                if (index % 3 !== 0) {
-                  return null;
-                }
-                const left = toTrackPercent(point.x);
-                const trailProgress = chartDomain > 0 ? point.t / chartDomain : 1;
-                return (
-                  <div
-                    key={point.t}
-                    className="absolute top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 bg-navy"
-                    style={{
-                      left: `${Math.max(0, Math.min(100, left))}%`,
-                      opacity: 0.2 + trailProgress * 0.5,
-                    }}
-                  />
-                );
-              })}
-              <div
-                className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 border-2 border-navy bg-surface"
-                style={{ left: `${particlePercent}%` }}
-                aria-hidden="true"
-              />
-            </div>
-            <div className="relative mt-3 h-4 font-mono text-[11px] tabular-nums text-quiet">
-              <span className="absolute left-0">{formatNumber(trackBounds.min)} m</span>
-              {originPercent > 12 && originPercent < 88 ? (
-                <span className="absolute -translate-x-1/2" style={{ left: `${originPercent}%` }}>
-                  0
-                </span>
-              ) : null}
-              <span className="absolute right-0">{formatNumber(trackBounds.max)} m</span>
+          <div className="relative min-h-[280px] flex-1">
+            <div className="absolute inset-0">
+              <SceneCanvas camera={[2.8, 1.4, 3.6]} fov={42}>
+                <LinearMotionScene
+                  x={currentPosition}
+                  min={trackBounds.min}
+                  max={trackBounds.max}
+                  v={currentVelocity}
+                />
+              </SceneCanvas>
             </div>
           </div>
           <dl className="grid h-12 grid-cols-4 border-t border-line font-mono text-[11px] tabular-nums">
@@ -451,7 +389,7 @@ export function LinearMotionLab() {
           </dl>
         </section>
 
-        <aside className="lab-charts min-h-0">
+        <aside className="lab-charts lab-charts-3 min-h-0">
           <TimeSeriesChart
             title="位置-时间"
             quantity="x"
@@ -481,16 +419,6 @@ export function LinearMotionLab() {
             points={chartSeries}
             currentTime={time}
             currentValue={currentA}
-          />
-          <TimeSeriesChart
-            title="位移-时间"
-            quantity="Δx"
-            unit="m"
-            strokeColor="#0F172A"
-            valueKey="dx"
-            points={chartSeries}
-            currentTime={time}
-            currentValue={displacement}
           />
         </aside>
       </main>

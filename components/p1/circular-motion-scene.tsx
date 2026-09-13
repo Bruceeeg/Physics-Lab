@@ -69,6 +69,12 @@ export function CircularMotionScene({
           unit="N"
           scale={0.7}
         />
+        <SpriteLabel
+          text={`Fc = mv²/r = T`}
+          color="#1e3a5f"
+          position={[0, 0.28, 0]}
+          height={0.14}
+        />
         <LabOrbit target={[0, 0.15, 0]} />
       </>
     );
@@ -111,7 +117,11 @@ export function CircularMotionScene({
           scale={0.7}
         />
         <SpriteLabel
-          text={`v = ${formatLabNumber(sample.speed)} m/s`}
+          text={
+            sample.looping
+              ? `过顶　v = ${formatLabNumber(sample.speed)} m/s`
+              : `摆荡　v = ${formatLabNumber(sample.speed)} m/s`
+          }
           color="#1e3a5f"
           position={[0, lift + params.r + 0.22, 0]}
           height={0.16}
@@ -166,8 +176,19 @@ export function CircularMotionScene({
         unit="N"
         scale={0.7}
       />
+      <VectorArrow
+        origin={bob}
+        vector={[-sample.x, 0, -sample.z]}
+        value={sample.Fc}
+        unitLength={0.08}
+        color={FORCE_COLORS.Fdash}
+        label="Fc"
+        unit="N"
+        dashed
+        scale={0.75}
+      />
       <SpriteLabel
-        text={`T = ${formatLabNumber(sample.T)} s`}
+        text={`v₀ = ${formatLabNumber(sample.speed)} m/s`}
         color="#1e3a5f"
         position={[0, pivotY + 0.18, 0]}
         height={0.16}

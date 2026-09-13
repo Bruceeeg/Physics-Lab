@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -18,20 +18,18 @@ import {
   type ProjectileSample,
 } from "@/lib/models/projectile";
 import {
-  HIDDEN_V0_MAX,
   canLaunch,
   createPrediction,
-  newDataset,
   placeTarget,
   predictionParams,
   recordLanding,
   retryPrediction,
   setHeight,
   setTheta,
-  submitV0Estimate,
+  setV0,
   type PredictionState,
 } from "@/lib/models/projectile-prediction";
-import { formatLabNumber, formatLabSigned } from "@/lib/models/lab-format";
+import { formatLabNumber } from "@/lib/models/lab-format";
 import { appendTimeSample } from "@/lib/models/time-series";
 
 const SceneCanvas = dynamic(() => import("@/components/projectile-canvas"), {
@@ -40,7 +38,7 @@ const SceneCanvas = dynamic(() => import("@/components/projectile-canvas"), {
 
 type LabMode = "params" | "predict";
 
-const DEFAULT_PARAMS: ProjectileParams = { v0: 5, thetaDeg: 30, h: 1, g: 9.81 };
+const DEFAULT_PARAMS: ProjectileParams = { v0: 5, thetaDeg: 30, h: 1, g: 9.81, m: 0.2 };
 
 const PARAMETER_DEFINITIONS: {
   key: keyof ProjectileParams;
@@ -54,6 +52,7 @@ const PARAMETER_DEFINITIONS: {
   { key: "v0", label: "初速度", symbol: "v₀", unit: "m/s", min: 0.5, max: 12, step: 0.1 },
   { key: "thetaDeg", label: "发射角", symbol: "θ", unit: "°", min: 0, max: 80, step: 1 },
   { key: "h", label: "发射高度", symbol: "h", unit: "m", min: 0, max: 3, step: 0.05 },
+  { key: "m", label: "质量", symbol: "m", unit: "kg", min: 0.05, max: 2, step: 0.05 },
   { key: "g", label: "重力加速度", symbol: "g", unit: "m/s²", min: 1, max: 20, step: 0.01 },
 ];
 
@@ -61,10 +60,6 @@ const TRAIL_MAX_POINTS = 400;
 
 function formatNumber(value: number) {
   return formatLabNumber(value);
-}
-
-function formatSigned(value: number) {
-  return formatLabSigned(value);
 }
 
 function Stat({ label, value, unit }: { label: string; value: string; unit: string }) {
@@ -85,7 +80,7 @@ function ModeSwitch({ mode, onChange }: { mode: LabMode; onChange: (mode: LabMod
         参数实验
       </button>
       <button type="button" aria-pressed={mode === "predict"} onClick={() => onChange("predict")}>
-        预测落点
+        预估落点
       </button>
     </div>
   );
@@ -143,7 +138,6 @@ export function ProjectileLab() {
     setIsPlaying(false);
   };
 
-  // Puts the ball back on the launcher. Prediction inputs are untouched.
   const clearFlight = () => {
     pause();
     timeRef.current = 0;
@@ -225,13 +219,7 @@ export function ProjectileLab() {
   const reset = () => {
     clearFlight();
     if (mode === "predict") {
-      setPrediction((current) =>
-        current
-          ? current.phase === "result"
-            ? retryPrediction(current)
-            : { ...current, lastLandingX: null }
-          : current,
-      );
+      setPrediction((current) => (current ? retryPrediction(current) : current));
     }
   };
 
@@ -245,13 +233,8 @@ export function ProjectileLab() {
       return;
     }
     clearFlight();
-    if (mode === "predict") {
-      setPrediction((current) =>
-        current && current.phase === "result" ? retryPrediction(current) : current,
-      );
-    }
     if (next === "predict") {
-      setPrediction((current) => current ?? createPrediction());
+      setPrediction((current) => current ?? createPrediction(paramsA.v0, paramsA.h, paramsA.thetaDeg));
     }
     setMode(next);
   };
@@ -270,15 +253,9 @@ export function ProjectileLab() {
     updatePrediction((state) => setTheta(state, thetaDeg));
   };
 
-  const handleEstimate = (v0: number) => {
-    if (!prediction) {
-      return;
-    }
-    const next = submitV0Estimate(prediction, v0);
-    if (next.phase !== prediction.phase) {
-      clearFlight();
-    }
-    setPrediction(next);
+  const handleV0 = (v0: number) => {
+    clearFlight();
+    updatePrediction((state) => setV0(state, v0));
   };
 
   const handlePlaceTarget = (x: number) => {
@@ -290,27 +267,15 @@ export function ProjectileLab() {
     updatePrediction(retryPrediction);
   };
 
-  const handleNewDataset = () => {
-    clearFlight();
-    updatePrediction((state) => newDataset(state));
-  };
-
   const sample = useMemo(() => sampleAt(activeParams, time), [activeParams, time]);
   const tLand = flightTime(activeParams);
-  const revealed = mode === "params" || prediction?.phase === "result";
-  const speed = Math.hypot(sample.vx, sample.vy);
   const chartSeries =
     series.length > 0 && Math.abs(series[series.length - 1].t - sample.t) < 1e-4
       ? series
       : [...series, sample];
 
-  const frameParams = useMemo<ProjectileParams>(
-    () => (mode === "predict" ? { ...activeParams, v0: HIDDEN_V0_MAX } : activeParams),
-    [activeParams, mode],
-  );
-
   const target: SceneTarget | null =
-    mode === "predict" && prediction && prediction.targetPlaced && prediction.xPredicted !== null
+    mode === "predict" && prediction && prediction.xPredicted !== null
       ? {
           x: prediction.xPredicted,
           state: prediction.outcome ? (prediction.outcome.hit ? "hit" : "miss") : "pending",
@@ -320,30 +285,28 @@ export function ProjectileLab() {
 
   const launchBlocked = mode === "predict" && (!prediction || !canLaunch(prediction));
   const startLabel = mode === "predict" ? "发射" : time > 0 && !landed ? "继续" : "开始";
+  const predictOk = Boolean(prediction?.outcome?.hit);
+  const predictFail = Boolean(prediction?.outcome && !prediction.outcome.hit);
 
   let status: string;
   if (mode === "predict" && prediction) {
-    if (prediction.phase === "result" && prediction.outcome) {
-      status = `${prediction.outcome.hit ? "命中" : "未命中"}，Δx = ${formatSigned(
-        prediction.outcome.deltaX,
-      )} m`;
+    if (prediction.outcome) {
+      status = `${prediction.outcome.hit ? "正确" : "失败"}，相对误差 ${formatNumber(
+        prediction.outcome.relativeError * 100,
+      )}%`;
     } else if (isPlaying) {
       status = `抛体在空中，t = ${formatNumber(time)} s`;
-    } else if (prediction.phase === "measure") {
-      status =
-        prediction.lastLandingX !== null
-          ? `已落地，R = ${formatNumber(prediction.lastLandingX)} m，反推 v₀ 后填入核对`
-          : "水平发射，读出落点 R 和高度 h，反推 v₀";
+    } else if (landed && prediction.lastLandingX !== null) {
+      status = `已落地，R = ${formatNumber(prediction.lastLandingX)} m`;
+    } else if (prediction.xPredicted !== null) {
+      status = `预估 x = ${formatNumber(prediction.xPredicted)} m，按发射`;
     } else {
-      status =
-        prediction.targetPlaced && prediction.xPredicted !== null
-          ? `标靶在 x = ${formatNumber(prediction.xPredicted)} m，按发射`
-          : "输入预测落点并放置标靶后才能发射";
+      status = "设定 v₀、发射角和预估落点后按发射";
     }
   } else if (tLand === 0) {
-    status = "初速度水平且高度为 0，抛体立即落地";
+    status = "初速度水平且高度为 0，抛体立刻落地";
   } else if (landed) {
-    status = `已落地，x = ${formatNumber(sample.x)} m`;
+    status = `已落地，x = ${formatNumber(sample.x)} m，E = ${formatNumber(sample.E)} J`;
   } else if (isPlaying) {
     status = `抛体在空中，t = ${formatNumber(time)} s`;
   } else if (time > 0) {
@@ -371,9 +334,15 @@ export function ProjectileLab() {
         <div className="grid min-w-0 grid-cols-3">
           <Stat label="时间 t" value={formatNumber(time)} unit="s" />
           <Stat label="水平 x" value={formatNumber(sample.x)} unit="m" />
-          <Stat label="竖直 y" value={formatNumber(sample.y)} unit="m" />
+          <Stat label="机械能 E" value={formatNumber(sample.E)} unit="J" />
         </div>
-        <p role="status" className="min-w-0 truncate text-xs text-quiet" title={status}>
+        <p
+          role="status"
+          className={`min-w-0 truncate text-xs ${
+            predictOk ? "text-emerald-700" : predictFail ? "text-red-700" : "text-quiet"
+          }`}
+          title={status}
+        >
           {status}
         </p>
         <div className="flex justify-end gap-1.5">
@@ -413,7 +382,7 @@ export function ProjectileLab() {
                   <span className="font-mono text-[10px] text-quiet">SI</span>
                 </div>
                 <p className="mt-0.5 text-[11px] text-quiet">
-                  改任一参数即回到 t = 0。数字输入按 Enter 确认，滑条立即生效。
+                  改任一参数即回到 t = 0。发射角、初速度可调。数字输入按 Enter 确认。
                 </p>
               </div>
 
@@ -425,7 +394,7 @@ export function ProjectileLab() {
                     label={item.label}
                     symbol={item.symbol}
                     unit={item.unit}
-                    value={paramsA[item.key]}
+                    value={paramsA[item.key] ?? 0.2}
                     min={item.min}
                     max={item.max}
                     step={item.step}
@@ -435,12 +404,13 @@ export function ProjectileLab() {
               </div>
 
               <section className="mx-2 mt-2 border-t border-line pt-2">
-                <h2 className="text-[13px] font-medium text-ink">公式与当前数值</h2>
+                <h2 className="text-[13px] font-medium text-ink">公式与能量</h2>
                 <div className="mt-1 space-y-1 font-mono text-[11px] leading-5">
                   <p className="text-quiet">x = v₀cosθ·t　　y = h + v₀sinθ·t − ½gt²</p>
-                  <p>t_L = (v₀sinθ + √(v₀²sin²θ + 2gh)) / g = {formatNumber(tLand)} s</p>
-                  <p>R = v₀cosθ·t_L = {formatNumber(range(activeParams))} m</p>
-                  <p>y_max = h + (v₀sinθ)² / 2g = {formatNumber(apexHeight(activeParams))} m</p>
+                  <p>t_L = {formatNumber(tLand)} s　　R = {formatNumber(range(activeParams))} m</p>
+                  <p>y_max = {formatNumber(apexHeight(activeParams))} m</p>
+                  <p className="text-navy">K = {formatNumber(sample.K)} J　　U = {formatNumber(sample.U)} J</p>
+                  <p>E = K + U = {formatNumber(sample.E)} J</p>
                 </div>
               </section>
             </>
@@ -449,10 +419,9 @@ export function ProjectileLab() {
               state={prediction}
               onHeightChange={handleHeight}
               onThetaChange={handleTheta}
-              onSubmitEstimate={handleEstimate}
+              onV0Change={handleV0}
               onPlaceTarget={handlePlaceTarget}
               onRetry={handleRetry}
-              onNewDataset={handleNewDataset}
             />
           ) : null}
         </aside>
@@ -461,7 +430,7 @@ export function ProjectileLab() {
           <div className="flex h-8 items-center justify-between border-b border-line px-2.5">
             <h2 className="text-xs font-medium text-ink">三维轨迹与速度</h2>
             <p className="font-mono text-[10px] text-quiet">
-              {mode === "params" ? "虚线 预测轨迹　实线 v　虚线 vₓ/vᵧ　拖动旋转" : "拖动旋转"}
+              {mode === "params" ? "虚线 预测轨迹　实线 v　拖动旋转" : "金色标牌为预估落点　拖动旋转"}
             </p>
           </div>
           <div className="relative min-h-[280px] flex-1">
@@ -471,33 +440,33 @@ export function ProjectileLab() {
                 sample={sample}
                 trail={trail}
                 showPrediction={mode === "params"}
-                showVelocity={Boolean(revealed)}
+                showVelocity
                 landingX={landed ? sample.x : null}
                 target={target}
-                frameParams={frameParams}
+                frameParams={activeParams}
                 allowRefit={time === 0}
               />
             </div>
           </div>
           <dl className="grid h-12 grid-cols-5 border-t border-line font-mono text-[11px] tabular-nums">
             {[
-              ["x", sample.x, "m", true],
-              ["y", sample.y, "m", true],
-              ["vₓ", sample.vx, "m/s", revealed],
-              ["vᵧ", sample.vy, "m/s", revealed],
-              ["|v|", speed, "m/s", revealed],
-            ].map(([label, value, unit, visible]) => (
+              ["x", sample.x, "m"],
+              ["y", sample.y, "m"],
+              ["K", sample.K, "J"],
+              ["U", sample.U, "J"],
+              ["E", sample.E, "J"],
+            ].map(([label, value, unit]) => (
               <div key={String(label)} className="border-r border-line px-2 py-1 last:border-r-0">
                 <dt className="text-quiet">{label}</dt>
                 <dd className="truncate text-ink">
-                  {visible ? `${formatNumber(Number(value))} ${unit}` : "—"}
+                  {formatNumber(Number(value))} {unit}
                 </dd>
               </div>
             ))}
           </dl>
         </section>
 
-        {revealed ? (
+        {mode === "params" ? (
           <aside className="lab-charts min-h-0">
             <TimeSeriesChart
               title="水平位移-时间"
@@ -522,31 +491,31 @@ export function ProjectileLab() {
               minDuration={Math.max(flightTime(activeParams), 1)}
             />
             <TimeSeriesChart
-              title="水平速度-时间"
-              quantity="vₓ"
-              unit="m/s"
+              title="动能"
+              quantity="K"
+              unit="J"
               strokeColor="#2563EB"
-              valueKey="vx"
+              valueKey="K"
               points={chartSeries}
               currentTime={time}
-              currentValue={sample.vx}
+              currentValue={sample.K}
               minDuration={Math.max(flightTime(activeParams), 1)}
             />
             <TimeSeriesChart
-              title="竖直速度-时间"
-              quantity="vᵧ"
-              unit="m/s"
+              title="机械能"
+              quantity="E"
+              unit="J"
               strokeColor="#6D28D9"
-              valueKey="vy"
+              valueKey="E"
               points={chartSeries}
               currentTime={time}
-              currentValue={sample.vy}
+              currentValue={sample.E}
               minDuration={Math.max(flightTime(activeParams), 1)}
             />
           </aside>
         ) : (
           <aside className="lab-board min-h-0">
-            {prediction ? <ProjectileMeasurementBoard state={prediction} /> : null}
+            {prediction ? <ProjectileMeasurementBoard state={prediction} sample={sample} /> : null}
           </aside>
         )}
       </main>

@@ -2,115 +2,63 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
-  HIDDEN_V0_MAX,
-  HIDDEN_V0_MIN,
+  LANDING_REL_TOL,
   PREDICTION_G,
   canLaunch,
   createPrediction,
-  drawHiddenV0,
   newDataset,
   placeTarget,
   predictionParams,
   recordLanding,
+  relativeLandingError,
   retryPrediction,
   setHeight,
   setTheta,
-  submitV0Estimate,
+  setV0,
 } from "./projectile-prediction.ts";
 
-// 2 + (1/3) * 6 = 4.00 m/s
-const fixedV0 = () => 1 / 3;
-
-test("hidden v0 is drawn from [2, 8] with two decimals", () => {
-  assert.equal(drawHiddenV0(() => 0), HIDDEN_V0_MIN);
-  assert.ok(drawHiddenV0(() => 0.999999) <= HIDDEN_V0_MAX);
-  const mid = drawHiddenV0(() => 0.123456);
-  assert.ok(Math.abs(mid * 100 - Math.round(mid * 100)) < 1e-9);
-  assert.equal(drawHiddenV0(fixedV0), 4);
-});
-
-test("a new prediction starts in the measure phase with a horizontal launcher", () => {
-  const state = createPrediction(fixedV0);
-  assert.equal(state.phase, "measure");
-  assert.equal(state.hiddenV0, 4);
-  assert.equal(state.thetaDeg, 0);
+test("a new prediction starts with settable v0 and launch angle", () => {
+  const state = createPrediction(5, 1, 30);
+  assert.equal(state.v0, 5);
+  assert.equal(state.thetaDeg, 30);
   assert.equal(state.h, 1);
-  assert.deepEqual(predictionParams(state), { v0: 4, thetaDeg: 0, h: 1, g: PREDICTION_G });
-  assert.equal(canLaunch(state), true);
+  assert.equal(state.xPredicted, null);
+  assert.equal(canLaunch(state), false);
+  assert.deepEqual(predictionParams(state), { v0: 5, thetaDeg: 30, h: 1, g: PREDICTION_G });
 });
 
-test("theta is locked during measure and accepts values past the slider range", () => {
-  const measure = createPrediction(fixedV0);
-  assert.equal(setTheta(measure, 30), measure);
-  const predict = submitV0Estimate(measure, 4);
-  assert.equal(setTheta(predict, 95).thetaDeg, 95);
-  assert.equal(setTheta(predict, -5).thetaDeg, -5);
+test("theta and v0 can be changed before launch", () => {
+  const state = createPrediction();
+  assert.equal(setTheta(state, 45).thetaDeg, 45);
+  assert.equal(setV0(state, 8).v0, 8);
+  assert.equal(setHeight(state, 1.6).h, 1.6);
 });
 
-test("v0 estimate within 5 percent unlocks the predict phase", () => {
-  const state = createPrediction(fixedV0);
-  const accepted = submitV0Estimate(state, 4.2);
-  assert.equal(accepted.phase, "predict");
-  assert.equal(accepted.v0Accepted, true);
-  assert.equal(submitV0Estimate(state, 3.8).phase, "predict");
-  const rejected = submitV0Estimate(state, 4.2004);
-  assert.equal(rejected.phase, "measure");
-  assert.equal(rejected.v0Accepted, false);
-  assert.equal(rejected.v0Estimate, 4.2004);
+test("launch needs a predicted landing position", () => {
+  const ready = placeTarget(createPrediction(), 2.4);
+  assert.equal(ready.xPredicted, 2.4);
+  assert.equal(canLaunch(ready), true);
 });
 
-test("measure phase records the landing without judging it", () => {
-  const state = recordLanding(createPrediction(fixedV0), 1.81);
-  assert.equal(state.phase, "measure");
-  assert.equal(state.lastLandingX, 1.81);
-  assert.equal(state.outcome, null);
-});
-
-test("predict phase needs a placed target before launching", () => {
-  const predict = submitV0Estimate(createPrediction(fixedV0), 4);
-  assert.equal(canLaunch(predict), false);
-  assert.equal(recordLanding(predict, 2), predict);
-  const placed = placeTarget(predict, 2);
-  assert.equal(placed.targetPlaced, true);
-  assert.equal(placed.xPredicted, 2);
-  assert.equal(canLaunch(placed), true);
-});
-
-test("landing within 0.10 m of the target counts as a hit", () => {
-  const placed = placeTarget(submitV0Estimate(createPrediction(fixedV0), 4), 2);
-  const hit = recordLanding(placed, 2.1);
-  assert.equal(hit.phase, "result");
+test("landing within 1 percent of the prediction counts as a hit", () => {
+  const placed = placeTarget(createPrediction(5, 1, 0), 2);
+  const hit = recordLanding(placed, 2.02);
   assert.equal(hit.outcome?.hit, true);
-  assert.equal(canLaunch(hit), false);
-  const nearMiss = recordLanding(placed, 2.101);
-  assert.equal(nearMiss.outcome?.hit, false);
-  assert.ok(Math.abs((nearMiss.outcome?.deltaX ?? 0) - 0.101) < 1e-9);
-  assert.equal(recordLanding(placed, 1.9).outcome?.hit, true);
+  assert.ok((hit.outcome?.relativeError ?? 1) <= LANDING_REL_TOL + 1e-9);
+  const miss = recordLanding(placed, 2.03);
+  assert.equal(miss.outcome?.hit, false);
+  assert.ok(Math.abs(relativeLandingError(2, 2.02) - 0.01) < 1e-9);
 });
 
-test("changing h or theta while predicting removes the placed target", () => {
-  const placed = placeTarget(submitV0Estimate(createPrediction(fixedV0), 4), 2);
-  assert.equal(setHeight(placed, 1.5).targetPlaced, false);
-  assert.equal(setTheta(placed, 20).xPredicted, null);
-  assert.equal(setHeight(placed, 5).h, 5);
-  assert.equal(setHeight(placed, 1), placed);
-});
-
-test("retry keeps the hidden v0; a new dataset replaces it", () => {
-  const result = recordLanding(
-    placeTarget(submitV0Estimate(createPrediction(fixedV0), 4), 2),
-    2.5,
-  );
+test("retry keeps v0 and theta; a new dataset keeps the current settings", () => {
+  const result = recordLanding(placeTarget(setTheta(createPrediction(6, 1, 20), 20), 3), 3.2);
   const retry = retryPrediction(result);
-  assert.equal(retry.phase, "predict");
-  assert.equal(retry.hiddenV0, 4);
-  assert.equal(retry.targetPlaced, false);
+  assert.equal(retry.v0, 6);
+  assert.equal(retry.thetaDeg, 20);
   assert.equal(retry.outcome, null);
   assert.equal(retry.lastLandingX, null);
-  const fresh = newDataset(result, () => 0.5);
-  assert.equal(fresh.phase, "measure");
-  assert.equal(fresh.hiddenV0, 5);
-  assert.equal(fresh.h, result.h);
-  assert.equal(fresh.thetaDeg, 0);
-  assert.equal(fresh.v0Estimate, null);
+  const fresh = newDataset(result);
+  assert.equal(fresh.v0, 6);
+  assert.equal(fresh.h, 1);
+  assert.equal(fresh.xPredicted, null);
 });

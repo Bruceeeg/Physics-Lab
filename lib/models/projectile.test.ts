@@ -56,7 +56,15 @@ test("horizontal launch from the ground lands immediately", () => {
   const params = { v0: 5, thetaDeg: 0, h: 0, g: 9.81 };
   assert.equal(flightTime(params), 0);
   assert.equal(range(params), 0);
-  assert.deepEqual(sampleAt(params, 1), { t: 0, x: 0, y: 0, vx: 5, vy: 0 });
+  const landed = sampleAt(params, 1);
+  assert.equal(landed.t, 0);
+  assert.equal(landed.x, 0);
+  assert.equal(landed.y, 0);
+  assert.equal(landed.vx, 5);
+  assert.equal(landed.vy, 0);
+  assert.ok(close(landed.K, 0.5 * 0.2 * 25));
+  assert.ok(close(landed.U, 0));
+  assert.ok(close(landed.E, landed.K));
 });
 
 test("trajectory samples span launch to landing", () => {

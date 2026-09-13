@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { acceleration, DEFAULT_ATWOOD, sampleAt, tension, timeToStop } from "./atwood-machine.ts";
+import { acceleration, DEFAULT_ATWOOD, hangingPositions, sampleAt, tension, timeToStop } from "./atwood-machine.ts";
 
 const close = (a: number, b: number, eps = 1e-9) => Math.abs(a - b) < eps;
 
@@ -49,6 +49,27 @@ test("motion stops after the travel limit", () => {
   const end = sampleAt(params, timeToStop(params) + 4);
   assert.ok(close(Math.abs(end.s), params.travel, 1e-8));
   assert.ok(close(end.t, timeToStop(params)));
+});
+
+test("rising mass stays below the pulley when travel is long", () => {
+  const params = { ...DEFAULT_ATWOOD, travel: 0.8 };
+  const end = sampleAt(params, timeToStop(params));
+  const pos = hangingPositions(params, end, "classic");
+  assert.ok(pos.A[1] < pos.pulleyY - pos.pulleyR);
+  assert.ok(pos.B[1] < pos.pulleyY - pos.pulleyR);
+  assert.ok(pos.A[1] > 0.08);
+  assert.ok(pos.B[1] > 0.08);
+  const start = hangingPositions(params, sampleAt(params, 0), "classic");
+  assert.ok(start.hang0 > hangingPositions({ ...params, travel: 0.3 }, sampleAt({ ...params, travel: 0.3 }, 0), "classic").hang0);
+});
+
+test("modified cart stays on the table side of the pulley", () => {
+  const params = { ...DEFAULT_ATWOOD, travel: 1.2 };
+  const start = hangingPositions(params, sampleAt(params, 0, "modified"), "modified");
+  const end = hangingPositions(params, sampleAt(params, timeToStop(params, "modified"), "modified"), "modified");
+  assert.ok(start.A[0] < -params.travel);
+  assert.ok(end.A[0] < 0);
+  assert.ok(end.B[1] < end.pulleyY - end.pulleyR);
 });
 
 test("massive pulley slows Atwood by adding I/R² to the inertia", () => {

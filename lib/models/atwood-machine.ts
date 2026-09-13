@@ -124,6 +124,68 @@ export function timeToStop(params: AtwoodParams, mode: AtwoodMode = "classic") {
   return Math.sqrt((2 * params.travel) / a);
 }
 
+export function lightMass(params: AtwoodParams): "A" | "B" {
+  return params.m1 <= params.m2 ? "A" : "B";
+}
+
+export function atwoodGeometry(params: AtwoodParams, mode: AtwoodMode = "classic") {
+  const pulleyR = params.Rp ?? 0.12;
+  const travel = Math.max(0.05, params.travel);
+  if (mode === "modified") {
+    const hang0 = 0.28;
+    const tableY = travel + hang0 + 0.2;
+    const cart0 = -(travel + 0.4);
+    return { pulleyY: tableY, pulleyR, hang0, tableY, cart0 };
+  }
+  const hang0 = travel + 0.38;
+  const pulleyY = hang0 + travel + 0.34;
+  return { pulleyY, pulleyR, hang0, tableY: 0, cart0: 0 };
+}
+
+export function hangingPositions(
+  params: AtwoodParams,
+  sample: AtwoodSample,
+  mode: AtwoodMode = "classic",
+) {
+  const geo = atwoodGeometry(params, mode);
+  if (mode === "modified") {
+    const cartX = geo.cart0 + sample.s;
+    return {
+      ...geo,
+      A: [cartX, geo.tableY + 0.06, 0] as [number, number, number],
+      B: [geo.pulleyR, geo.pulleyY - geo.hang0 + sample.y2, 0] as [number, number, number],
+    };
+  }
+  return {
+    ...geo,
+    A: [-geo.pulleyR, geo.pulleyY - geo.hang0 + sample.y1, 0] as [number, number, number],
+    B: [geo.pulleyR, geo.pulleyY - geo.hang0 + sample.y2, 0] as [number, number, number],
+  };
+}
+
+export function lightKinematics(params: AtwoodParams, sample: AtwoodSample) {
+  const id = lightMass(params);
+  if (id === "A") {
+    return {
+      id,
+      s: sample.y1,
+      v: -sample.v1,
+      a: sample.a,
+      T: sample.T1,
+      m: params.m1,
+      mg: params.m1 * params.g,
+    };
+  }
+  return {
+    id,
+    s: sample.y2,
+    v: -sample.v2,
+    a: -sample.a,
+    T: sample.T,
+    m: params.m2,
+    mg: params.m2 * params.g,
+  };
+}
 export function sampleAt(params: AtwoodParams, t: number, mode: AtwoodMode = "classic"): AtwoodSample {
   const tEnd = timeToStop(params, mode);
   const tc = Number.isFinite(tEnd) ? Math.min(Math.max(0, t), tEnd) : Math.max(0, t);

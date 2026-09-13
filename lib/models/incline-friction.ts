@@ -27,6 +27,13 @@ export type InclineSample = {
   onPlane: boolean;
   landed: boolean;
   frictionKind: FrictionKind;
+  mg: number;
+  mgParallel: number;
+  mgPerp: number;
+  K: number;
+  U: number;
+  E: number;
+  Wf: number;
 };
 
 export const DEFAULT_INCLINE: InclineParams = {
@@ -181,6 +188,36 @@ export function blockPlacement(
   };
 }
 
+function energyFields(
+  params: InclineParams,
+  v: number,
+  y: number,
+  sRamp: number,
+  sPlane: number,
+  onPlane: boolean,
+  sliding: boolean,
+) {
+  const K = 0.5 * params.m * v * v;
+  const U = params.m * params.g * Math.max(0, y - SURFACE_Y);
+  const muK = clampMuK(params.muS, params.muK);
+  const WRamp = stuck(params) ? 0 : -muK * rampNormalForce(params) * sRamp;
+  const WPlane = onPlane && (sliding || sPlane > 0) ? -muK * planeNormalForce(params) * sPlane : 0;
+  return { K, U, E: K + U, Wf: WRamp + WPlane };
+}
+
+function gravityFields(params: InclineParams, onPlane: boolean) {
+  const mg = params.m * params.g;
+  const theta = thetaRad(params);
+  if (onPlane) {
+    return { mg, mgParallel: 0, mgPerp: mg };
+  }
+  return {
+    mg,
+    mgParallel: mg * Math.sin(theta),
+    mgPerp: mg * Math.cos(theta),
+  };
+}
+
 export function sampleAt(params: InclineParams, t: number): InclineSample {
   const aRamp = acceleration(params);
   const isStuck = stuck(params);
@@ -192,6 +229,8 @@ export function sampleAt(params: InclineParams, t: number): InclineSample {
 
   if (isStuck) {
     const top = surfaceAt(params, 0);
+    const energy = energyFields(params, 0, top[1], 0, 0, false, false);
+    const gravity = gravityFields(params, false);
     return {
       t: time,
       s: 0,
@@ -209,6 +248,8 @@ export function sampleAt(params: InclineParams, t: number): InclineSample {
       onPlane: false,
       landed: false,
       frictionKind: "static",
+      ...gravity,
+      ...energy,
     };
   }
 
@@ -217,6 +258,8 @@ export function sampleAt(params: InclineParams, t: number): InclineSample {
     const sRamp = 0.5 * aRamp * tc * tc;
     const v = aRamp * tc;
     const point = surfaceAt(params, sRamp);
+    const energy = energyFields(params, v, point[1], sRamp, 0, false, true);
+    const gravity = gravityFields(params, false);
     return {
       t: time,
       s: sRamp,
@@ -234,6 +277,8 @@ export function sampleAt(params: InclineParams, t: number): InclineSample {
       onPlane: false,
       landed: false,
       frictionKind: "kinetic",
+      ...gravity,
+      ...energy,
     };
   }
 
@@ -244,6 +289,8 @@ export function sampleAt(params: InclineParams, t: number): InclineSample {
   const finished = Number.isFinite(tEnd) && time >= tEnd - 1e-9;
   const sliding = !finished;
   const v = sliding ? Math.max(0, v0 + aFlat * tFlat) : 0;
+  const energy = energyFields(params, v, SURFACE_Y, params.travel, sPlane, true, sliding);
+  const gravity = gravityFields(params, true);
   return {
     t: time,
     s: params.travel + sPlane,
@@ -261,5 +308,7 @@ export function sampleAt(params: InclineParams, t: number): InclineSample {
     onPlane: true,
     landed: finished,
     frictionKind: sliding ? "kinetic" : "static",
+    ...gravity,
+    ...energy,
   };
 }

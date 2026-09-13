@@ -3,6 +3,7 @@ export type ProjectileParams = {
   thetaDeg: number;
   h: number;
   g: number;
+  m?: number;
 };
 
 export type ProjectileSample = {
@@ -11,7 +12,16 @@ export type ProjectileSample = {
   y: number;
   vx: number;
   vy: number;
+  K: number;
+  U: number;
+  E: number;
 };
+
+export const DEFAULT_PROJECTILE_MASS = 0.2;
+
+export function projectileMass(params: ProjectileParams) {
+  return params.m ?? DEFAULT_PROJECTILE_MASS;
+}
 
 export type ViewExtent = { extentX: number; extentY: number; scale: number };
 
@@ -52,12 +62,21 @@ export function sampleAt(params: ProjectileParams, t: number): ProjectileSample 
   const clamped = Math.min(tLand, Math.max(0, t));
   const { vx0, vy0 } = launchComponents(params);
   const y = params.h + vy0 * clamped - 0.5 * params.g * clamped * clamped;
+  const vx = vx0;
+  const vy = vy0 - params.g * clamped;
+  const height = clamped >= tLand ? 0 : Math.max(0, y);
+  const mass = projectileMass(params);
+  const K = 0.5 * mass * (vx * vx + vy * vy);
+  const U = mass * params.g * height;
   return {
     t: clamped,
     x: vx0 * clamped,
-    y: clamped >= tLand ? 0 : Math.max(0, y),
-    vx: vx0,
-    vy: vy0 - params.g * clamped,
+    y: height,
+    vx,
+    vy,
+    K,
+    U,
+    E: K + U,
   };
 }
 

@@ -5,6 +5,9 @@ export type ReadySlug =
   | "incline-friction"
   | "atwood-machine"
   | "circular-motion"
+  | "conical-pendulum"
+  | "horizontal-circular"
+  | "vertical-circular"
   | "conservation-of-energy"
   | "impulse-momentum"
   | "torque-equilibrium"
@@ -209,15 +212,37 @@ export const EXPERIMENTS: readonly ExperimentEntry[] = [
     summary: "经典双吊、桌上滑车，或计入滑轮转动惯量 I = ½MR²。",
   },
   {
-    slug: "circular-motion",
-    title: "圆周运动",
+    slug: "conical-pendulum",
+    title: "圆锥摆",
     formula: "T = 2π√(L cosθ / g)",
     course: "p1",
     courses: P1_AND_C,
     unit: "Unit 2 力与平动动力学",
     preview: "circular",
     status: "ready",
-    summary: "圆锥摆、水平圆周或竖直圆周：比较周期、绳力和过顶条件。",
+    summary: "给定摆长、张角与水平切向速度，观察圆锥摆周期与受力。",
+  },
+  {
+    slug: "horizontal-circular",
+    title: "水平圆周",
+    formula: "Fc = mv² / r",
+    course: "p1",
+    courses: P1_AND_C,
+    unit: "Unit 2 力与平动动力学",
+    preview: "circular",
+    status: "ready",
+    summary: "水平面上的匀速圆周：向心力、绳张力与周期逐步计算。",
+  },
+  {
+    slug: "vertical-circular",
+    title: "竖直圆周",
+    formula: "v² = v₀² − 2gR(1−cosφ)",
+    course: "p1",
+    courses: P1_AND_C,
+    unit: "Unit 2 力与平动动力学",
+    preview: "circular",
+    status: "ready",
+    summary: "竖直圆周：过顶或能量不足时在圆弧上摆荡，并给出受力。",
   },
   {
     slug: "conservation-of-energy",

@@ -95,6 +95,32 @@ export function InclineFrictionScene({
         unit="N"
         scale={0.7}
       />
+      {onRamp ? (
+        <>
+          <VectorArrow
+            origin={body}
+            vector={[Math.cos(theta) * sample.mgParallel, -Math.sin(theta) * sample.mgParallel, 0]}
+            value={sample.mgParallel}
+            unitLength={0.04}
+            color={FORCE_COLORS.G}
+            label="mg∥"
+            unit="N"
+            dashed
+            scale={0.7}
+          />
+          <VectorArrow
+            origin={body}
+            vector={[-Math.sin(theta) * sample.mgPerp, -Math.cos(theta) * sample.mgPerp, 0]}
+            value={sample.mgPerp}
+            unitLength={0.04}
+            color={FORCE_COLORS.G}
+            label="mg⊥"
+            unit="N"
+            dashed
+            scale={0.7}
+          />
+        </>
+      ) : null}
       <ForceWithXY
         origin={body}
         vector={nVec}
@@ -116,14 +142,14 @@ export function InclineFrictionScene({
       <SpriteLabel
         text={
           sample.stuck
-            ? "静止　静摩擦平衡"
+            ? "静止　fs = mg∥"
             : sample.landed
               ? sample.sPlane >= params.plane - 1e-6
                 ? "到达平面尽头"
-                : "平面上停下"
+                : "平面上停下　fk → 0"
               : sample.onPlane
-                ? `fk　a = ${formatLabNumber(sample.a)} m/s²`
-                : `fk　a = ${formatLabNumber(sample.a)} m/s²`
+                ? `平面 fk = μk mg　a = ${formatLabNumber(sample.a)} m/s²`
+                : `斜面 fk = μk mg cosθ　a = ${formatLabNumber(sample.a)} m/s²`
         }
         color="#1e3a5f"
         position={[body[0], body[1] + BLOCK_HEIGHT / 2 + 0.16, 0]}

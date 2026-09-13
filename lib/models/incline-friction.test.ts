@@ -133,3 +133,15 @@ test("on the ramp the cube underside rests on the slope", () => {
   assert.ok(close(contactX, surface[0], 1e-8));
   assert.ok(close(contactY, surface[1], 1e-8));
 });
+
+test("ramp samples carry gravity components and mechanical energy", () => {
+  const params = { m: 2, thetaDeg: 30, muS: 0.4, muK: 0.3, g: 10, travel: 0.8, plane: 1 };
+  const mid = sampleAt(params, timeToBottom(params) * 0.4);
+  const theta = Math.PI / 6;
+  assert.ok(close(mid.mg, 20));
+  assert.ok(close(mid.mgParallel, 20 * Math.sin(theta)));
+  assert.ok(close(mid.mgPerp, 20 * Math.cos(theta)));
+  assert.ok(close(mid.K, 0.5 * 2 * mid.v * mid.v, 1e-6));
+  assert.ok(mid.U > 0);
+  assert.ok(mid.Wf < 0);
+});

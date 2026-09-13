@@ -114,15 +114,24 @@ export function InclineFrictionLab() {
       ))}
       formula={
         <>
-          <p className="text-quiet">静止 tanθ ≤ μs　滑动后拆成水平 / 竖直</p>
-          <p>斜面 a = g(sinθ − μk cosθ) = {n(a)} m/s²</p>
-          <p>ax = {n(sample.ax)} m/s²　ay = {n(sample.ay)} m/s²</p>
+          <p className="text-quiet">重力 mg 竖直向下，斜面上分解为 mg∥、mg⊥。</p>
+          <p>mg = {n(sample.mg)} N</p>
+          <p>斜面 mg∥ = mg sinθ = {n(sample.onPlane ? params.m * params.g * Math.sin((params.thetaDeg * Math.PI) / 180) : sample.mgParallel)} N</p>
+          <p>斜面 mg⊥ = mg cosθ = {n(sample.onPlane ? params.m * params.g * Math.cos((params.thetaDeg * Math.PI) / 180) : sample.mgPerp)} N</p>
+          <p>斜面 N = mg⊥　fk = μk N = μk mg cosθ</p>
+          <p>平面 N = mg　fk = μk mg</p>
           <p>
-            N = {n(sample.N)} N, {frictionForceLabel(sample.frictionKind)} = {n(sample.f)} N
+            当前 {sample.onPlane ? "平面" : "斜面"}：N = {n(sample.N)} N，
+            {frictionForceLabel(sample.frictionKind)} = {n(sample.f)} N
           </p>
+          <p>斜面 a = g(sinθ − μk cosθ) = {n(a)} m/s²　平面 a = −μk g = {n(aFlat)} m/s²</p>
           <p className="text-navy">
+            K = {n(sample.K)} J　U = {n(sample.U)} J　E = {n(sample.E)} J
+          </p>
+          <p>摩擦做功 Wf = {n(sample.Wf)} J，机械能减少。</p>
+          <p>
             {isStuck
-              ? `${frictionForceTitle("static")}，a = 0.00`
+              ? `${frictionForceTitle("static")} 平衡 mg∥，a = 0.00`
               : sample.onPlane
                 ? `${frictionForceTitle(sample.frictionKind)}　平面 a = ${n(sample.a)} m/s²`
                 : `${frictionForceTitle(sample.frictionKind)}　斜面 a = ${n(sample.a)} m/s²`}
@@ -130,24 +139,24 @@ export function InclineFrictionLab() {
         </>
       }
       sceneTitle="斜面与平面"
-      sceneCaption="实线 mg / N / f　虚线水平 / 竖直分量　拖动旋转"
+      sceneCaption="实线 mg / N / f　虚线 mg∥ / mg⊥　拖动旋转"
       scene={
         <SceneCanvas camera={[1.8, 0.95, 2.8]} fov={42}>
           <InclineFrictionScene params={params} sample={sample} />
         </SceneCanvas>
       }
       readouts={[
-        { label: "ax", value: n(sample.ax), unit: "m/s²" },
-        { label: "ay", value: n(sample.ay), unit: "m/s²" },
+        { label: "K", value: n(sample.K), unit: "J" },
+        { label: "E", value: n(sample.E), unit: "J" },
         { label: "N", value: n(sample.N), unit: "N" },
         { label: frictionForceLabel(sample.frictionKind), value: n(sample.f), unit: "N" },
       ]}
       charts={
         <>
           <TimeSeriesChart title="沿程位移" quantity="s" unit="m" strokeColor="#1E3A5F" valueKey="s" points={series} currentTime={time} currentValue={sample.s} />
-          <TimeSeriesChart title="速率" quantity="v" unit="m/s" strokeColor="#A16207" valueKey="v" points={series} currentTime={time} currentValue={sample.v} />
-          <TimeSeriesChart title="加速度" quantity="a" unit="m/s²" strokeColor="#2563EB" valueKey="a" points={series} currentTime={time} currentValue={sample.a} />
-          <TimeSeriesChart title={frictionForceTitle(sample.frictionKind)} quantity="f" unit="N" strokeColor="#6D28D9" valueKey="f" points={series} currentTime={time} currentValue={sample.f} />
+          <TimeSeriesChart title={frictionForceTitle(sample.frictionKind)} quantity="f" unit="N" strokeColor="#B45309" valueKey="f" points={series} currentTime={time} currentValue={sample.f} />
+          <TimeSeriesChart title="动能" quantity="K" unit="J" strokeColor="#A16207" valueKey="K" points={series} currentTime={time} currentValue={sample.K} />
+          <TimeSeriesChart title="机械能" quantity="E" unit="J" strokeColor="#6D28D9" valueKey="E" points={series} currentTime={time} currentValue={sample.E} />
         </>
       }
     />

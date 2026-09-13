@@ -30,6 +30,7 @@ export function LabFrame({
   stats,
   status,
   statusError = false,
+  statusOk = false,
   isPlaying,
   time,
   startDisabled = false,
@@ -51,6 +52,7 @@ export function LabFrame({
   stats: { label: string; value: string; unit: string }[];
   status: string;
   statusError?: boolean;
+  statusOk?: boolean;
   isPlaying: boolean;
   time: number;
   startDisabled?: boolean;
@@ -94,7 +96,9 @@ export function LabFrame({
         </div>
         <p
           role="status"
-          className={`min-w-0 truncate text-xs ${statusError ? "text-red-700" : "text-quiet"}`}
+          className={`min-w-0 truncate text-xs ${
+            statusOk ? "text-emerald-700" : statusError ? "text-red-700" : "text-quiet"
+          }`}
           title={status}
         >
           {status}

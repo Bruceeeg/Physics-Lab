@@ -40,6 +40,7 @@ export function ExperimentCard({
   previewsPaused: boolean;
 }) {
   const mediaRef = useRef<HTMLDivElement>(null);
+  const faceRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(true);
   const [reduceMotion, setReduceMotion] = useState(false);
   const ready = isReadyExperiment(experiment);
@@ -65,15 +66,39 @@ export function ExperimentCard({
     return () => observer.disconnect();
   }, []);
 
+  const resetTilt = () => {
+    const face = faceRef.current;
+    if (!face) {
+      return;
+    }
+    face.style.setProperty("--rx", "0deg");
+    face.style.setProperty("--ry", "0deg");
+    face.style.setProperty("--tz", "0px");
+  };
+
+  const tiltFace = (event: { clientX: number; clientY: number }) => {
+    const face = faceRef.current;
+    if (!face || reduceMotion) {
+      return;
+    }
+    const box = face.getBoundingClientRect();
+    if (box.width < 8 || box.height < 8) {
+      return;
+    }
+    const px = (event.clientX - box.left) / box.width - 0.5;
+    const py = (event.clientY - box.top) / box.height - 0.5;
+    face.style.setProperty("--rx", `${(-py * 11).toFixed(2)}deg`);
+    face.style.setProperty("--ry", `${(px * 14).toFixed(2)}deg`);
+    face.style.setProperty("--tz", "10px");
+  };
+
   const running = visible && !previewsPaused && !reduceMotion;
 
   const media = (
     <div
       ref={mediaRef}
-      className={`relative aspect-[16/10] overflow-hidden rounded-[14px] border bg-muted ${
-        ready
-          ? "border-line transition-colors duration-200 group-hover:border-navy"
-          : "border-line"
+      className={`relative aspect-[16/10] overflow-hidden rounded-[12px] border bg-muted ${
+        ready ? "border-line" : "border-line"
       }`}
     >
       <div className={ready ? "h-full w-full" : "h-full w-full opacity-40 grayscale"}>
@@ -89,34 +114,35 @@ export function ExperimentCard({
 
   const caption = (
     <>
-      <h3 className={`mt-2.5 text-sm font-medium ${ready ? "text-ink" : "text-quiet"}`}>
+      <h3 className={`mt-2.5 px-0.5 text-sm font-medium ${ready ? "text-ink" : "text-quiet"}`}>
         {experiment.title}
       </h3>
-      <p className="mt-1 font-mono text-xs text-quiet">{experiment.formula}</p>
+      <p className="mt-1 px-0.5 font-mono text-xs text-quiet">{experiment.formula}</p>
     </>
   );
 
-  if (!ready) {
-    return (
-      <article className="relative" aria-disabled="true">
-        <div className="relative">{media}</div>
-        {caption}
-      </article>
-    );
-  }
-
   return (
-    <article className="group relative">
-      <Link
-        href={experimentHref(experiment.slug)}
-        className="absolute inset-0 z-10 cursor-pointer rounded-[14px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-navy"
-      >
-        <span className="sr-only">
-          {experiment.title}，{experiment.formula}
-        </span>
-      </Link>
-      {media}
-      {caption}
+    <article
+      className={`catalog-card-3d relative ${ready ? "is-ready" : "is-pending"}`}
+      aria-disabled={ready ? undefined : "true"}
+      onPointerMove={tiltFace}
+      onPointerLeave={resetTilt}
+      onPointerCancel={resetTilt}
+    >
+      <div ref={faceRef} className="catalog-card-3d__face rounded-[16px]">
+        {ready ? (
+          <Link
+            href={experimentHref(experiment.slug)}
+            className="absolute inset-0 z-10 cursor-pointer rounded-[16px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-navy"
+          >
+            <span className="sr-only">
+              {experiment.title}，{experiment.formula}
+            </span>
+          </Link>
+        ) : null}
+        {media}
+        {caption}
+      </div>
     </article>
   );
 }
