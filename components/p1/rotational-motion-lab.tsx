@@ -12,9 +12,11 @@ import {
   DEFAULT_ROLLING,
   ROLLING_SHAPES,
   kappa,
+  launchRange,
   sampleAt,
   speedAtBottom,
   timeToBottom,
+  timeToFloor,
   type RollingContact,
   type RollingParams,
   type RollingShape,
@@ -23,7 +25,7 @@ import {
 const SceneCanvas = dynamic(() => import("@/components/lab-canvas"), { ssr: false });
 
 const PARAMETER_DEFINITIONS: {
-  key: Exclude<keyof RollingParams, "shape" | "contact">;
+  key: Exclude<keyof RollingParams, "shape" | "contact" | "tableH">;
   label: string;
   symbol: string;
   unit: string;
@@ -44,7 +46,10 @@ export function RotationalMotionLab() {
     const next = sampleAt(params, t);
     return { sample: next, point: [next.x, next.y + params.r, 0] as [number, number, number] };
   }, [params]);
-  const getLimit = useCallback(() => timeToBottom(params), [params]);
+  const getLimit = useCallback(
+    () => ((params.contact ?? "roll") === "launch" ? timeToFloor(params) : timeToBottom(params)),
+    [params],
+  );
   const { time, isPlaying, start, pause, reset, sample, series, trail } = useLabPlayback(
     compute,
     getLimit,
@@ -52,6 +57,7 @@ export function RotationalMotionLab() {
   const n = formatLabNumber;
   const vBottom = speedAtBottom(params);
   const sliding = (params.contact ?? "roll") === "slide";
+  const launch = (params.contact ?? "roll") === "launch";
 
   const apply = (patch: Partial<RollingParams>) => {
     reset();
@@ -68,6 +74,7 @@ export function RotationalMotionLab() {
           options={[
             { id: "roll" as const, label: "无滑滚动" },
             { id: "slide" as const, label: "无摩擦滑动" },
+            { id: "launch" as const, label: "滚出平抛" },
           ]}
           onChange={(contact: RollingContact) => apply({ contact })}
         />
@@ -78,8 +85,12 @@ export function RotationalMotionLab() {
         { label: "角速度 ω", value: n(sample.omega), unit: "rad/s" },
       ]}
       status={
-        sample.landed
+        sample.airborne
+          ? `离开桌面后平抛，ω 保持 ${n(sample.omega)} rad/s。射程 D = v√(2H/g) = ${n(launchRange(params))} m。`
+          : sample.landed
           ? `已到达底端，v = ${n(vBottom)} m/s。圆环最慢，实心球最快。`
+          : launch
+            ? `先无滑滚到桌沿，再平抛。离开时 v = ${n(vBottom)} m/s，射程 D = v√(2H/g) = ${n(launchRange(params))} m。`
           : sliding
             ? `无摩擦滑动，底端 v = √(2gh) = ${n(vBottom)} m/s，比滚动更快。`
             : `无滑滚动，底端 v = √(2mgh / (m + I/r²)) = ${n(vBottom)} m/s。`
@@ -112,6 +123,19 @@ export function RotationalMotionLab() {
               onChange={(value) => apply({ [item.key]: value })}
             />
           ))}
+          {launch ? (
+            <ParameterControl
+              id="tableH"
+              label="桌面高度"
+              symbol="H"
+              unit="m"
+              value={params.tableH ?? 0.75}
+              min={0.3}
+              max={1.4}
+              step={0.02}
+              onChange={(value) => apply({ tableH: value })}
+            />
+          ) : null}
         </>
       }
       formula={
@@ -121,6 +145,7 @@ export function RotationalMotionLab() {
           <p>κ = I/(mr²) = {n(kappa(params.shape))}</p>
           <p>ax = {n(sample.ax)} m/s²　ay = {n(sample.ay)} m/s²</p>
           <p className="text-navy">v_底 = {n(vBottom)} m/s</p>
+          {launch ? <p>平抛射程 D = {n(launchRange(params))} m</p> : null}
           <p>K平 + K转 = {n(sample.Ktrans + sample.Krot)} J</p>
         </>
       }

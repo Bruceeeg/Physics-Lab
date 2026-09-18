@@ -4,9 +4,11 @@ import { test } from "node:test";
 import {
   accel,
   kappa,
+  launchRange,
   sampleAt,
   speedAtBottom,
   timeToBottom,
+  timeToFloor,
 } from "./rotational-motion.ts";
 
 const close = (a: number, b: number, eps = 1e-9) => Math.abs(a - b) < eps;
@@ -61,6 +63,28 @@ test("translational plus rotational KE equals the lost gravitational PE", () => 
   const end = sampleAt(params, timeToBottom(params));
   assert.ok(close(start.E, end.E, 1e-8));
   assert.ok(close(end.Ktrans + end.Krot, start.Ug - end.Ug, 1e-8));
+});
+
+test("rolling then launching keeps ω and range v √(2H/g)", () => {
+  const params = {
+    shape: "disk" as const,
+    m: 0.5,
+    r: 0.1,
+    h: 0.45,
+    thetaDeg: 30,
+    g: 10,
+    contact: "launch" as const,
+    tableH: 0.8,
+  };
+  const v = speedAtBottom(params);
+  const D = v * Math.sqrt(0.16);
+  assert.ok(close(launchRange(params), D));
+  const fly = sampleAt(params, timeToBottom(params) + 0.1);
+  assert.equal(fly.airborne, true);
+  assert.ok(close(fly.omega, v / params.r));
+  const land = sampleAt(params, timeToFloor(params) + 1);
+  assert.equal(land.landed, true);
+  assert.ok(land.y < 0.02);
 });
 
 test("rolling uses static friction and splits acceleration in the lab frame", () => {

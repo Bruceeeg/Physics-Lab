@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { CanvasTexture, SRGBColorSpace } from "three";
 
 // Single-line sprite label rasterised to a canvas texture. Same halo treatment
 // as the pull-friction force labels: paper-coloured glyph stroke, no pill.
-const SCALE = 4;
+const SCALE = 8;
 const FALLBACK_FONT = "ui-monospace, Menlo, monospace";
 const HALO_OUTER = "#e2e8f0";
 const HALO_INNER = "#f1f5f9";
+
+export const LabelScaleContext = createContext(1);
 
 type Vec3 = [number, number, number];
 
@@ -74,7 +76,7 @@ function rasterLabel(text: string, color: string, family: string) {
 
   const texture = new CanvasTexture(canvas);
   texture.colorSpace = SRGBColorSpace;
-  texture.anisotropy = 1;
+  texture.anisotropy = 8;
   return { texture, aspect: canvas.width / canvas.height };
 }
 
@@ -91,6 +93,8 @@ export function SpriteLabel({
   height?: number;
   renderOrder?: number;
 }) {
+  const labelScale = useContext(LabelScaleContext);
+  const worldHeight = height * labelScale;
   const fontsReady = useFontsReady();
   const family = fontsReady ? labelFontFamily() : FALLBACK_FONT;
   const raster = useMemo(() => rasterLabel(text, color, family), [text, color, family]);
@@ -99,7 +103,7 @@ export function SpriteLabel({
   return (
     <sprite
       position={position}
-      scale={[height * raster.aspect, height, 1]}
+      scale={[worldHeight * raster.aspect, worldHeight, 1]}
       renderOrder={renderOrder}
       frustumCulled={false}
     >

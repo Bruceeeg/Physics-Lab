@@ -1,4 +1,6 @@
-export type AngMomMode = "drop" | "skater";
+import { integrateMotion } from "./rk4.ts";
+
+export type AngMomMode = "drop" | "skater" | "rod";
 
 export type AngMomParams = {
   M: number;
@@ -19,6 +21,9 @@ export type AngMomSample = {
   I: number;
   L: number;
   stuck: boolean;
+  x: number;
+  v: number;
+  theta: number;
 };
 
 export const DEFAULT_ANGMOM: AngMomParams = {
@@ -56,7 +61,63 @@ export function skaterI2(params: AngMomParams) {
   return IDisk(params) * Math.min(1, Math.max(0.2, params.IScale ?? 0.45));
 }
 
+export function rodInertia(params: AngMomParams) {
+  return (params.M * params.R * params.R) / 3;
+}
+
+export function rodImpactSpeed(params: AngMomParams) {
+  return Math.sqrt((3 * params.g) / params.R);
+}
+
+export function rodHitTime(params: AngMomParams) {
+  const I = rodInertia(params);
+  const coeff = (params.M * params.g * params.R) / (2 * I);
+  const state = integrateMotion(Math.PI / 2, 0, 8, (theta) => -coeff * Math.sin(theta), 0.002, (theta) => theta <= 0);
+  return state.t;
+}
+
+export function sphereSpeedAfterRod(params: AngMomParams) {
+  const omega = rodImpactSpeed(params);
+  return (rodInertia(params) * omega) / (params.m * params.R);
+}
+
 export function sampleAt(params: AngMomParams, t: number, mode: AngMomMode = "drop"): AngMomSample {
+  if (mode === "rod") {
+    const time = Math.max(0, t);
+    const I = rodInertia(params);
+    const tHit = rodHitTime(params);
+    const omegaHit = rodImpactSpeed(params);
+    const vBall = sphereSpeedAfterRod(params);
+    if (time < tHit) {
+      const coeff = (params.M * params.g * params.R) / (2 * I);
+      const state = integrateMotion(Math.PI / 2, 0, time, (theta) => -coeff * Math.sin(theta), 0.002, (theta) => theta <= 0);
+      return {
+        t: time,
+        y: 0,
+        phi: state.x,
+        omega: state.v,
+        I,
+        L: I * state.v,
+        stuck: false,
+        x: params.R,
+        v: 0,
+        theta: state.x,
+      };
+    }
+    const tau = time - tHit;
+    return {
+      t: time,
+      y: 0,
+      phi: 0,
+      omega: 0,
+      I,
+      L: 0,
+      stuck: true,
+      x: params.R - vBall * tau,
+      v: -vBall,
+      theta: 0,
+    };
+  }
   if (mode === "skater") {
     const time = Math.max(0, t);
     const I1 = IDisk(params);
@@ -76,6 +137,9 @@ export function sampleAt(params: AngMomParams, t: number, mode: AngMomMode = "dr
       I,
       L: I1 * params.omega0,
       stuck: pulled,
+      x: 0,
+      v: 0,
+      theta: 0,
     };
   }
   const time = Math.max(0, t);
@@ -95,5 +159,8 @@ export function sampleAt(params: AngMomParams, t: number, mode: AngMomMode = "dr
     I,
     L: IDisk(params) * params.omega0,
     stuck,
+    x: 0,
+    v: 0,
+    theta: 0,
   };
 }

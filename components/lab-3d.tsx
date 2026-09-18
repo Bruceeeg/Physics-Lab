@@ -1,7 +1,15 @@
 "use client";
 
 import { Grid, Line, OrbitControls } from "@react-three/drei";
-import { memo, useEffect, useLayoutEffect, useMemo } from "react";
+import {
+  createContext,
+  memo,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  type ReactNode,
+} from "react";
 import {
   BufferAttribute,
   BufferGeometry,
@@ -36,6 +44,16 @@ import { FORCE_COLORS } from "@/lib/models/force-display";
 import { DISPLAY_EPS, formatLabNumber } from "@/lib/models/lab-format";
 
 type Vec3 = [number, number, number];
+
+const LabControlsContext = createContext(true);
+
+export function LabPreviewMode({ children }: { children: ReactNode }) {
+  return <LabControlsContext.Provider value={false}>{children}</LabControlsContext.Provider>;
+}
+
+export function useLabControlsEnabled() {
+  return useContext(LabControlsContext);
+}
 
 const UP = new Vector3(0, 1, 0);
 const TRAIL_MAX_POINTS = 400;
@@ -76,6 +94,10 @@ export function LabOrbit({
   minDistance?: number;
   maxDistance?: number;
 }) {
+  const enabled = useLabControlsEnabled();
+  if (!enabled) {
+    return null;
+  }
   return (
     <OrbitControls
       makeDefault

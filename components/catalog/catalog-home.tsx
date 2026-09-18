@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 
 import { ExperimentCard } from "@/components/catalog/experiment-card";
+import { PreviewHost } from "@/components/catalog/previews/preview-3d";
 import { SiteHeader } from "@/components/catalog/site-header";
 import {
   clusterByCEmUnit,
@@ -49,7 +50,8 @@ export function CatalogHome() {
   const groups = useMemo(() => listCatalogGroups(course), [course]);
 
   return (
-    <div className="min-h-[100dvh] bg-paper text-ink">
+    <PreviewHost>
+      <div className="min-h-[100dvh] bg-paper text-ink">
       <SiteHeader
         previewPaused={previewPaused}
         onTogglePreview={() => setPreviewPaused((value) => !value)}
@@ -103,7 +105,7 @@ export function CatalogHome() {
               : group.course === "p2"
                 ? "选择题占比见各单元。本课程含电路、电场、波动与近代物理，不含流体。"
                 : group.course === "c-mech"
-                  ? "选择题占比见各单元。与 Physics 1 重合的力学实验已开放，并补上滑轮惯量、转动惯量、τ = Iα、弹道摆与复摆。不含流体。"
+                  ? "选择题占比见各单元。与 Physics 1 重合的力学实验已开放，并补上变力积分、阻力微分方程、圆环轨道、非均匀杆、扭摆与斜面阿特伍德。不含流体。"
                   : "选择题占比见各单元。与 Physics 2 重合的电学实验已开放，并补上高斯定理、库仑悬挂、等势线、电容、螺线管与 RL。不含光学与近代物理。";
           return (
             <section key={group.course} className="mb-14" aria-labelledby={`course-${group.course}`}>
@@ -139,6 +141,7 @@ export function CatalogHome() {
           );
         })}
       </main>
-    </div>
+      </div>
+    </PreviewHost>
   );
 }

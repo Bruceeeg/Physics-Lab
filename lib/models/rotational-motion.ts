@@ -2,7 +2,7 @@ import type { FrictionKind } from "./lab-format.ts";
 
 export type RollingShape = "disk" | "hoop" | "solid-sphere" | "hollow-sphere";
 
-export type RollingContact = "roll" | "slide";
+export type RollingContact = "roll" | "slide" | "launch";
 
 export type RollingParams = {
   shape: RollingShape;
@@ -12,6 +12,7 @@ export type RollingParams = {
   thetaDeg: number;
   g: number;
   contact?: RollingContact;
+  tableH?: number;
 };
 
 export type RollingSample = {
@@ -31,6 +32,7 @@ export type RollingSample = {
   ay: number;
   frictionKind: FrictionKind;
   landed: boolean;
+  airborne: boolean;
 };
 
 export const ROLLING_SHAPES: readonly { id: RollingShape; label: string; kappa: number }[] = [
@@ -47,6 +49,7 @@ export const DEFAULT_ROLLING: RollingParams = {
   h: 0.6,
   thetaDeg: 25,
   g: 9.81,
+  tableH: 0.75,
 };
 
 export function kappa(shape: RollingShape) {
@@ -89,6 +92,22 @@ export function timeToBottom(params: RollingParams) {
   return Math.sqrt((2 * s) / a);
 }
 
+export function tableHeight(params: RollingParams) {
+  return params.tableH ?? 0.75;
+}
+
+export function launchRange(params: RollingParams) {
+  const v = speedAtBottom(params);
+  const H = tableHeight(params);
+  return params.g > 0 ? v * Math.sqrt((2 * H) / params.g) : 0;
+}
+
+export function timeToFloor(params: RollingParams) {
+  const H = tableHeight(params);
+  const air = params.g > 0 ? Math.sqrt((2 * H) / params.g) : Number.POSITIVE_INFINITY;
+  return timeToBottom(params) + air;
+}
+
 export function speedAtBottom(params: RollingParams) {
   if ((params.contact ?? "roll") === "slide") {
     return Math.sqrt(2 * params.g * params.h);
@@ -98,6 +117,44 @@ export function speedAtBottom(params: RollingParams) {
 
 export function sampleAt(params: RollingParams, t: number): RollingSample {
   const tEnd = timeToBottom(params);
+  const launch = (params.contact ?? "roll") === "launch";
+  const time = Math.max(0, t);
+  if (launch && Number.isFinite(tEnd) && time > tEnd) {
+    const H = tableHeight(params);
+    const v = speedAtBottom(params);
+    const air = time - tEnd;
+    const x0 = pathLength(params) * Math.cos((params.thetaDeg * Math.PI) / 180);
+    const y = H - 0.5 * params.g * air * air;
+    const floor = y <= 0;
+    const yAir = floor ? 0 : y;
+    const x = x0 + v * (floor ? Math.sqrt((2 * H) / params.g) : air);
+    const vy = floor ? 0 : -params.g * air;
+    const speed = floor ? 0 : Math.hypot(v, vy);
+    const omega0 = params.r > 0 ? v / params.r : 0;
+    const I = kappa(params.shape) * params.m * params.r * params.r;
+    const Ktrans = 0.5 * params.m * speed * speed;
+    const Krot = 0.5 * I * omega0 * omega0;
+    const Ug = params.m * params.g * yAir;
+    return {
+      t: floor ? tEnd + Math.sqrt((2 * H) / params.g) : time,
+      s: pathLength(params) + v * (floor ? Math.sqrt((2 * H) / params.g) : air),
+      v: speed,
+      omega: omega0,
+      x,
+      y: yAir,
+      Ktrans,
+      Krot,
+      Ug,
+      E: Ktrans + Krot + Ug,
+      N: floor ? params.m * params.g : 0,
+      f: 0,
+      ax: 0,
+      ay: floor ? 0 : -params.g,
+      frictionKind: "none",
+      landed: floor,
+      airborne: !floor,
+    };
+  }
   const landed = Number.isFinite(tEnd) && t >= tEnd - 1e-9;
   const tc = landed ? tEnd : Math.max(0, t);
   const a = accel(params);
@@ -130,5 +187,6 @@ export function sampleAt(params: RollingParams, t: number): RollingSample {
     ay: landed ? 0 : -a * Math.sin(theta),
     frictionKind: contact.frictionKind,
     landed,
+    airborne: false,
   };
 }

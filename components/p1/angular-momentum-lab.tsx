@@ -14,8 +14,12 @@ import {
   IDisk,
   fallTime,
   omegaAfter,
+  rodHitTime,
+  rodImpactSpeed,
+  rodInertia,
   sampleAt,
   skaterI2,
+  sphereSpeedAfterRod,
   type AngMomMode,
   type AngMomParams,
 } from "@/lib/models/angular-momentum";
@@ -45,13 +49,18 @@ export function AngularMomentumLab() {
   const [mode, setMode] = useState<AngMomMode>("drop");
   const compute = useCallback((t: number) => {
     const next = sampleAt(params, t, mode);
-    return { sample: next, point: [params.r, next.y + 0.05, 0] as [number, number, number] };
+    const point: [number, number, number] =
+      mode === "rod"
+        ? [next.stuck ? next.x - params.R : 0, 0.12, 0]
+        : [params.r, next.y + 0.05, 0];
+    return { sample: next, point };
   }, [mode, params]);
   const { time, isPlaying, start, pause, reset, sample, series } = useLabPlayback(compute);
   const n = formatLabNumber;
   const tf = fallTime(params);
   const invalid = mode === "drop" && params.r > params.R;
   const skater = mode === "skater";
+  const rod = mode === "rod";
 
   return (
     <LabFrame
@@ -63,6 +72,7 @@ export function AngularMomentumLab() {
           options={[
             { id: "drop" as const, label: "落物粘盘" },
             { id: "skater" as const, label: "收臂加速" },
+            { id: "rod" as const, label: "杆撞小球" },
           ]}
           onChange={(next) => {
             reset();
@@ -78,7 +88,11 @@ export function AngularMomentumLab() {
       status={
         invalid
           ? "落点半径 r 不能大于转盘半径 R。"
-          : skater
+          : rod
+            ? sample.stuck
+              ? `杆在最低点停下。小球获得 v = Iω / (mL) = ${n(sphereSpeedAfterRod(params))} m/s。`
+              : `杆从水平自由下摆，t = ${n(rodHitTime(params))} s 在最低点撞击静止小球。`
+            : skater
             ? sample.stuck
               ? `已收臂。I 变小，ω 增大，L = Iω 保持 ${n(sample.L)} kg·m²/s。`
               : "转盘先以 I₁ 转动，随后收臂把 I 降到 I₁×比例。"
@@ -97,6 +111,13 @@ export function AngularMomentumLab() {
         ? PARAMETER_DEFINITIONS.filter((item) => item.key === "M" || item.key === "R" || item.key === "omega0").concat([
             { key: "IScale", label: "收臂后 I 比例", symbol: "I₂/I₁", unit: "", min: 0.25, max: 0.95, step: 0.05 },
           ])
+        : rod
+          ? [
+              { key: "M" as const, label: "杆质量", symbol: "M", unit: "kg", min: 0.2, max: 4, step: 0.05 },
+              { key: "R" as const, label: "杆长", symbol: "L", unit: "m", min: 0.2, max: 1.2, step: 0.01 },
+              { key: "m" as const, label: "小球质量", symbol: "m", unit: "kg", min: 0.05, max: 2, step: 0.05 },
+              { key: "g" as const, label: "重力加速度", symbol: "g", unit: "m/s²", min: 1, max: 20, step: 0.01 },
+            ]
         : PARAMETER_DEFINITIONS
       ).map((item) => (
         <ParameterControl
@@ -124,6 +145,14 @@ export function AngularMomentumLab() {
             <p>I₂ = {n(skaterI2(params))} kg·m²</p>
             <p className="text-navy">L = {n(sample.L)} kg·m²/s</p>
           </>
+        ) : rod ? (
+          <>
+            <p className="text-quiet">I = ML²/3，ω = √(3g/L)，mv = Iω/L</p>
+            <p>I = {n(rodInertia(params))} kg·m²</p>
+            <p>ω_hit = {n(rodImpactSpeed(params))} rad/s</p>
+            <p className="text-navy">v = {n(sphereSpeedAfterRod(params))} m/s</p>
+            <p>杆在撞击后停止，角动量交给小球。</p>
+          </>
         ) : (
           <>
             <p className="text-quiet">I = ∫ r² dm = ½MR²，I₁ω₁ = I₂ω₂</p>
@@ -133,8 +162,8 @@ export function AngularMomentumLab() {
           </>
         )
       }
-      sceneTitle={skater ? "三维收臂转盘" : "三维落物转盘"}
-      sceneCaption={skater ? "收臂后加速　拖动旋转" : "落物重力沿竖直　拖动旋转"}
+      sceneTitle={rod ? "三维杆撞小球" : skater ? "三维收臂转盘" : "三维落物转盘"}
+      sceneCaption={rod ? "杆从水平下摆后撞击　拖动旋转" : skater ? "收臂后加速　拖动旋转" : "落物重力沿竖直　拖动旋转"}
       scene={
         <SceneCanvas camera={[1.2, 1.1, 2.2]}>
           <AngularMomentumScene params={params} sample={sample} mode={mode} />

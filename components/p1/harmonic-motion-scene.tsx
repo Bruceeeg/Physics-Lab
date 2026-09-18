@@ -20,17 +20,13 @@ export function HarmonicMotionScene({
 }) {
   const weight = params.m * params.g;
 
-  if (mode === "spring") {
+  if (mode === "spring" || mode === "parallel") {
     const wallX = -params.A - 0.28;
     const block: [number, number, number] = [sample.x, 0.12, 0];
-    const coils = helicalSpringPoints({
-      start: [wallX + 0.04, 0.12, 0],
-      end: [sample.x - 0.08, 0.12, 0],
-      coils: 10,
-      radius: 0.032,
-      pointsPerCoil: 14,
-    });
-    const fs = -params.k * sample.x;
+    const nSprings = mode === "parallel" ? Math.max(1, params.springCount ?? 3) : 1;
+    const spread = 0.055;
+    const keq = nSprings * params.k;
+    const fs = -keq * sample.x;
     return (
       <>
         <LabScenery />
@@ -39,10 +35,20 @@ export function HarmonicMotionScene({
           <meshStandardMaterial color="#e2e8f0" transparent opacity={0.55} side={DoubleSide} />
         </mesh>
         <mesh position={[wallX, 0.2, 0]}>
-          <boxGeometry args={[0.08, 0.4, 0.36]} />
+          <boxGeometry args={[0.08, 0.4, Math.max(0.36, nSprings * spread + 0.12)]} />
           <meshStandardMaterial color="#475569" />
         </mesh>
-        {coils.length > 1 ? <HelicalSpring points={coils} color="#A16207" radius={0.007} /> : null}
+        {Array.from({ length: nSprings }, (_, index) => {
+          const z = (index - (nSprings - 1) / 2) * spread;
+          const coils = helicalSpringPoints({
+            start: [wallX + 0.04, 0.12, z],
+            end: [sample.x - 0.08, 0.12, z],
+            coils: 10,
+            radius: 0.028,
+            pointsPerCoil: 14,
+          });
+          return coils.length > 1 ? <HelicalSpring key={index} points={coils} color="#A16207" radius={0.007} /> : null;
+        })}
         <TrailLine points={trail} />
         <BoxMass position={block} size={[0.16, 0.12, 0.14]} />
         <VectorArrow
@@ -76,6 +82,34 @@ export function HarmonicMotionScene({
           scale={0.65}
         />
         <LabOrbit target={[0, 0.15, 0]} minDistance={1.2} />
+      </>
+    );
+  }
+
+  if (mode === "torsion") {
+    const R = Math.min(0.5, Math.max(0.12, params.L));
+    const diskY = 0.35;
+    const nDisks = Math.max(1, params.springCount ?? 3);
+    return (
+      <>
+        <LabScenery />
+        <mesh position={[0, diskY + 0.42, 0]}>
+          <cylinderGeometry args={[0.08, 0.08, 0.06, 16]} />
+          <meshStandardMaterial color="#334155" />
+        </mesh>
+        <mesh position={[0, diskY + 0.22, 0]}>
+          <cylinderGeometry args={[0.008, 0.008, 0.4, 10]} />
+          <meshStandardMaterial color="#a16207" />
+        </mesh>
+        <group position={[0, diskY, 0]} rotation={[0, sample.theta, 0]}>
+          {Array.from({ length: nDisks }, (_, index) => (
+            <mesh key={index} position={[0, -index * 0.045, 0]} rotation={[Math.PI / 2, 0, 0]}>
+              <cylinderGeometry args={[R, R, 0.04, 48]} />
+              <meshPhysicalMaterial color={index % 2 === 0 ? "#3d5a80" : "#a16207"} roughness={0.32} metalness={0.2} />
+            </mesh>
+          ))}
+        </group>
+        <LabOrbit target={[0, diskY * 0.7, 0]} minDistance={1.1} />
       </>
     );
   }

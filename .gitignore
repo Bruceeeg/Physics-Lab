@@ -23,6 +23,7 @@
 *.pem
 .tmp-uupm/
 .tmp-uupm.tar.gz
+.tmp-cmech-frq/
 
 # python
 __pycache__/

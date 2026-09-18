@@ -30,6 +30,11 @@ export type ReadySlug =
   | "rotation-n2"
   | "ballistic-pendulum"
   | "physical-pendulum"
+  | "variable-force"
+  | "drag-force"
+  | "loop-track"
+  | "nonuniform-rod"
+  | "torsional-pendulum"
   | "equipotential"
   | "coulombs-law"
   | "capacitance"
@@ -73,6 +78,11 @@ export type PreviewKind =
   | "n2rot"
   | "ballistic"
   | "physical-pendulum"
+  | "variable-force"
+  | "drag-force"
+  | "loop-track"
+  | "nonuniform-rod"
+  | "torsional-pendulum"
   | "equipotential"
   | "capacitance"
   | "ohm"
@@ -209,7 +219,7 @@ export const EXPERIMENTS: readonly ExperimentEntry[] = [
     unit: "Unit 2 力与平动动力学",
     preview: "atwood",
     status: "ready",
-    summary: "经典双吊、桌上滑车，或计入滑轮转动惯量 I = ½MR²。",
+    summary: "经典双吊、桌上滑车、斜面悬挂，或计入滑轮转动惯量 I = ½MR²。",
   },
   {
     slug: "conical-pendulum",
@@ -264,7 +274,7 @@ export const EXPERIMENTS: readonly ExperimentEntry[] = [
     unit: "Unit 4 线动量",
     preview: "momentum",
     status: "ready",
-    summary: "对心碰撞、爆炸分离，或弹道摆：由上升高度反推弹丸速度。",
+    summary: "对心碰撞、爆炸分离、F(t)=αt²+βt 冲量，或弹道摆：由上升高度反推弹丸速度。",
   },
   {
     slug: "torque-equilibrium",
@@ -286,7 +296,7 @@ export const EXPERIMENTS: readonly ExperimentEntry[] = [
     unit: "Unit 6 转动系统的能量与动量",
     preview: "rotation",
     status: "ready",
-    summary: "无滑滚动或无摩擦滑动。I = ∫ r² dm = κmr²，比较底端速率。",
+    summary: "无滑滚动、无摩擦滑动，或滚出桌面后平抛。I = ∫ r² dm = κmr²。",
   },
   {
     slug: "angular-momentum",
@@ -297,7 +307,7 @@ export const EXPERIMENTS: readonly ExperimentEntry[] = [
     unit: "Unit 6 转动系统的能量与动量",
     preview: "angmom",
     status: "ready",
-    summary: "落物粘盘或收臂加速。圆盘 I = ∫ r² dm = ½MR²，检验 Iω 守恒。",
+    summary: "落物粘盘、收臂加速，或杆从水平下摆撞击小球。圆盘 I = ½MR²，杆 I = ML²/3。",
   },
   {
     slug: "harmonic-motion",
@@ -308,7 +318,7 @@ export const EXPERIMENTS: readonly ExperimentEntry[] = [
     unit: "Unit 7 振动",
     preview: "shm",
     status: "ready",
-    summary: "单摆、水平弹簧振子，或复摆 T = 2π√(I/mgd)。",
+    summary: "单摆、水平弹簧振子、复摆、扭摆 T = 2π√(I/κ)，或并联弹簧 keq = Nk。",
   },
   {
     slug: "fluid-dynamics",
@@ -477,6 +487,56 @@ export const EXPERIMENTS: readonly ExperimentEntry[] = [
     preview: "physical-pendulum",
     status: "ready",
     summary: "均匀米尺绕可移支点摆动。I = I_cm + md²。",
+  },
+  {
+    slug: "variable-force",
+    title: "变力与微积分",
+    formula: "W = ∫ F dx，J = ∫ F dt",
+    course: "c-mech",
+    unit: "Unit 2 力与平动动力学",
+    preview: "variable-force",
+    status: "ready",
+    summary: "F(x)、F(t)=αt²+βt、火箭 a=K−Lt²，以及变角拉力。用积分求功和冲量。",
+  },
+  {
+    slug: "drag-force",
+    title: "阻力与收尾速度",
+    formula: "m dv/dt = mg − bv",
+    course: "c-mech",
+    unit: "Unit 2 力与平动动力学",
+    preview: "drag-force",
+    status: "ready",
+    summary: "线性阻力 bv 或二次阻力 cv²。由微分方程得到收尾速度与 v(t)。",
+  },
+  {
+    slug: "loop-track",
+    title: "圆环轨道",
+    formula: "h_min = 2R + ½R(1+κ)",
+    course: "c-mech",
+    unit: "Unit 6 转动系统的能量与动量",
+    preview: "loop-track",
+    status: "ready",
+    summary: "滑块或滚动体进圆环。由机械能求过顶最小高度，并检查法向力是否离开轨道。",
+  },
+  {
+    slug: "nonuniform-rod",
+    title: "非均匀杆转动惯量",
+    formula: "I = ∫ x² λ(x) dx",
+    course: "c-mech",
+    unit: "Unit 5 力矩与转动动力学",
+    preview: "nonuniform-rod",
+    status: "ready",
+    summary: "λ∝x 或 λ∝x² 的细杆，以及叶片轮机 I = N(I_cm+Md²)。用积分求 I 与复摆周期。",
+  },
+  {
+    slug: "torsional-pendulum",
+    title: "扭摆",
+    formula: "T = 2π√(I/κ)",
+    course: "c-mech",
+    unit: "Unit 7 振动",
+    preview: "torsional-pendulum",
+    status: "ready",
+    summary: "扭转常量 κ 与多层圆盘 I = N·½mR²。周期 T = 2π√(I/κ)。",
   },
   {
     slug: "equipotential",

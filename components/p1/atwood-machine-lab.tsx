@@ -27,6 +27,7 @@ const ATWOOD_MODES = [
   { id: "classic" as const, label: "经典双吊" },
   { id: "modified" as const, label: "桌上滑车" },
   { id: "pulley" as const, label: "滑轮惯量" },
+  { id: "incline" as const, label: "斜面悬挂" },
 ];
 
 export function AtwoodMachineLab() {
@@ -47,6 +48,7 @@ export function AtwoodMachineLab() {
   const aSys = acceleration(params, mode);
   const modified = mode === "modified";
   const pulley = mode === "pulley";
+  const incline = mode === "incline";
   const stuck = Math.abs(aSys) < 1e-9;
   const light = lightKinematics(params, sample);
   const lightSeries = useMemo(
@@ -86,12 +88,16 @@ export function AtwoodMachineLab() {
             ? sample.frictionKind === "static"
               ? `静摩擦平衡悬挂重量。轻物为 ${light.id}。fs = ${n(sample.f)} N，fs,max = ${n((params.muS ?? params.mu ?? 0) * sample.N)} N。`
               : `两质量使系统保持静止。轻物为 ${light.id}。`
-            : `两质量相等，系统保持静止。轻物为 ${light.id}。`
+            : incline
+              ? `斜面分量与悬挂重量平衡，系统静止。a = 0。`
+              : `两质量相等，系统保持静止。轻物为 ${light.id}。`
           : modified
             ? `桌上滑车。轻物 ${light.id}。${frictionForceTitle(sample.frictionKind)} = ${n(sample.f)} N。a = ${n(light.a)} m/s²。`
             : pulley
             ? `计入滑轮 I = ½MR² = ${formatLabSci(pulleyInertia(params))} kg·m²。仪表针对轻物 ${light.id}。`
-            : `较重的是 ${heavier}，轻物 ${light.id} 上升。T − mg = ma。`
+            : incline
+              ? `斜面悬挂。a = (mB g − mA g sinθ)/(mA+mB) = ${n(aSys)} m/s²。A 沿斜面，B 竖直。`
+              : `较重的是 ${heavier}，轻物 ${light.id} 上升。T − mg = ma。`
       }
       isPlaying={isPlaying}
       time={time}
@@ -163,6 +169,22 @@ export function AtwoodMachineLab() {
                 }}
               />
             </>
+          ) : null}
+          {incline ? (
+            <ParameterControl
+              id="theta"
+              label="斜面倾角"
+              symbol="θ"
+              unit="°"
+              value={params.thetaDeg ?? 30}
+              min={10}
+              max={50}
+              step={1}
+              onChange={(value) => {
+                reset();
+                setParams((current) => ({ ...current, thetaDeg: value }));
+              }}
+            />
           ) : null}
           {pulley ? (
             <>
@@ -250,6 +272,13 @@ export function AtwoodMachineLab() {
             <p className="text-navy">轻物 {light.id}：T − mg = ma = {n(net)} N</p>
             <p>TA = {n(sample.T1)} N　TB = {n(sample.T)} N</p>
           </>
+        ) : incline ? (
+          <>
+            <p className="text-quiet">A 斜面上　B 悬挂　a = (mB g − mA g sinθ)/(mA+mB)</p>
+            <p>θ = {n(params.thetaDeg ?? 30)}°</p>
+            <p>mgA sinθ = {n(params.m1 * params.g * Math.sin(((params.thetaDeg ?? 30) * Math.PI) / 180))} N</p>
+            <p className="text-navy">a = {n(aSys)} m/s²　T = {n(sample.T)} N</p>
+          </>
         ) : (
           <>
             <p className="text-quiet">A 深蓝　B 金色　读数针对轻物 {light.id}</p>
@@ -261,8 +290,8 @@ export function AtwoodMachineLab() {
           </>
         )
       }
-      sceneTitle={modified ? "三维桌上滑车" : pulley ? "三维滑轮惯量" : "三维阿特伍德机"}
-      sceneCaption={modified ? "A 车上深蓝　B 悬挂金色　实线 T / mg / N / f" : pulley ? "A 深蓝　B 金色　两侧张力不同" : "A 深蓝　B 金色　实线 T / mg"}
+      sceneTitle={modified ? "三维桌上滑车" : pulley ? "三维滑轮惯量" : incline ? "三维斜面阿特伍德" : "三维阿特伍德机"}
+      sceneCaption={modified ? "A 车上深蓝　B 悬挂金色　实线 T / mg / N / f" : pulley ? "A 深蓝　B 金色　两侧张力不同" : incline ? "A 沿斜面　B 竖直悬挂" : "A 深蓝　B 金色　实线 T / mg"}
       scene={
         <SceneCanvas camera={[1.6, 1.1, 2.8]}>
           <AtwoodMachineScene sample={sample} params={params} mode={mode} />

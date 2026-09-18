@@ -3,34 +3,15 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
-import { ConservationOfEnergyPreview } from "@/components/catalog/previews/conservation-of-energy-preview";
-import { LinearMotionPreview } from "@/components/catalog/previews/linear-motion-preview";
-import { PullFrictionPreview } from "@/components/catalog/previews/pull-friction-preview";
-import { SchematicPreview } from "@/components/catalog/previews/schematic-preview";
+import { CatalogPreview3D, useCatalogPreviewRuntime } from "@/components/catalog/previews/preview-3d";
 import {
   experimentHref,
   isReadyExperiment,
   type ExperimentEntry,
 } from "@/lib/experiments/catalog";
 
-function PreviewMedia({
-  experiment,
-  running,
-}: {
-  experiment: ExperimentEntry;
-  running: boolean;
-}) {
-  if (experiment.preview === "pull-friction") {
-    return <PullFrictionPreview running={running} />;
-  }
-  if (experiment.preview === "linear-motion") {
-    return <LinearMotionPreview running={running} />;
-  }
-  if (experiment.preview === "energy") {
-    return <ConservationOfEnergyPreview running={running} />;
-  }
-  return <SchematicPreview kind={experiment.preview} running={running} />;
-}
+const PRELOAD_MARGIN = "320px 0px";
+const UNMOUNT_DELAY_MS = 400;
 
 export function ExperimentCard({
   experiment,
@@ -41,7 +22,10 @@ export function ExperimentCard({
 }) {
   const mediaRef = useRef<HTMLDivElement>(null);
   const faceRef = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(true);
+  const leaveTimer = useRef(0);
+  const { scrolling } = useCatalogPreviewRuntime();
+  const [inView, setInView] = useState(false);
+  const [held, setHeld] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
   const ready = isReadyExperiment(experiment);
 
@@ -58,12 +42,29 @@ export function ExperimentCard({
     if (!node) {
       return;
     }
-    const observer = new IntersectionObserver(
-      ([entry]) => setVisible(Boolean(entry?.isIntersecting)),
-      { threshold: 0.05, rootMargin: "80px 0px" },
+    const preload = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          window.clearTimeout(leaveTimer.current);
+          setHeld(true);
+          return;
+        }
+        window.clearTimeout(leaveTimer.current);
+        leaveTimer.current = window.setTimeout(() => setHeld(false), UNMOUNT_DELAY_MS);
+      },
+      { threshold: 0, rootMargin: PRELOAD_MARGIN },
     );
-    observer.observe(node);
-    return () => observer.disconnect();
+    const playback = new IntersectionObserver(
+      ([entry]) => setInView(Boolean(entry?.isIntersecting)),
+      { threshold: 0.05, rootMargin: "0px" },
+    );
+    preload.observe(node);
+    playback.observe(node);
+    return () => {
+      preload.disconnect();
+      playback.disconnect();
+      window.clearTimeout(leaveTimer.current);
+    };
   }, []);
 
   const resetTilt = () => {
@@ -76,33 +77,32 @@ export function ExperimentCard({
     face.style.setProperty("--tz", "0px");
   };
 
-  const tiltFace = (event: { clientX: number; clientY: number }) => {
+  const tiltFace = () => {
     const face = faceRef.current;
     if (!face || reduceMotion) {
       return;
     }
-    const box = face.getBoundingClientRect();
-    if (box.width < 8 || box.height < 8) {
-      return;
-    }
-    const px = (event.clientX - box.left) / box.width - 0.5;
-    const py = (event.clientY - box.top) / box.height - 0.5;
-    face.style.setProperty("--rx", `${(-py * 11).toFixed(2)}deg`);
-    face.style.setProperty("--ry", `${(px * 14).toFixed(2)}deg`);
-    face.style.setProperty("--tz", "10px");
+    face.style.setProperty("--tz", "8px");
   };
 
-  const running = visible && !previewsPaused && !reduceMotion;
+  const running = inView && !previewsPaused && !reduceMotion && !scrolling;
 
   const media = (
     <div
       ref={mediaRef}
-      className={`relative aspect-[16/10] overflow-hidden rounded-[12px] border bg-muted ${
-        ready ? "border-line" : "border-line"
-      }`}
+      className="relative aspect-[16/10] overflow-hidden rounded-[8px] border border-line bg-muted"
     >
-      <div className={ready ? "h-full w-full" : "h-full w-full opacity-40 grayscale"}>
-        <PreviewMedia experiment={experiment} running={running} />
+      <div className="h-full w-full">
+        {ready ? (
+          <CatalogPreview3D
+            kind={experiment.preview}
+            slug={experiment.slug}
+            running={running}
+            visible={held}
+          />
+        ) : (
+          <div className="h-full w-full bg-muted opacity-40" />
+        )}
       </div>
       {ready ? null : (
         <p className="pointer-events-none absolute inset-x-0 bottom-0 border-t border-line bg-paper/92 px-3 py-1.5 text-xs text-gold">

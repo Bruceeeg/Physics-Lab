@@ -16,6 +16,7 @@ import {
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 
 import { SpriteLabel } from "@/components/scene-label";
+import { useLabControlsEnabled } from "@/components/lab-3d";
 import { fitViewDistance } from "@/lib/models/camera-fit";
 import { FORCE_COLORS, FORCE_LABEL_COLORS } from "@/lib/models/force-display";
 import {
@@ -489,6 +490,7 @@ export function ProjectileScene({
   frameParams,
   allowRefit,
 }: ProjectileSceneProps) {
+  const controlsEnabled = useLabControlsEnabled();
   const { v0, thetaDeg, h, g } = frameParams;
   const { extentX, extentY, scale } = useMemo(
     () => viewExtent({ v0, thetaDeg, h, g }),
@@ -565,19 +567,21 @@ export function ProjectileScene({
       />
       {landingX !== null && !target ? <LandingMarker x={landingX} scale={scale} /> : null}
       {target ? <TargetCup target={target} scale={scale} /> : null}
-      <FitCamera extentX={extentX} extentY={extentY} allowRefit={allowRefit} />
-      <OrbitControls
-        makeDefault
-        enableDamping
-        dampingFactor={0.08}
-        rotateSpeed={0.45}
-        zoomSpeed={0.65}
-        panSpeed={0.5}
-        minPolarAngle={0.12}
-        maxPolarAngle={Math.PI / 2 - 0.02}
-        minDistance={0.8}
-        maxDistance={600}
-      />
+      <FitCamera extentX={extentX} extentY={extentY} allowRefit={allowRefit && controlsEnabled} />
+      {controlsEnabled ? (
+        <OrbitControls
+          makeDefault
+          enableDamping
+          dampingFactor={0.08}
+          rotateSpeed={0.45}
+          zoomSpeed={0.65}
+          panSpeed={0.5}
+          minPolarAngle={0.12}
+          maxPolarAngle={Math.PI / 2 - 0.02}
+          minDistance={0.8}
+          maxDistance={600}
+        />
+      ) : null}
     </>
   );
 }

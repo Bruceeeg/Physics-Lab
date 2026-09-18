@@ -1,6 +1,6 @@
 import type { FrictionKind } from "./lab-format.ts";
 
-export type AtwoodMode = "classic" | "modified" | "pulley";
+export type AtwoodMode = "classic" | "modified" | "pulley" | "incline";
 
 export type AtwoodParams = {
   m1: number;
@@ -11,6 +11,7 @@ export type AtwoodParams = {
   muS?: number;
   Mp?: number;
   Rp?: number;
+  thetaDeg?: number;
 };
 
 export type AtwoodSample = {
@@ -37,6 +38,7 @@ export const DEFAULT_ATWOOD: AtwoodParams = {
   mu: 0,
   Mp: 0.4,
   Rp: 0.12,
+  thetaDeg: 30,
 };
 
 export function pulleyInertia(params: AtwoodParams) {
@@ -63,6 +65,10 @@ export function acceleration(params: AtwoodParams, mode: AtwoodMode = "classic")
     const denom = sum + pulleyInertia(params) / (Rp * Rp);
     return denom > 1e-12 ? (params.g * (params.m2 - params.m1)) / denom : 0;
   }
+  if (mode === "incline") {
+    const theta = ((params.thetaDeg ?? 30) * Math.PI) / 180;
+    return (params.m2 * params.g - params.m1 * params.g * Math.sin(theta)) / sum;
+  }
   if (mode === "modified") {
     const N = params.m1 * params.g;
     const drive = params.m2 * params.g;
@@ -80,7 +86,7 @@ export function tension(params: AtwoodParams, mode: AtwoodMode = "classic") {
   if (mode === "pulley") {
     return params.m2 * (params.g - a);
   }
-  if (mode === "modified") {
+  if (mode === "modified" || mode === "incline") {
     return params.m2 * (params.g - a);
   }
   return (2 * params.m1 * params.m2 * params.g) / (params.m1 + params.m2);
@@ -137,6 +143,11 @@ export function atwoodGeometry(params: AtwoodParams, mode: AtwoodMode = "classic
     const cart0 = -(travel + 0.4);
     return { pulleyY: tableY, pulleyR, hang0, tableY, cart0 };
   }
+  if (mode === "incline") {
+    const hang0 = 0.28;
+    const pulleyY = travel + hang0 + 0.45;
+    return { pulleyY, pulleyR, hang0, tableY: pulleyY, cart0: travel + 0.4 };
+  }
   const hang0 = travel + 0.38;
   const pulleyY = hang0 + travel + 0.34;
   return { pulleyY, pulleyR, hang0, tableY: 0, cart0: 0 };
@@ -153,6 +164,19 @@ export function hangingPositions(
     return {
       ...geo,
       A: [cartX, geo.tableY + 0.06, 0] as [number, number, number],
+      B: [geo.pulleyR, geo.pulleyY - geo.hang0 + sample.y2, 0] as [number, number, number],
+    };
+  }
+  if (mode === "incline") {
+    const theta = ((params.thetaDeg ?? 30) * Math.PI) / 180;
+    const dist = geo.cart0 - sample.s;
+    return {
+      ...geo,
+      A: [
+        -dist * Math.cos(theta),
+        geo.pulleyY - dist * Math.sin(theta),
+        0,
+      ] as [number, number, number],
       B: [geo.pulleyR, geo.pulleyY - geo.hang0 + sample.y2, 0] as [number, number, number],
     };
   }
@@ -198,7 +222,7 @@ export function sampleAt(params: AtwoodParams, t: number, mode: AtwoodMode = "cl
     s,
     y1: s,
     y2: -s,
-    v1: mode === "modified" ? v : -v,
+    v1: mode === "modified" || mode === "incline" ? v : -v,
     v2: v,
     a,
     T: tension(params, mode),

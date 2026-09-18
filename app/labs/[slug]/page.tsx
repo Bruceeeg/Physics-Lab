@@ -6,13 +6,17 @@ import { ArchimedesLab } from "@/components/p1/archimedes-lab";
 import { AtwoodMachineLab } from "@/components/p1/atwood-machine-lab";
 import { CircularMotionLab } from "@/components/p1/circular-motion-lab";
 import { ConservationOfEnergyLab } from "@/components/p1/conservation-of-energy-lab";
+import { DragForceLab } from "@/components/p1/drag-force-lab";
 import { FluidDynamicsLab } from "@/components/p1/fluid-dynamics-lab";
 import { HarmonicMotionLab } from "@/components/p1/harmonic-motion-lab";
 import { ImpulseMomentumLab } from "@/components/p1/impulse-momentum-lab";
 import { InclineFrictionLab } from "@/components/p1/incline-friction-lab";
+import { LoopTrackLab } from "@/components/p1/loop-track-lab";
+import { NonuniformRodLab } from "@/components/p1/nonuniform-rod-lab";
 import { RotationN2Lab } from "@/components/p1/rotation-n2-lab";
 import { RotationalMotionLab } from "@/components/p1/rotational-motion-lab";
 import { TorqueEquilibriumLab } from "@/components/p1/torque-equilibrium-lab";
+import { VariableForceLab } from "@/components/p1/variable-force-lab";
 import { BoylesLawLab } from "@/components/p2/boyles-law-lab";
 import { CapacitanceLab } from "@/components/p2/capacitance-lab";
 import { ElectricFieldLab } from "@/components/p2/electric-field-lab";
@@ -68,6 +72,11 @@ const LAB_PAGES: Record<ReadySlug, ComponentType<{ slug?: string }>> = {
   "rotation-n2": RotationN2Lab,
   "ballistic-pendulum": ImpulseMomentumLab,
   "physical-pendulum": HarmonicMotionLab,
+  "variable-force": VariableForceLab,
+  "drag-force": DragForceLab,
+  "loop-track": LoopTrackLab,
+  "nonuniform-rod": NonuniformRodLab,
+  "torsional-pendulum": HarmonicMotionLab,
   equipotential: ElectricFieldLab,
   "coulombs-law": ElectricFieldLab,
   capacitance: CapacitanceLab,

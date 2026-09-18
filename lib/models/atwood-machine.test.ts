@@ -72,6 +72,16 @@ test("modified cart stays on the table side of the pulley", () => {
   assert.ok(end.B[1] < end.pulleyY - end.pulleyR);
 });
 
+test("incline Atwood is a = (mB g − mA g sinθ) / (mA + mB)", () => {
+  const params = { m1: 1, m2: 1, g: 10, travel: 0.5, thetaDeg: 30 };
+  assert.ok(close(acceleration(params, "incline"), 2.5));
+  const moving = sampleAt(params, 0.2, "incline");
+  assert.ok(moving.s > 0);
+  const pos = hangingPositions(params, moving, "incline");
+  assert.ok(pos.A[1] < pos.pulleyY);
+  assert.ok(pos.B[1] < pos.pulleyY);
+});
+
 test("massive pulley slows Atwood by adding I/R² to the inertia", () => {
   const params = { m1: 1, m2: 3, g: 10, travel: 0.5, Mp: 2, Rp: 0.1 };
   const I = 0.5 * 2 * 0.1 * 0.1;

@@ -4,6 +4,7 @@ import { Grid, Html, OrbitControls, useCursor } from "@react-three/drei";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import {
   memo,
+  useContext,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -26,6 +27,7 @@ import {
 } from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 
+import { LabelScaleContext } from "@/components/scene-label";
 import {
   FORCE_COLORS,
   forceMarks,
@@ -62,7 +64,7 @@ const FORCE_HIGHLIGHT_COLORS: Record<ExplainedForceName, string> = {
 // Force labels are rasterised once per distinct text/colour and drawn as camera-facing sprites in
 // the same WebGL pass as the arrows. They therefore share the arrow's transform exactly and scale
 // with the scene, instead of being re-projected DOM nodes that trail the geometry by a frame.
-const LABEL_SCALE = 4;
+const LABEL_SCALE = 8;
 const LABEL_WORLD_HEIGHT = 0.4;
 const LABEL_TIP_GAP = 0.06;
 const LABEL_SIDE_GAP = 0.04;
@@ -207,7 +209,7 @@ function rasterLabel(name: string, value: string, color: string, family: string)
 
   const texture = new CanvasTexture(canvas);
   texture.colorSpace = SRGBColorSpace;
-  texture.anisotropy = 1;
+  texture.anisotropy = 8;
   return { texture, aspect: canvas.width / canvas.height };
 }
 
@@ -232,9 +234,11 @@ function ForceLabel({
   const raster = useMemo(() => rasterLabel(name, value, color, family), [name, value, color, family]);
   useEffect(() => () => raster.texture.dispose(), [raster]);
 
-  const width = LABEL_WORLD_HEIGHT * raster.aspect;
+  const labelScale = useContext(LabelScaleContext);
+  const worldHeight = LABEL_WORLD_HEIGHT * labelScale;
+  const width = worldHeight * raster.aspect;
   const halfW = width / 2;
-  const halfH = LABEL_WORLD_HEIGHT / 2;
+  const halfH = worldHeight / 2;
 
   // Push the label centre past the cone by its own half-extent along the arrow so the box clears
   // the arrowhead regardless of direction.
@@ -256,7 +260,7 @@ function ForceLabel({
   return (
     <sprite
       position={position}
-      scale={[width, LABEL_WORLD_HEIGHT, 1]}
+      scale={[width, worldHeight, 1]}
       renderOrder={LABEL_RENDER_ORDER}
       frustumCulled={false}
     >
@@ -603,6 +607,10 @@ function FollowOrbit({
     prev.current = { x, y, z };
     controls.update();
   }, -1);
+
+  if (!interactive) {
+    return null;
+  }
 
   return (
     <OrbitControls

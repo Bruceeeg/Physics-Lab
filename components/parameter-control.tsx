@@ -43,6 +43,11 @@ export function ParameterControl({
   const focused = useRef(false);
 
   useEffect(() => {
+    focused.current = false;
+    setDraft(displayValue(value, step));
+  }, [id]);
+
+  useEffect(() => {
     if (!focused.current) {
       setDraft(displayValue(value, step));
     }

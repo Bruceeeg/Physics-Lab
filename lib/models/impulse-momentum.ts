@@ -1,4 +1,4 @@
-export type ImpulseMode = "collision" | "explosion" | "ballistic";
+export type ImpulseMode = "collision" | "explosion" | "ballistic" | "forcetime";
 
 export type ImpulseParams = {
   m1: number;
@@ -9,6 +9,8 @@ export type ImpulseParams = {
   U?: number;
   L?: number;
   g?: number;
+  alpha?: number;
+  beta?: number;
 };
 
 export type ImpulseSample = {
@@ -39,6 +41,8 @@ export const DEFAULT_IMPULSE: ImpulseParams = {
   U: 0.8,
   L: 0.8,
   g: 9.81,
+  alpha: 3200,
+  beta: -500,
 };
 
 export function ballisticVelocityAfter(params: ImpulseParams) {
@@ -114,11 +118,60 @@ function displacementDuringPulse(vi: number, vf: number, tau: number, duration: 
   return vi * tau + (vf - vi) * 0.5 * (tau - (duration / Math.PI) * Math.sin((Math.PI * tau) / duration));
 }
 
+export function forceTimeEnd(params: ImpulseParams) {
+  const alpha = params.alpha ?? 3200;
+  const beta = params.beta ?? -500;
+  if (alpha === 0) {
+    return Number.POSITIVE_INFINITY;
+  }
+  const root = -beta / alpha;
+  return root > 1e-9 ? root : Number.POSITIVE_INFINITY;
+}
+
+export function forceAtTime(params: ImpulseParams, t: number) {
+  const alpha = params.alpha ?? 3200;
+  const beta = params.beta ?? -500;
+  return alpha * t * t + beta * t;
+}
+
+export function forceTimeImpulse(params: ImpulseParams, t: number) {
+  const alpha = params.alpha ?? 3200;
+  const beta = params.beta ?? -500;
+  const tc = Math.min(Math.max(0, t), forceTimeEnd(params));
+  return (alpha * tc * tc * tc) / 3 + (beta * tc * tc) / 2;
+}
+
 export function sampleAt(
   params: ImpulseParams,
   t: number,
   mode: ImpulseMode = "collision",
 ): ImpulseSample {
+  if (mode === "forcetime") {
+    const time = Math.max(0, t);
+    const tEnd = forceTimeEnd(params);
+    const tc = Number.isFinite(tEnd) ? Math.min(time, tEnd) : time;
+    const F = time <= tEnd + 1e-12 ? forceAtTime(params, tc) : 0;
+    const J = forceTimeImpulse(params, tc);
+    const v1 = params.v1 + J / params.m1;
+    const v2 = params.v2 - J / params.m2;
+    const x1During = X1_0 + params.v1 * tc + (J * tc) / (2 * params.m1);
+    const x2During = X2_0 + params.v2 * tc - (J * tc) / (2 * params.m2);
+    const x1 = time <= tEnd + 1e-12 ? x1During : x1During + v1 * (time - tEnd);
+    const x2 = time <= tEnd + 1e-12 ? x2During : x2During + v2 * (time - tEnd);
+    return {
+      t: time,
+      x1,
+      x2,
+      v1,
+      v2,
+      F,
+      p1: params.m1 * v1,
+      p2: params.m2 * v2,
+      pTotal: params.m1 * v1 + params.m2 * v2,
+      theta: 0,
+      y: 0,
+    };
+  }
   if (mode === "explosion") {
     const time = Math.max(0, t);
     const duration = CONTACT_DURATION;

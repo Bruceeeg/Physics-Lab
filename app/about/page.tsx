@@ -13,7 +13,7 @@ const COVERAGE = [
   { unit: "Unit 3", have: "弹簧弹射与机械能守恒；弹簧做功写成 W = ∫ kx dx", gap: "尚无单独的 W = Fd、P = Fv 实验台" },
   { unit: "Unit 4", have: "一维碰撞与爆炸分离", gap: "暂无二维碰撞" },
   { unit: "Unit 5", have: "米尺力矩平衡", gap: "τ = Iα 与转动惯量测定在 C 力学" },
-  { unit: "Unit 6", have: "无滑滚动、角动量守恒；I = ∫ r² dm", gap: "暂无完整过山车/圆环" },
+  { unit: "Unit 6", have: "无滑滚动、角动量守恒；I = ∫ r² dm", gap: "完整圆环轨道在 C 力学" },
   { unit: "Unit 7", have: "单摆与水平弹簧振子", gap: "复摆在 C 力学" },
   { unit: "Unit 8", have: "托里拆利单孔、三孔罐、阿基米德测密度", gap: "暂无管道连续方程装置" },
 ];
@@ -29,13 +29,13 @@ const P2_COVERAGE = [
 ];
 
 const C_MECH_COVERAGE = [
-  { unit: "Unit 1", have: "与 Physics 1 共用匀变速与抛体", gap: "" },
-  { unit: "Unit 2", have: "摩擦、圆周运动、阿特伍德滑轮惯量 I = ½MR²", gap: "" },
-  { unit: "Unit 3", have: "机械能守恒，弹簧做功 W = ∫ kx dx = ½kA²", gap: "" },
-  { unit: "Unit 4", have: "碰撞冲量，以及弹道摆", gap: "暂无二维碰撞" },
-  { unit: "Unit 5", have: "力矩平衡、转动惯量测定、τ = Iα", gap: "" },
-  { unit: "Unit 6", have: "滚动与角动量；I = ∫ r² dm", gap: "暂无完整过山车" },
-  { unit: "Unit 7", have: "单摆、弹簧振子与复摆", gap: "" },
+  { unit: "Unit 1", have: "匀变速、抛体，以及火箭 a = K − Lt²", gap: "" },
+  { unit: "Unit 2", have: "摩擦、圆周、阿特伍德（含斜面与滑轮惯量）、变力 F(x)/F(t)、线性/二次阻力", gap: "" },
+  { unit: "Unit 3", have: "机械能守恒；变力做功 W = ∫ F dx", gap: "" },
+  { unit: "Unit 4", have: "碰撞冲量、F(t)=αt²+βt、弹道摆", gap: "暂无二维碰撞" },
+  { unit: "Unit 5", have: "力矩平衡、转动惯量测定、τ = Iα、非均匀杆 I = ∫ x² λ dx", gap: "" },
+  { unit: "Unit 6", have: "滚动、滚出平抛、角动量、杆撞小球、圆环轨道 h_min", gap: "" },
+  { unit: "Unit 7", have: "单摆、弹簧振子、复摆、扭摆、并联弹簧", gap: "" },
 ];
 
 const C_EM_COVERAGE = [

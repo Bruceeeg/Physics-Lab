@@ -2,15 +2,16 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
-  contactTime,
-  DEFAULT_IMPULSE,
-  impulseOn2,
-  postVelocities,
-  explosionVelocities,
-  sampleAt,
   ballisticMaxAngle,
   ballisticVelocityAfter,
+  contactTime,
+  DEFAULT_IMPULSE,
+  explosionVelocities,
+  forceTimeEnd,
   hitTime,
+  impulseOn2,
+  postVelocities,
+  sampleAt,
 } from "./impulse-momentum.ts";
 
 const close = (a: number, b: number, eps = 1e-9) => Math.abs(a - b) < eps;
@@ -40,6 +41,18 @@ test("an explosion from rest keeps zero total momentum", () => {
   assert.ok(close(0.5 * params.m1 * v1f * v1f + 0.5 * params.m2 * v2f * v2f, 1.2, 1e-8));
   const after = sampleAt(params, 0.2, "explosion");
   assert.ok(close(after.pTotal, 0, 1e-8));
+});
+
+test("force-time F = αt² + βt conserves total momentum", () => {
+  const params = { ...DEFAULT_IMPULSE, m1: 0.5, v1: 3, m2: 1.05, v2: 0, alpha: 3200, beta: -500 };
+  const tEnd = forceTimeEnd(params);
+  const p0 = params.m1 * params.v1;
+  const during = sampleAt(params, tEnd * 0.5, "forcetime");
+  const after = sampleAt(params, tEnd + 0.2, "forcetime");
+  assert.ok(close(during.pTotal, p0, 1e-6));
+  assert.ok(close(after.pTotal, p0, 1e-6));
+  assert.ok(after.v1 < params.v1);
+  assert.ok(after.v2 > 0);
 });
 
 test("impulse on cart 2 equals its change in momentum", () => {

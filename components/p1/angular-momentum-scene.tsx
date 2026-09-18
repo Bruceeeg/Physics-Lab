@@ -1,6 +1,6 @@
 "use client";
 
-import { BoxMass, LabOrbit, LabScenery, SphereMass, VectorArrow } from "@/components/lab-3d";
+import { BoxMass, LabLine, LabOrbit, LabScenery, SphereMass, VectorArrow } from "@/components/lab-3d";
 import { SpriteLabel } from "@/components/scene-label";
 import { FORCE_COLORS } from "@/lib/models/force-display";
 import { formatLabNumber } from "@/lib/models/lab-format";
@@ -20,6 +20,39 @@ export function AngularMomentumScene({
   const seatY = diskY + 0.025 + cubeHalf;
   const drop: [number, number, number] = [params.r, seatY + sample.y, 0];
   const arm = params.R * (sample.stuck && mode === "skater" ? (params.IScale ?? 0.45) : 0.85);
+
+  if (mode === "rod") {
+    const length = params.R;
+    const pivot: [number, number, number] = [0, length + 0.12, 0];
+    const tip: [number, number, number] = [
+      length * Math.sin(sample.theta),
+      pivot[1] - length * Math.cos(sample.theta),
+      0,
+    ];
+    const ball: [number, number, number] = [sample.stuck ? sample.x - length : 0, pivot[1] - length, 0];
+    return (
+      <>
+        <LabScenery />
+        <mesh position={pivot}>
+          <cylinderGeometry args={[0.03, 0.03, 0.08, 12]} />
+          <meshStandardMaterial color="#334155" />
+        </mesh>
+        <LabLine points={[pivot, tip]} color="#1e3a5f" lineWidth={2.2} />
+        <mesh position={[(pivot[0] + tip[0]) / 2, (pivot[1] + tip[1]) / 2, 0]} rotation={[0, 0, -sample.theta]}>
+          <boxGeometry args={[0.045, length, 0.04]} />
+          <meshStandardMaterial color="#3d5a80" />
+        </mesh>
+        <SphereMass position={ball} radius={0.06} color="#a16207" />
+        <SpriteLabel
+          text={sample.stuck ? `v = ${formatLabNumber(Math.abs(sample.v))} m/s` : `ω = ${formatLabNumber(sample.omega)} rad/s`}
+          color="#1e3a5f"
+          position={[0.15, pivot[1] * 0.55, 0]}
+          height={0.16}
+        />
+        <LabOrbit target={[0, length * 0.45, 0]} minDistance={1.2} />
+      </>
+    );
+  }
 
   return (
     <>

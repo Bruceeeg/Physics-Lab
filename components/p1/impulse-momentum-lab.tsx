@@ -14,6 +14,8 @@ import {
   contactTime,
   DEFAULT_IMPULSE,
   explosionVelocities,
+  forceTimeEnd,
+  forceTimeImpulse,
   hitTime,
   impulseOn2,
   sampleAt,
@@ -60,12 +62,16 @@ export function ImpulseMomentumLab({ slug }: { slug?: string } = {}) {
   const { time, isPlaying, start, pause, reset, sample, series, trail } = useLabPlayback(compute);
   const explosion = mode === "explosion";
   const ballistic = mode === "ballistic";
-  const tc = explosion ? 0 : ballistic ? hitTime(params) : contactTime(params);
+  const forcetime = mode === "forcetime";
+  const tPulse = forceTimeEnd(params);
+  const tc = explosion ? 0 : ballistic ? hitTime(params) : forcetime ? tPulse : contactTime(params);
   const J = explosion
     ? params.m2 * explosionVelocities(params).v2f
     : ballistic
       ? params.m1 * params.v1
-      : impulseOn2(params);
+      : forcetime
+        ? forceTimeImpulse(params, Number.isFinite(tPulse) ? tPulse : time)
+        : impulseOn2(params);
   const n = formatLabNumber;
   const closing = explosion || ballistic || Number.isFinite(tc);
 
@@ -78,6 +84,7 @@ export function ImpulseMomentumLab({ slug }: { slug?: string } = {}) {
           value={mode}
           options={[
             { id: "collision" as const, label: "对心碰撞" },
+            { id: "forcetime" as const, label: "F(t) 冲量" },
             { id: "explosion" as const, label: "爆炸分离" },
             { id: "ballistic" as const, label: "弹道摆" },
           ]}
@@ -102,6 +109,8 @@ export function ImpulseMomentumLab({ slug }: { slug?: string } = {}) {
           ? `静止两车被弹簧推开。总动量保持 0，½m₁v₁² + ½m₂v₂² = U。`
           : ballistic
             ? `碰撞后 V = ${n(ballisticVelocityAfter(params))} m/s，最大摆角 ${n((ballisticMaxAngle(params) * 180) / Math.PI)}°。`
+          : forcetime
+            ? `F = αt² + βt，接触至 t = ${n(tc)} s。J = ∫F dt = ${n(J)} N·s，两车动量变化相反。`
           : closing
             ? `t = ${n(tc)} s 接触。J = Δp₂ = ${n(J)} N·s，总动量保持 ${n(sample.pTotal)} kg·m/s。`
             : "两车没有相互靠近，不会碰撞。增大 v₁ 或减小 v₂。"
@@ -127,6 +136,15 @@ export function ImpulseMomentumLab({ slug }: { slug?: string } = {}) {
               { key: "L" as const, label: "摆长", symbol: "L", unit: "m", min: 0.4, max: 1.2, step: 0.02 },
               { key: "g" as const, label: "重力加速度", symbol: "g", unit: "m/s²", min: 1, max: 20, step: 0.01 },
             ]
+        : forcetime
+          ? [
+              PARAMETER_DEFINITIONS[0],
+              PARAMETER_DEFINITIONS[1],
+              PARAMETER_DEFINITIONS[2],
+              PARAMETER_DEFINITIONS[3],
+              { key: "alpha" as const, label: "二次系数", symbol: "α", unit: "N/s²", min: 200, max: 6000, step: 50 },
+              { key: "beta" as const, label: "一次系数", symbol: "β", unit: "N/s", min: -2000, max: -50, step: 10 },
+            ]
         : PARAMETER_DEFINITIONS
       ).map((item) => (
         <ParameterControl
@@ -142,7 +160,11 @@ export function ImpulseMomentumLab({ slug }: { slug?: string } = {}) {
                 ? (params.L ?? 0.8)
                 : item.key === "g"
                   ? (params.g ?? 9.81)
-                  : params[item.key]
+                  : item.key === "alpha"
+                    ? (params.alpha ?? 3200)
+                    : item.key === "beta"
+                      ? (params.beta ?? -500)
+                      : params[item.key]
           }
           min={item.min}
           max={item.max}
@@ -169,6 +191,14 @@ export function ImpulseMomentumLab({ slug }: { slug?: string } = {}) {
             <p>θ_max = {n((ballisticMaxAngle(params) * 180) / Math.PI)} °</p>
             <p className="text-navy">h = {n(sample.y)} m</p>
           </>
+        ) : forcetime ? (
+          <>
+            <p className="text-quiet">F(t) = αt² + βt，J = ∫ F dt = Δp</p>
+            <p>接触结束 t = {n(tc)} s</p>
+            <p>F = {n(sample.F)} N</p>
+            <p className="text-navy">J = {n(J)} N·s</p>
+            <p>Δv₁ = {n(J / params.m1)} m/s　Δv₂ = {n(-J / params.m2)} m/s</p>
+          </>
         ) : (
           <>
             <p className="text-quiet">J = ∫F dt = Δp</p>
@@ -179,8 +209,8 @@ export function ImpulseMomentumLab({ slug }: { slug?: string } = {}) {
           </>
         )
       }
-      sceneTitle={ballistic ? "三维弹道摆" : "三维轨道碰撞"}
-      sceneCaption={ballistic ? "非弹性碰撞后上摆　拖动旋转" : "对心碰撞沿水平轨道　y = 0.00 m　vy = 0.00 m/s"}
+      sceneTitle={ballistic ? "三维弹道摆" : forcetime ? "三维变力冲量" : "三维轨道碰撞"}
+      sceneCaption={ballistic ? "非弹性碰撞后上摆　拖动旋转" : forcetime ? "F = αt² + βt 作用在两车之间　拖动旋转" : "对心碰撞沿水平轨道　y = 0.00 m　vy = 0.00 m/s"}
       scene={
         <SceneCanvas camera={ballistic ? [0.4, 1.2, 2.6] : [0.2, 1.4, 3.2]}>
           <ImpulseMomentumScene sample={sample} trail={trail} mode={mode} params={params} />

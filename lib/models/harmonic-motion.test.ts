@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { DEFAULT_HARMONIC, period, physicalInertia, sampleAt } from "./harmonic-motion.ts";
+import { DEFAULT_HARMONIC, period, physicalInertia, sampleAt, torsionInertia } from "./harmonic-motion.ts";
 
 const close = (a: number, b: number, eps = 1e-9) => Math.abs(a - b) < eps;
 
@@ -35,6 +35,28 @@ test("bob returns after one period and energy stays at the amplitude value", () 
   const mid = sampleAt(params, T / 4);
   assert.ok(Math.abs(mid.theta) < 1e-8);
   assert.ok(close(start.E, mid.E, 1e-8));
+});
+
+test("N parallel springs give T = 2π √(m / Nk)", () => {
+  const params = { ...DEFAULT_HARMONIC, m: 0.4, k: 40, A: 0.1, springCount: 4 };
+  const T = period(params, "parallel");
+  assert.ok(close(T, 2 * Math.PI * Math.sqrt(0.4 / 160)));
+  const start = sampleAt(params, 0, "parallel");
+  const mid = sampleAt(params, T / 4, "parallel");
+  assert.ok(close(start.E, 0.5 * 160 * 0.01));
+  assert.ok(close(start.E, mid.E, 1e-8));
+});
+
+test("torsional pendulum period is 2π √(I / κ) with I = N · ½ m R²", () => {
+  const params = { ...DEFAULT_HARMONIC, m: 0.8, L: 0.2, kappaT: 0.4, springCount: 2, theta0Deg: 10 };
+  const I = torsionInertia(params);
+  assert.ok(close(I, 2 * 0.5 * 0.8 * 0.04));
+  const T = period(params, "torsion");
+  assert.ok(close(T, 2 * Math.PI * Math.sqrt(I / 0.4)));
+  const start = sampleAt(params, 0, "torsion");
+  const later = sampleAt(params, T, "torsion");
+  assert.ok(close(start.theta, later.theta, 1e-8));
+  assert.ok(close(start.E, later.E, 1e-8));
 });
 
 test("physical pendulum period is 2π √(I / mgd) for a rod pivoted at the end", () => {
