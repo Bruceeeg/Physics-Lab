@@ -162,6 +162,103 @@ export const C_EM_CED_UNITS = [
 
 export type CEmCedUnit = (typeof C_EM_CED_UNITS)[number];
 
+export const COURSE_FILTERS: readonly { id: CourseFilter; label: string }[] = [
+  { id: "all", label: "全部" },
+  { id: "p1", label: "Physics 1" },
+  { id: "p2", label: "Physics 2" },
+  { id: "c-mech", label: "C 力学" },
+  { id: "c-em", label: "C 电磁" },
+];
+
+export const SITE_LEDE =
+  "按 College Board 考纲覆盖四门 AP 物理：Physics 1、Physics 2、C 力学、C 电磁。通过本站可以学习各课程的核心实验：每个实验台会展示受力分析、运动轨迹与实时读数。调整质量、速度、角度等参数，就能看到场景边界，以及物理过程如何随之变化。";
+
+export const COURSE_SUMMARIES: readonly { id: CourseId; label: string; text: string }[] = [
+  {
+    id: "p1",
+    label: "Physics 1",
+    text: "代数基础的力学入门，从运动学、牛顿定律、功与能、动量、转动、振动到流体。",
+  },
+  {
+    id: "p2",
+    label: "Physics 2",
+    text: "在力学之上延伸到热力学、电场与电路、磁与电磁、几何光学、波动光学与近代物理。",
+  },
+  {
+    id: "c-mech",
+    label: "C 力学",
+    text: "微积分写法的力学，并补上转动惯量、τ = Iα、弹道摆与复摆；不含流体。",
+  },
+  {
+    id: "c-em",
+    label: "C 电磁",
+    text: "微积分写法的电磁，从电荷与高斯定理到电容、螺线管与电磁感应；不含光学与近代物理。",
+  },
+];
+
+export type CourseOverview = {
+  id: CourseId;
+  kicker: string;
+  title: string;
+  blurb: string;
+  units: readonly { id: string; title: string; english: string; weighting: string }[];
+  featuredSlugs: readonly ReadySlug[];
+};
+
+export const COURSE_OVERVIEWS: readonly CourseOverview[] = [
+  {
+    id: "p1",
+    kicker: "物理 1",
+    title: "AP Physics 1",
+    blurb:
+      "代数基础的力学入门：从运动学、牛顿定律、功与能、动量、转动、振动到流体。课程要求约四分之一课时用于探究实验。",
+    units: P1_CED_UNITS,
+    featuredSlugs: [
+      "conservation-of-energy",
+      "projectile-motion",
+      "vertical-circular",
+      "fluid-dynamics",
+    ],
+  },
+  {
+    id: "p2",
+    kicker: "物理 2",
+    title: "AP Physics 2",
+    blurb:
+      "在力学之上延伸到热力学、电场与电路、磁与电磁、几何光学、波动光学与近代物理。课程要求约四分之一课时用于探究实验。",
+    units: P2_CED_UNITS,
+    featuredSlugs: [
+      "electric-field",
+      "rc-circuits",
+      "geometric-optics",
+      "boyles-law",
+    ],
+  },
+  {
+    id: "c-mech",
+    kicker: "C 力学",
+    title: "AP Physics C 力学",
+    blurb:
+      "微积分写法的力学：与 Physics 1 的 1–7 单元对应但权重不同，补充滑轮惯量、转动惯量测定、τ = Iα、弹道摆与复摆。不含流体。",
+    units: C_MECH_CED_UNITS,
+    featuredSlugs: [
+      "variable-force",
+      "loop-track",
+      "nonuniform-rod",
+      "drag-force",
+    ],
+  },
+  {
+    id: "c-em",
+    kicker: "C 电磁",
+    title: "AP Physics C 电磁",
+    blurb:
+      "微积分写法的电磁：从电荷与高斯定理到电容、螺线管与电磁感应。不含光学与近代物理。",
+    units: C_EM_CED_UNITS,
+    featuredSlugs: ["electric-field", "capacitance", "solenoid", "rl-circuits"],
+  },
+];
+
 const P1_AND_C = ["p1", "c-mech"] as const;
 const P2_AND_C = ["p2", "c-em"] as const;
 
@@ -663,6 +760,36 @@ export function clusterByCEmUnit(experiments: readonly ExperimentEntry[]) {
     unit,
     experiments: experiments.filter((item) => item.unit === unit.title),
   })).filter((group) => group.experiments.length > 0);
+}
+
+export function getCourseOverview(id: CourseId): CourseOverview {
+  return COURSE_OVERVIEWS.find((item) => item.id === id) ?? COURSE_OVERVIEWS[0]!;
+}
+
+export function adjacentCourse(id: CourseId, step: number): CourseId {
+  const ids = COURSE_SECTIONS.map((section) => section.id);
+  const index = ids.indexOf(id);
+  const start = index < 0 ? 0 : index;
+  const next = (start + step) % ids.length;
+  return ids[(next + ids.length) % ids.length] ?? id;
+}
+
+export function nextFeaturedStep(
+  course: CourseId,
+  featuredIndex: number,
+  featuredCount: number,
+): { course: CourseId; featuredIndex: number } {
+  if (featuredCount <= 0 || featuredIndex + 1 >= featuredCount) {
+    return { course: adjacentCourse(course, 1), featuredIndex: 0 };
+  }
+  return { course, featuredIndex: featuredIndex + 1 };
+}
+
+export function listFeaturedExperiments(id: CourseId): ExperimentEntry[] {
+  return getCourseOverview(id).featuredSlugs.flatMap((slug) => {
+    const item = getExperiment(slug);
+    return item ? [{ ...item, unit: experimentUnit(item, id) }] : [];
+  });
 }
 
 export function getExperiment(slug: string): ExperimentEntry | undefined {

@@ -4,9 +4,15 @@ import { test } from "node:test";
 import {
   C_EM_CED_UNITS,
   C_MECH_CED_UNITS,
+  COURSE_FILTERS,
+  COURSE_OVERVIEWS,
+  COURSE_SUMMARIES,
+  SITE_LEDE,
   COURSE_SECTIONS,
   P1_CED_UNITS,
   P2_CED_UNITS,
+  adjacentCourse,
+  nextFeaturedStep,
   clusterByCEmUnit,
   clusterByCMechUnit,
   clusterByP1Unit,
@@ -14,13 +20,16 @@ import {
   experimentCourses,
   experimentHref,
   experimentUnit,
+  getCourseOverview,
   getExperiment,
   isReadyExperiment,
   listCatalogGroups,
   listExperimentSlugs,
   listExperiments,
+  listFeaturedExperiments,
   parseCourseFilter,
 } from "./catalog.ts";
+import { FEATURED_CLIP_MS, FEATURED_GAP_MS, PREVIEW_PLAY } from "./preview-timing.ts";
 
 const P1_READY = [
   "linear-motion",
@@ -294,4 +303,45 @@ test("parses course filter values", () => {
   assert.equal(parseCourseFilter("c-em"), "c-em");
   assert.equal(parseCourseFilter("mechanics"), "all");
   assert.equal(parseCourseFilter("官方探究"), "all");
+});
+
+test("lists four course overviews with ready featured labs", () => {
+  assert.deepEqual(
+    COURSE_FILTERS.map((item) => item.id),
+    ["all", "p1", "p2", "c-mech", "c-em"],
+  );
+  assert.deepEqual(
+    COURSE_OVERVIEWS.map((item) => item.id),
+    COURSE_SECTIONS.map((section) => section.id),
+  );
+  assert.equal(getCourseOverview("p1").featuredSlugs[0], "conservation-of-energy");
+  assert.match(getCourseOverview("p1").blurb, /流体/);
+  assert.match(SITE_LEDE, /College Board/);
+  assert.deepEqual(
+    COURSE_SUMMARIES.map((item) => item.label),
+    ["Physics 1", "Physics 2", "C 力学", "C 电磁"],
+  );
+  assert.equal(adjacentCourse("p1", 1), "p2");
+  assert.equal(adjacentCourse("c-em", 1), "p1");
+  assert.equal(adjacentCourse("p1", -1), "c-em");
+  for (const overview of COURSE_OVERVIEWS) {
+    const featured = listFeaturedExperiments(overview.id);
+    assert.equal(featured.length, overview.featuredSlugs.length);
+    assert.ok(featured.every((item) => item.status === "ready"));
+    assert.ok(featured.every((item) => experimentCourses(item).includes(overview.id)));
+  }
+});
+
+test("featured autoplay waits half a second after a preview clip", () => {
+  assert.equal(PREVIEW_PLAY, 5);
+  assert.equal(FEATURED_GAP_MS, 500);
+  assert.equal(FEATURED_CLIP_MS, 5500);
+});
+
+test("advances featured labs then wraps to the next course", () => {
+  assert.deepEqual(nextFeaturedStep("p1", 0, 4), { course: "p1", featuredIndex: 1 });
+  assert.deepEqual(nextFeaturedStep("p1", 2, 4), { course: "p1", featuredIndex: 3 });
+  assert.deepEqual(nextFeaturedStep("p1", 3, 4), { course: "p2", featuredIndex: 0 });
+  assert.deepEqual(nextFeaturedStep("c-em", 3, 4), { course: "p1", featuredIndex: 0 });
+  assert.deepEqual(nextFeaturedStep("p2", 0, 0), { course: "c-mech", featuredIndex: 0 });
 });

@@ -381,6 +381,147 @@ input[type="range"]::-moz-range-thumb {
   border-radius: 2px;
 }
 
+html.catalog-hero-lock,
+html.catalog-hero-lock body {
+  height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.catalog-hero {
+  display: flex;
+  height: 100dvh;
+  flex-direction: column;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: var(--color-paper);
+  touch-action: none;
+  transition: transform 520ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.catalog-hero a,
+.catalog-hero button {
+  touch-action: manipulation;
+}
+
+.catalog-hero.is-exiting {
+  transform: translateY(-100%);
+}
+
+.catalog-hero.is-overlay:not(.is-in) {
+  transform: translateY(-100%);
+  pointer-events: none;
+}
+
+.catalog-hero.is-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+}
+
+.catalog-labs-page {
+  animation: catalog-labs-in 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.catalog-labs-page.is-covered {
+  pointer-events: none;
+}
+
+@keyframes catalog-labs-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.catalog-enter-btn {
+  display: flex;
+  height: 48px;
+  width: 48px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  box-shadow: 0 8px 20px rgb(15 23 42 / 8%);
+  touch-action: manipulation;
+}
+
+.catalog-enter-btn:hover {
+  border-color: var(--color-navy);
+}
+
+.catalog-enter-btn:active {
+  transform: scale(0.98);
+}
+
+.catalog-enter-btn:focus-visible {
+  outline: 2px solid var(--color-navy);
+  outline-offset: 2px;
+}
+
+.catalog-enter-btn__glyph {
+  display: block;
+  width: 10px;
+  height: 10px;
+  margin-top: -3px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .catalog-enter-btn__glyph {
+    animation: catalog-enter-nudge 1.8s ease-in-out infinite;
+  }
+}
+
+@keyframes catalog-enter-nudge {
+  0%,
+  100% {
+    transform: rotate(45deg) translate(0, 0);
+  }
+  50% {
+    transform: rotate(45deg) translate(2px, 2px);
+  }
+}
+
+@media (max-height: 900px) {
+  .catalog-hero-copy h1 {
+    font-size: 1.875rem;
+  }
+
+  .catalog-hero-lede {
+    margin-top: 0.75rem;
+    gap: 1rem;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+  }
+
+  .catalog-hero-lede li + li {
+    margin-top: 0.35rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .catalog-hero {
+    transition: none;
+  }
+
+  .catalog-hero.is-exiting,
+  .catalog-hero.is-overlay.is-in {
+    transform: none;
+  }
+
+  .catalog-labs-page {
+    animation: none;
+  }
+}
+
 .catalog-card-3d {
   perspective: 960px;
 }

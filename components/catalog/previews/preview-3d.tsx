@@ -96,11 +96,13 @@ export function CatalogPreview3D({
   slug,
   running,
   visible,
+  hero = false,
 }: {
   kind: PreviewKind;
   slug: string;
   running: boolean;
   visible: boolean;
+  hero?: boolean;
 }) {
   const { mounted } = useCatalogPreviewRuntime();
   const index = useRef(0);
@@ -115,7 +117,7 @@ export function CatalogPreview3D({
 
   return (
     <View className="h-full w-full bg-[#cbd5e1]" index={index.current} aria-hidden="true">
-      <PreviewKindScene kind={kind} slug={slug} running={running} />
+      <PreviewKindScene kind={kind} slug={slug} running={running} hero={hero} />
     </View>
   );
 }
