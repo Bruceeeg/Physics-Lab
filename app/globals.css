@@ -17,6 +17,8 @@
 
 :root {
   color-scheme: light;
+  --font-noto: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC",
+    sans-serif;
 }
 
 html {
@@ -318,7 +320,24 @@ body {
   }
 
   .lab-scene {
-    min-height: 480px;
+    order: 1;
+  }
+
+  .lab-parameters,
+  .lab-board {
+    order: 2;
+  }
+
+  .lab-charts {
+    order: 3;
+  }
+
+  .lab-scene {
+    min-height: auto;
+  }
+
+  .lab-scene-viewport {
+    min-height: clamp(320px, 52dvh, 440px);
   }
 
   .scene-pip {
@@ -386,6 +405,30 @@ html.catalog-hero-lock body {
   height: 100dvh;
   overflow: hidden;
   overscroll-behavior: none;
+}
+
+html.catalog-labs-open,
+html.catalog-labs-open body {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html.catalog-labs-open::-webkit-scrollbar,
+html.catalog-labs-open body::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.catalog-scroll-quiet {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.catalog-scroll-quiet::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }
 
 .catalog-hero {
@@ -533,7 +576,6 @@ html.catalog-hero-lock body {
     transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
     box-shadow 180ms ease,
     border-color 180ms ease;
-  will-change: transform;
   border: 1px solid var(--color-line);
   background: var(--color-surface);
   padding: 8px 8px 10px;
@@ -544,6 +586,7 @@ html.catalog-hero-lock body {
 
 .catalog-card-3d:hover .catalog-card-3d__face,
 .catalog-card-3d:focus-within .catalog-card-3d__face {
+  will-change: transform;
   border-color: var(--color-navy);
   box-shadow:
     0 22px 44px rgb(30 58 95 / 16%),

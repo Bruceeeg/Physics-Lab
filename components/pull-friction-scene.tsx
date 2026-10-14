@@ -706,7 +706,7 @@ export function PullFrictionScene({
       </mesh>
       <MassBlock position={origin} />
       <TrailLine points={trail} />
-      {marks.map((mark) => (
+      {interactive ? marks.map((mark) => (
         <ForceArrow
           key={mark.name}
           origin={origin}
@@ -730,7 +730,7 @@ export function PullFrictionScene({
           }
           onClose={() => setSelectedForce(null)}
         />
-      ))}
+      )) : null}
       <FollowOrbit x={state.x} y={0.4 + state.z} z={0} interactive={interactive} />
     </>
   );

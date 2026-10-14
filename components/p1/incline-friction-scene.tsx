@@ -94,6 +94,7 @@ export function InclineFrictionScene({
         label="mg"
         unit="N"
         scale={0.7}
+        labelOffset={[-0.18, -0.02, 0]}
       />
       {onRamp ? (
         <>
@@ -107,6 +108,7 @@ export function InclineFrictionScene({
             unit="N"
             dashed
             scale={0.7}
+            labelOffset={[0, -0.18, 0]}
           />
           <VectorArrow
             origin={body}
@@ -118,6 +120,7 @@ export function InclineFrictionScene({
             unit="N"
             dashed
             scale={0.7}
+            labelOffset={[-0.18, 0.02, 0]}
           />
         </>
       ) : null}
@@ -129,6 +132,11 @@ export function InclineFrictionScene({
         color={FORCE_COLORS.N}
         label="N"
         scale={0.7}
+        labelOffsets={{
+          main: [0.2, 0.08, 0],
+          horizontal: [0.18, -0.12, 0],
+          vertical: [-0.18, 0.06, 0],
+        }}
       />
       <ForceWithXY
         origin={body}
@@ -138,6 +146,11 @@ export function InclineFrictionScene({
         color={FORCE_COLORS.f}
         label={fLabel}
         scale={0.7}
+        labelOffsets={{
+          main: [0, -0.2, 0],
+          horizontal: [0.12, -0.2, 0],
+          vertical: [-0.2, -0.04, 0],
+        }}
       />
       <SpriteLabel
         text={

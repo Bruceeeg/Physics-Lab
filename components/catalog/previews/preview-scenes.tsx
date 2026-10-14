@@ -7,37 +7,41 @@ import type { PerspectiveCamera as CameraImpl } from "three";
 
 import { LabPreviewMode } from "@/components/lab-3d";
 import { LabelScaleContext } from "@/components/scene-label";
-import { LinearMotionScene } from "@/components/linear-motion-scene";
-import { AngularMomentumScene } from "@/components/p1/angular-momentum-scene";
-import { ArchimedesScene } from "@/components/p1/archimedes-scene";
-import { AtwoodMachineScene } from "@/components/p1/atwood-machine-scene";
-import { CircularMotionScene } from "@/components/p1/circular-motion-scene";
-import { ConservationOfEnergyScene } from "@/components/p1/conservation-of-energy-scene";
-import { DragForceScene } from "@/components/p1/drag-force-scene";
-import { FluidDynamicsScene } from "@/components/p1/fluid-dynamics-scene";
-import { HarmonicMotionScene } from "@/components/p1/harmonic-motion-scene";
-import { ImpulseMomentumScene } from "@/components/p1/impulse-momentum-scene";
-import { InclineFrictionScene } from "@/components/p1/incline-friction-scene";
-import { LoopTrackScene } from "@/components/p1/loop-track-scene";
-import { NonuniformRodScene } from "@/components/p1/nonuniform-rod-scene";
-import { RotationN2Scene } from "@/components/p1/rotation-n2-scene";
-import { RotationalMotionScene } from "@/components/p1/rotational-motion-scene";
-import { TorqueEquilibriumScene } from "@/components/p1/torque-equilibrium-scene";
-import { VariableForceScene } from "@/components/p1/variable-force-scene";
-import { BoylesLawScene } from "@/components/p2/boyles-law-scene";
-import { CapacitanceScene } from "@/components/p2/capacitance-scene";
-import { ElectricFieldScene } from "@/components/p2/electric-field-scene";
-import { ElectromagneticInductionScene } from "@/components/p2/electromagnetic-induction-scene";
-import { GeometricOpticsScene } from "@/components/p2/geometric-optics-scene";
-import { MagnetismScene } from "@/components/p2/magnetism-scene";
-import { ParticleModelOfLightScene } from "@/components/p2/particle-model-of-light-scene";
-import { RcCircuitsScene } from "@/components/p2/rc-circuits-scene";
-import { ResistorCircuitsScene } from "@/components/p2/resistor-circuits-scene";
-import { RlCircuitsScene } from "@/components/p2/rl-circuits-scene";
-import { ThermalConductivityScene } from "@/components/p2/thermal-conductivity-scene";
-import { WavesOpticsScene } from "@/components/p2/waves-optics-scene";
-import { ProjectileScene } from "@/components/projectile-scene";
-import { PullFrictionScene, type TrailPoint } from "@/components/pull-friction-scene";
+import { LazyScene } from "@/components/catalog/previews/lazy-scene";
+import {
+  loadAngularMomentumScene,
+  loadArchimedesScene,
+  loadAtwoodMachineScene,
+  loadBoylesLawScene,
+  loadCapacitanceScene,
+  loadCircularMotionScene,
+  loadConservationOfEnergyScene,
+  loadDragForceScene,
+  loadElectricFieldScene,
+  loadElectromagneticInductionScene,
+  loadFluidDynamicsScene,
+  loadGeometricOpticsScene,
+  loadHarmonicMotionScene,
+  loadImpulseMomentumScene,
+  loadInclineFrictionScene,
+  loadLinearMotionScene,
+  loadLoopTrackScene,
+  loadMagnetismScene,
+  loadNonuniformRodScene,
+  loadParticleModelOfLightScene,
+  loadProjectileScene,
+  loadPullFrictionScene,
+  loadRcCircuitsScene,
+  loadResistorCircuitsScene,
+  loadRlCircuitsScene,
+  loadRotationN2Scene,
+  loadRotationalMotionScene,
+  loadThermalConductivityScene,
+  loadTorqueEquilibriumScene,
+  loadVariableForceScene,
+  loadWavesOpticsScene,
+} from "@/components/catalog/previews/scene-loaders";
+import type { TrailPoint } from "@/components/pull-friction-scene";
 import type { PreviewKind } from "@/lib/experiments/catalog";
 import { PREVIEW_CYCLE, PREVIEW_PLAY } from "@/lib/experiments/preview-timing";
 import { DEFAULT_ANGMOM, fallTime, sampleAt as angMomAt } from "@/lib/models/angular-momentum";
@@ -185,13 +189,13 @@ function PreviewRig({
 
   return (
     <LabPreviewMode>
-      <LabelScaleContext.Provider value={hero ? 1.15 : 1.5}>
+      <LabelScaleContext.Provider value={hero ? 1.15 : 0}>
         <PerspectiveCamera
           ref={cam}
           makeDefault
           fov={usedFov}
           near={0.08}
-          far={2000}
+          far={80}
           position={framed}
         />
         {children}
@@ -205,7 +209,7 @@ function LinearPreview({ running }: { running: boolean }) {
   const sample = motionSample(0, 1.6, 0.7, time);
   return (
     <PreviewRig camera={[1.9, 0.95, 2.5]} target={[0, 0.2, 0]} fov={42}>
-      <LinearMotionScene x={sample.x} min={0} max={4.4} v={sample.v} />
+      <LazyScene name="linear-motion" load={loadLinearMotionScene} x={sample.x} min={0} max={4.4} v={sample.v} />
     </PreviewRig>
   );
 }
@@ -223,7 +227,7 @@ function ProjectilePreview({ running }: { running: boolean }) {
       fov={42}
       heroFrame={{ camera: [span * 0.18, 1.45, span * 1.12], target: [span * 0.36, 0.42, 0], fov: 42 }}
     >
-      <ProjectileScene
+      <LazyScene name="projectile" load={loadProjectileScene}
         params={PROJECTILE_PARAMS}
         sample={sample}
         trail={[]}
@@ -288,7 +292,7 @@ function PullPreview({ running }: { running: boolean }) {
       fov={38}
       dolly={0.55}
     >
-      <PullFrictionScene
+      <LazyScene name="pull-friction" load={loadPullFrictionScene}
         state={state}
         derived={derived}
         trail={trail}
@@ -304,7 +308,7 @@ function InclinePreview({ running }: { running: boolean }) {
   const sample = inclineAt(DEFAULT_INCLINE, time);
   return (
     <PreviewRig camera={[1.8, 0.95, 2.8]} target={[0.45, 0.22, 0]} fov={42}>
-      <InclineFrictionScene params={DEFAULT_INCLINE} sample={sample} />
+      <LazyScene name="incline" load={loadInclineFrictionScene} params={DEFAULT_INCLINE} sample={sample} />
     </PreviewRig>
   );
 }
@@ -314,7 +318,7 @@ function AtwoodPreview({ running }: { running: boolean }) {
   const sample = atwoodAt(DEFAULT_ATWOOD, time);
   return (
     <PreviewRig camera={[1.6, 1.1, 2.8]} target={[0, 0.55, 0]} dolly={0.68}>
-      <AtwoodMachineScene sample={sample} params={DEFAULT_ATWOOD} />
+      <LazyScene name="atwood" load={loadAtwoodMachineScene} sample={sample} params={DEFAULT_ATWOOD} />
     </PreviewRig>
   );
 }
@@ -346,7 +350,7 @@ function CircularPreview({ running, slug }: { running: boolean; slug: string }) 
           : undefined
       }
     >
-      <CircularMotionScene params={DEFAULT_CIRCULAR} sample={sample} trail={[]} mode={mode} />
+      <LazyScene name="circular" load={loadCircularMotionScene} params={DEFAULT_CIRCULAR} sample={sample} trail={[]} mode={mode} />
     </PreviewRig>
   );
 }
@@ -361,7 +365,7 @@ function EnergyPreview({ running }: { running: boolean }) {
       dolly={0.7}
       heroFrame={{ camera: [1.05, 0.70, 1.70], target: [0.18, 0.30, 0], fov: 42 }}
     >
-      <ConservationOfEnergyScene params={DEFAULT_ENERGY} sample={sample} trail={[]} />
+      <LazyScene name="energy" load={loadConservationOfEnergyScene} params={DEFAULT_ENERGY} sample={sample} trail={[]} />
     </PreviewRig>
   );
 }
@@ -371,7 +375,7 @@ function MomentumPreview({ running }: { running: boolean }) {
   const sample = impulseAt(DEFAULT_IMPULSE, time, "collision");
   return (
     <PreviewRig camera={[0.2, 1.4, 3.2]} target={[0, 0.16, 0]} dolly={0.42}>
-      <ImpulseMomentumScene sample={sample} trail={[]} params={DEFAULT_IMPULSE} />
+      <LazyScene name="impulse" load={loadImpulseMomentumScene} sample={sample} trail={[]} params={DEFAULT_IMPULSE} />
     </PreviewRig>
   );
 }
@@ -381,7 +385,7 @@ function BallisticPreview({ running }: { running: boolean }) {
   const sample = impulseAt({ ...DEFAULT_IMPULSE, L: 0.8 }, time, "ballistic");
   return (
     <PreviewRig camera={[0.4, 1.2, 2.6]} target={[0, 0.45, 0]} dolly={0.55}>
-      <ImpulseMomentumScene
+      <LazyScene name="impulse" load={loadImpulseMomentumScene}
         sample={sample}
         trail={[]}
         mode="ballistic"
@@ -396,7 +400,7 @@ function TorquePreview({ running }: { running: boolean }) {
   const sample = torqueAt(DEFAULT_TORQUE, time);
   return (
     <PreviewRig camera={[1.1, 0.7, 1.8]} target={[0, 0.35, 0]} fov={42}>
-      <TorqueEquilibriumScene params={DEFAULT_TORQUE} sample={sample} />
+      <LazyScene name="torque" load={loadTorqueEquilibriumScene} params={DEFAULT_TORQUE} sample={sample} />
     </PreviewRig>
   );
 }
@@ -406,7 +410,7 @@ function RollPreview({ running }: { running: boolean }) {
   const sample = rollingAt(DEFAULT_ROLLING, time);
   return (
     <PreviewRig camera={[1.8, 1.2, 2.8]} target={[0.4, 0.28, 0]} dolly={0.58}>
-      <RotationalMotionScene params={DEFAULT_ROLLING} sample={sample} trail={[]} />
+      <LazyScene name="rotation" load={loadRotationalMotionScene} params={DEFAULT_ROLLING} sample={sample} trail={[]} />
     </PreviewRig>
   );
 }
@@ -416,7 +420,7 @@ function AngMomPreview({ running }: { running: boolean }) {
   const sample = angMomAt(DEFAULT_ANGMOM, time, "drop");
   return (
     <PreviewRig camera={[1.2, 1.1, 2.2]} target={[0, 0.28, 0]} dolly={0.68}>
-      <AngularMomentumScene params={DEFAULT_ANGMOM} sample={sample} />
+      <LazyScene name="angmom" load={loadAngularMomentumScene} params={DEFAULT_ANGMOM} sample={sample} />
     </PreviewRig>
   );
 }
@@ -427,7 +431,7 @@ function PendulumPreview({ running, physical }: { running: boolean; physical?: b
   const sample = harmonicAt(DEFAULT_HARMONIC, time, mode);
   return (
     <PreviewRig camera={[1.6, 1.2, 2.8]} target={[0, 0.35, 0]} dolly={physical ? 0.4 : 0.48}>
-      <HarmonicMotionScene params={DEFAULT_HARMONIC} sample={sample} trail={[]} mode={mode} />
+      <LazyScene name="harmonic" load={loadHarmonicMotionScene} params={DEFAULT_HARMONIC} sample={sample} trail={[]} mode={mode} />
     </PreviewRig>
   );
 }
@@ -442,7 +446,7 @@ function FluidsPreview({ running }: { running: boolean }) {
       dolly={0.66}
       heroFrame={{ camera: [1.02, 0.92, 1.78], target: [0.30, 0.44, 0], fov: 42 }}
     >
-      <FluidDynamicsScene params={DEFAULT_FLUID} sample={sample} />
+      <LazyScene name="fluids" load={loadFluidDynamicsScene} params={DEFAULT_FLUID} sample={sample} />
     </PreviewRig>
   );
 }
@@ -452,7 +456,7 @@ function ArchimedesPreview({ running }: { running: boolean }) {
   const sample = archimedesAt(DEFAULT_ARCHIMEDES, time);
   return (
     <PreviewRig camera={[0.55, 0.45, 1.15]} target={[0, 0.22, 0]} fov={42}>
-      <ArchimedesScene params={DEFAULT_ARCHIMEDES} sample={sample} />
+      <LazyScene name="archimedes" load={loadArchimedesScene} params={DEFAULT_ARCHIMEDES} sample={sample} />
     </PreviewRig>
   );
 }
@@ -467,7 +471,7 @@ function BoylePreview({ running }: { running: boolean }) {
       fov={42}
       heroFrame={{ camera: [0.58, 0.48, 1.18], target: [0, 0.40, 0], fov: 42 }}
     >
-      <BoylesLawScene params={DEFAULT_BOYLE} sample={sample} />
+      <LazyScene name="boyle" load={loadBoylesLawScene} params={DEFAULT_BOYLE} sample={sample} />
     </PreviewRig>
   );
 }
@@ -477,7 +481,7 @@ function ThermalPreview({ running }: { running: boolean }) {
   const sample = thermalAt(DEFAULT_THERMAL, time);
   return (
     <PreviewRig camera={[0.75, 0.42, 1.15]} target={[0, 0.14, 0]} fov={42}>
-      <ThermalConductivityScene params={DEFAULT_THERMAL} sample={sample} mode="single" />
+      <LazyScene name="thermal" load={loadThermalConductivityScene} params={DEFAULT_THERMAL} sample={sample} mode="single" />
     </PreviewRig>
   );
 }
@@ -509,7 +513,7 @@ function CoulombPreview({ running, slug }: { running: boolean; slug: string }) {
           : { camera: [0.48, 0.32, 0.78], target: [0, 0.12, 0], fov: 42 }
       }
     >
-      <ElectricFieldScene params={DEFAULT_ELECTRIC} sample={sample} mode={mode} />
+      <LazyScene name="electric" load={loadElectricFieldScene} params={DEFAULT_ELECTRIC} sample={sample} mode={mode} />
     </PreviewRig>
   );
 }
@@ -519,7 +523,7 @@ function EquipotentialPreview({ running }: { running: boolean }) {
   const sample = electricAt(DEFAULT_ELECTRIC, time, "equipotential");
   return (
     <PreviewRig camera={[0.55, 0.38, 1.05]} target={[0, 0.12, 0]} fov={42}>
-      <ElectricFieldScene params={DEFAULT_ELECTRIC} sample={sample} mode="equipotential" />
+      <LazyScene name="electric" load={loadElectricFieldScene} params={DEFAULT_ELECTRIC} sample={sample} mode="equipotential" />
     </PreviewRig>
   );
 }
@@ -529,7 +533,7 @@ function ResistorPreview({ running }: { running: boolean }) {
   const sample = resistorAt(DEFAULT_RESISTOR, time, "series");
   return (
     <PreviewRig camera={[0.35, 0.55, 0.95]} target={[0, 0.12, 0]} fov={42}>
-      <ResistorCircuitsScene sample={sample} mode="series" />
+      <LazyScene name="resistor" load={loadResistorCircuitsScene} sample={sample} mode="series" />
     </PreviewRig>
   );
 }
@@ -544,7 +548,7 @@ function RcPreview({ running }: { running: boolean }) {
       fov={42}
       heroFrame={{ camera: [0.28, 0.36, 0.6], target: [0, 0.1, 0], fov: 42 }}
     >
-      <RcCircuitsScene sample={sample} mode="charge" />
+      <LazyScene name="rc" load={loadRcCircuitsScene} sample={sample} mode="charge" />
     </PreviewRig>
   );
 }
@@ -554,7 +558,7 @@ function MagnetPreview({ running }: { running: boolean }) {
   const sample = magnetismAt(DEFAULT_MAGNETISM, time, "wire");
   return (
     <PreviewRig camera={[0.7, 0.5, 1.15]} target={[0, 0.16, 0]} fov={42}>
-      <MagnetismScene params={DEFAULT_MAGNETISM} sample={sample} mode="wire" />
+      <LazyScene name="magnetism" load={loadMagnetismScene} params={DEFAULT_MAGNETISM} sample={sample} mode="wire" />
     </PreviewRig>
   );
 }
@@ -569,7 +573,7 @@ function SolenoidPreview({ running }: { running: boolean }) {
       fov={42}
       heroFrame={{ camera: [0.18, 0.26, 0.38], target: [0, 0.18, 0], fov: 42 }}
     >
-      <MagnetismScene params={DEFAULT_MAGNETISM} sample={sample} mode="solenoid" />
+      <LazyScene name="magnetism" load={loadMagnetismScene} params={DEFAULT_MAGNETISM} sample={sample} mode="solenoid" />
     </PreviewRig>
   );
 }
@@ -579,7 +583,7 @@ function InductionPreview({ running }: { running: boolean }) {
   const sample = inductionAt(DEFAULT_INDUCTION, time, "coil");
   return (
     <PreviewRig camera={[0.7, 0.5, 1.2]} target={[0, 0.16, 0]} fov={42} dolly={0.55}>
-      <ElectromagneticInductionScene params={DEFAULT_INDUCTION} sample={sample} mode="coil" />
+      <LazyScene name="induction" load={loadElectromagneticInductionScene} params={DEFAULT_INDUCTION} sample={sample} mode="coil" />
     </PreviewRig>
   );
 }
@@ -594,7 +598,7 @@ function OpticsPreview({ running }: { running: boolean }) {
       fov={42}
       heroFrame={{ camera: [-0.05, 0.38, 1.12], target: [-0.08, 0.14, 0], fov: 42 }}
     >
-      <GeometricOpticsScene sample={sample} mode="convex" />
+      <LazyScene name="optics" load={loadGeometricOpticsScene} sample={sample} mode="convex" />
     </PreviewRig>
   );
 }
@@ -604,7 +608,7 @@ function WavesPreview({ running }: { running: boolean }) {
   const sample = wavesAt(DEFAULT_WAVES, time, "standing");
   return (
     <PreviewRig camera={[0.4, 0.45, 1.35]} target={[0, 0.16, 0]} fov={42} dolly={0.65}>
-      <WavesOpticsScene params={DEFAULT_WAVES} sample={sample} mode="standing" />
+      <LazyScene name="waves" load={loadWavesOpticsScene} params={DEFAULT_WAVES} sample={sample} mode="standing" />
     </PreviewRig>
   );
 }
@@ -614,7 +618,7 @@ function PhotonPreview({ running }: { running: boolean }) {
   const sample = photonAt(DEFAULT_PHOTON, time, "led");
   return (
     <PreviewRig camera={[0.45, 0.38, 0.95]} target={[0, 0.16, 0]} fov={42}>
-      <ParticleModelOfLightScene sample={sample} mode="led" />
+      <LazyScene name="photon" load={loadParticleModelOfLightScene} sample={sample} mode="led" />
     </PreviewRig>
   );
 }
@@ -625,7 +629,7 @@ function N2RotPreview({ running, hoop }: { running: boolean; hoop?: boolean }) {
   const sample = rotationN2At(params, time);
   return (
     <PreviewRig camera={[1.4, 1.1, 2.4]} target={[0, 0.7, 0]} dolly={0.5}>
-      <RotationN2Scene params={params} sample={sample} />
+      <LazyScene name="n2rot" load={loadRotationN2Scene} params={params} sample={sample} />
     </PreviewRig>
   );
 }
@@ -640,7 +644,7 @@ function CapacitancePreview({ running }: { running: boolean }) {
       fov={42}
       heroFrame={{ camera: [0.26, 0.24, 0.5], target: [0, 0.16, 0], fov: 42 }}
     >
-      <CapacitanceScene sample={sample} />
+      <LazyScene name="capacitance" load={loadCapacitanceScene} sample={sample} />
     </PreviewRig>
   );
 }
@@ -655,7 +659,7 @@ function RlPreview({ running }: { running: boolean }) {
       fov={42}
       heroFrame={{ camera: [0.28, 0.36, 0.6], target: [0, 0.1, 0], fov: 42 }}
     >
-      <RlCircuitsScene sample={sample} mode="grow" />
+      <LazyScene name="rl" load={loadRlCircuitsScene} sample={sample} mode="grow" />
     </PreviewRig>
   );
 }
@@ -670,7 +674,7 @@ function VariableForcePreview({ running }: { running: boolean }) {
       dolly={0.48}
       heroFrame={{ dolly: 0.4 }}
     >
-      <VariableForceScene params={DEFAULT_VARIABLE_FORCE} sample={sample} trail={[]} mode="fx" />
+      <LazyScene name="variable-force" load={loadVariableForceScene} params={DEFAULT_VARIABLE_FORCE} sample={sample} trail={[]} mode="fx" />
     </PreviewRig>
   );
 }
@@ -684,7 +688,7 @@ function DragForcePreview({ running }: { running: boolean }) {
       target={[0, 0.7, 0]}
       heroFrame={{ camera: [1.35, 1.05, 2.05], target: [0, 0.82, 0], fov: 42 }}
     >
-      <DragForceScene params={DEFAULT_DRAG} sample={sample} trail={[]} />
+      <LazyScene name="drag-force" load={loadDragForceScene} params={DEFAULT_DRAG} sample={sample} trail={[]} />
     </PreviewRig>
   );
 }
@@ -699,7 +703,7 @@ function LoopTrackPreview({ running }: { running: boolean }) {
       dolly={0.6}
       heroFrame={{ camera: [0.12, 1.05, 1.90], target: [-0.45, 0.58, 0], fov: 42 }}
     >
-      <LoopTrackScene params={DEFAULT_LOOP} sample={sample} trail={[]} mode="slide" />
+      <LazyScene name="loop-track" load={loadLoopTrackScene} params={DEFAULT_LOOP} sample={sample} trail={[]} mode="slide" />
     </PreviewRig>
   );
 }
@@ -714,7 +718,7 @@ function NonuniformRodPreview({ running }: { running: boolean }) {
       dolly={0.5}
       heroFrame={{ camera: [1.20, 0.92, 1.75], target: [0, 0.72, 0], fov: 42 }}
     >
-      <NonuniformRodScene params={DEFAULT_NONUNIFORM_ROD} sample={sample} mode="linear" />
+      <LazyScene name="nonuniform-rod" load={loadNonuniformRodScene} params={DEFAULT_NONUNIFORM_ROD} sample={sample} mode="linear" />
     </PreviewRig>
   );
 }
@@ -725,7 +729,7 @@ function TorsionPreview({ running }: { running: boolean }) {
   const sample = harmonicAt(params, time, "torsion");
   return (
     <PreviewRig camera={[1.2, 0.9, 2.0]} target={[0, 0.28, 0]}>
-      <HarmonicMotionScene params={params} sample={sample} trail={[]} mode="torsion" />
+      <LazyScene name="harmonic" load={loadHarmonicMotionScene} params={params} sample={sample} trail={[]} mode="torsion" />
     </PreviewRig>
   );
 }

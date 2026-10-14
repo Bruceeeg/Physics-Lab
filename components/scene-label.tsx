@@ -97,8 +97,15 @@ export function SpriteLabel({
   const worldHeight = height * labelScale;
   const fontsReady = useFontsReady();
   const family = fontsReady ? labelFontFamily() : FALLBACK_FONT;
-  const raster = useMemo(() => rasterLabel(text, color, family), [text, color, family]);
-  useEffect(() => () => raster.texture.dispose(), [raster]);
+  const raster = useMemo(
+    () => (labelScale <= 0 ? null : rasterLabel(text, color, family)),
+    [text, color, family, labelScale],
+  );
+  useEffect(() => () => raster?.texture.dispose(), [raster]);
+
+  if (!raster || labelScale <= 0) {
+    return null;
+  }
 
   return (
     <sprite

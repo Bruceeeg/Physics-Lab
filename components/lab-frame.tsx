@@ -153,7 +153,7 @@ export function LabFrame({
             <h2 className="text-xs font-medium text-ink">{sceneTitle}</h2>
             <p className="font-mono text-[10px] text-quiet">{sceneCaption}</p>
           </div>
-          <div className="relative min-h-[280px] flex-1">
+          <div className="lab-scene-viewport relative min-h-[280px] flex-1">
             <div className="absolute inset-0 h-full w-full">{scene}</div>
           </div>
           <dl className={`grid h-12 ${cols} border-t border-line font-mono text-[11px] tabular-nums`}>

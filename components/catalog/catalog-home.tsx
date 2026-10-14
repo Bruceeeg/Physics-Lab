@@ -137,7 +137,11 @@ export function CatalogHome() {
                 </div>
               </header>
               <div className="flex min-h-0 flex-1 flex-col">
-                <CourseOverview compact previewsPaused={previewPaused || stage === "catalog"} />
+                <CourseOverview
+                  compact
+                  previewsPaused={previewPaused || stage === "catalog"}
+                  previewMounted={stage === "hero" || heroReturning}
+                />
               </div>
               <div className="flex shrink-0 justify-center pb-5 pt-3 md:pb-6">
                 <button

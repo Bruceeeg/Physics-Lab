@@ -18,7 +18,6 @@ import {
   modeFromSlug,
   period,
   sampleAt,
-  tension,
   type CircularMode,
   type CircularParams,
 } from "@/lib/models/circular-motion";
@@ -53,12 +52,16 @@ export function CircularMotionLab({ slug }: { slug?: string }) {
   const n = formatLabNumber;
   const vEq = conicalEquilibriumSpeed(params);
   const Teq = equilibriumPeriod(params);
-  const theta = (params.thetaDeg * Math.PI) / 180;
-  const Tstring = mode === "vertical" ? sample.tension : tension(params, mode);
+  const theta = sample.polar;
+  const Tstring = sample.tension;
   const Tsin = Tstring * Math.sin(theta);
   const looping = canLoop(params);
   const vLoop = loopSpeed(params);
   const chartDuration = Math.max(Number.isFinite(T) ? T : 2, 2);
+  const chartWindow =
+    mode === "vertical"
+      ? 6
+      : Math.min(15, Math.max(6, Number.isFinite(T) ? T * 3 : 10));
 
   const set = (key: keyof CircularParams, value: number) => {
     reset();
@@ -75,15 +78,20 @@ export function CircularMotionLab({ slug }: { slug?: string }) {
       return `向心力 Fc = mv²/r = ${n(sample.Fc)} N。周期 T = 2πr/v = ${n(T)} s。`;
     }
     if (mode === "vertical") {
+      if (sample.phase === "projectile") {
+        return `绳张力降到 0，小球已在 t = ${n(sample.detachment?.t ?? sample.t)} s 脱轨并进入抛体运动。`;
+      }
       return looping
         ? `v₀ ≥ √(5gR) = ${n(vLoop)} m/s，可以过顶。T = mv²/R + mg cosφ。`
-        : `v₀ < √(5gR) = ${n(vLoop)} m/s，过不了顶，在圆弧上摆荡，不会停在空中。`;
+        : sample.detachment
+          ? `v₀ < √(5gR) = ${n(vLoop)} m/s，将在 T = 0 时脱离圆周。`
+          : `速度较低且绳保持拉紧，小球在圆弧上往返摆动。`;
     }
     const balanced = Math.abs(params.v0 - vEq) <= 0.02 * Math.max(vEq, 0.2);
     return balanced
       ? `圆锥摆平衡：v₀ ≈ veq = ${n(vEq)} m/s。T sinθ = mv²/r。`
-      : `切向速度 ${n(params.v0)} m/s，平衡速度 veq = ${n(vEq)} m/s。T sinθ 与 mv²/r 不相等时圆锥会升高或降低。`;
-  }, [mode, looping, n, params.v0, sample.Fc, T, vEq, vLoop]);
+      : `非平衡圆锥摆：θ(t) = ${n((sample.polar * 180) / Math.PI)}°，θ̇ = ${n(sample.polarVelocity)} rad/s。`;
+  }, [mode, looping, n, params.v0, sample.detachment, sample.phase, sample.polar, sample.polarVelocity, sample.t, sample.Fc, T, vEq, vLoop]);
 
   return (
     <LabFrame
@@ -143,24 +151,34 @@ export function CircularMotionLab({ slug }: { slug?: string }) {
           </>
         ) : mode === "vertical" ? (
           <>
-            <p className="text-quiet">杆约束在半径 R 的竖直面内。受力：T 指向圆心，mg 竖直向下。</p>
+            <p className="text-quiet">绳拉紧时半径为 R。T 降到 0 后绳松弛，小球转为抛体。</p>
             <p>φ̈ = −(g/R) sinφ</p>
             <p>过顶需 v₀ ≥ √(5gR) = {n(vLoop)} m/s</p>
-            <p>{looping ? "当前可以过顶。" : "当前过不了顶，在圆弧上摆荡。"}</p>
+            <p>
+              {sample.phase === "projectile"
+                ? `t脱 = ${n(sample.detachment?.t ?? 0)} s，之后 ax = 0、ay = −g。`
+                : looping
+                  ? "当前可以过顶。"
+                  : sample.detachment
+                    ? "当前将在张力归零时脱轨。"
+                    : "当前绳保持拉紧并往返摆动。"}
+            </p>
             <p className="text-navy">T = mv²/R + mg cosφ = {n(sample.tension)} N</p>
             <p>Fc = mv²/R = {n(sample.Fc)} N　v = {n(sample.speed)} m/s</p>
           </>
         ) : (
           <>
-            <p className="text-quiet">受力：T 沿摆线，mg 竖直向下。水平分量提供向心力。</p>
+            <p className="text-quiet">θ 与 φ 按球摆方程随时间变化；设定张角与速度是初始条件。</p>
+            <p>θ̈ = sinθ cosθ φ̇² − (g/L)sinθ</p>
+            <p>φ̈ = −2cotθ θ̇φ̇</p>
+            <p>θ(t) = {n((sample.polar * 180) / Math.PI)}°　θ̇ = {n(sample.polarVelocity)} rad/s</p>
             <p>r = L sinθ = {n(sample.r)} m</p>
             <p>平衡切向速度 veq = √(g L sin²θ / cosθ) = {n(vEq)} m/s</p>
             <p>当前 v₀ = {n(params.v0)} m/s</p>
-            <p>T = mg / cosθ = {n(Tstring)} N</p>
+            <p>T = mL(θ̇² + sin²θ φ̇²) + mg cosθ = {n(Tstring)} N</p>
             <p>T sinθ = {n(Tsin)} N</p>
-            <p className="text-navy">mv²/r = {n(sample.Fc)} N</p>
+            <p className="text-navy">方位向心项 mrφ̇² = {n(sample.Fc)} N</p>
             <p>平衡周期 Teq = 2π√(L cosθ / g) = {n(Teq)} s</p>
-            <p>当前周期 T = 2πr/v₀ = {n(T)} s</p>
           </>
         )
       }
@@ -169,8 +187,8 @@ export function CircularMotionLab({ slug }: { slug?: string }) {
         mode === "horizontal"
           ? "实线 T / mg / N　T 在水平面指向圆心　拖动旋转"
           : mode === "vertical"
-            ? "实线 T / mg　过不了顶则摆荡　拖动旋转"
-            : "实线 T / mg　虚线 Fc 指向圆心　拖动旋转"
+            ? "绳拉紧时显示 T；脱轨后按抛体运动　拖动旋转"
+            : "动态 θ(t)　实线 T / mg　虚线方位向心项"
       }
       scene={
         <SceneCanvas camera={[2.4, 1.7, 3.6]}>
@@ -178,17 +196,17 @@ export function CircularMotionLab({ slug }: { slug?: string }) {
         </SceneCanvas>
       }
       readouts={[
-        { label: mode === "vertical" ? "φ" : "r", value: n(mode === "vertical" ? sample.phi : sample.r), unit: mode === "vertical" ? "rad" : "m" },
+        { label: mode === "vertical" ? "φ" : mode === "conical" ? "θ" : "r", value: n(mode === "vertical" ? sample.phi : mode === "conical" ? (sample.polar * 180) / Math.PI : sample.r), unit: mode === "vertical" ? "rad" : mode === "conical" ? "°" : "m" },
         { label: "v", value: n(sample.speed), unit: "m/s" },
         { label: "T绳", value: n(sample.tension), unit: "N" },
         { label: "Fc", value: n(sample.Fc), unit: "N" },
       ]}
       charts={
         <>
-          <TimeSeriesChart title="水平位移 x" quantity="x" unit="m" strokeColor="#1E3A5F" valueKey="x" points={series} currentTime={time} currentValue={sample.x} minDuration={chartDuration} />
-          <TimeSeriesChart title="竖直位移 y" quantity="y" unit="m" strokeColor="#A16207" valueKey="y" points={series} currentTime={time} currentValue={sample.y} minDuration={chartDuration} />
-          <TimeSeriesChart title={mode === "horizontal" ? "向心力" : "角速度"} quantity={mode === "horizontal" ? "Fc" : "ω"} unit={mode === "horizontal" ? "N" : "rad/s"} strokeColor="#2563EB" valueKey={mode === "horizontal" ? "Fc" : "omega"} points={series} currentTime={time} currentValue={mode === "horizontal" ? sample.Fc : sample.omega} minDuration={chartDuration} />
-          <TimeSeriesChart title={mode === "vertical" ? "绳张力" : "速率"} quantity={mode === "vertical" ? "T" : "v"} unit={mode === "vertical" ? "N" : "m/s"} strokeColor="#6D28D9" valueKey={mode === "vertical" ? "tension" : "speed"} points={series} currentTime={time} currentValue={mode === "vertical" ? sample.tension : sample.speed} minDuration={chartDuration} />
+          <TimeSeriesChart title="水平位移 x" quantity="x" unit="m" strokeColor="#1E3A5F" valueKey="x" points={series} currentTime={time} currentValue={sample.x} minDuration={chartDuration} windowDuration={chartWindow} />
+          <TimeSeriesChart title="竖直位移 y" quantity="y" unit="m" strokeColor="#A16207" valueKey="y" points={series} currentTime={time} currentValue={sample.y} minDuration={chartDuration} windowDuration={chartWindow} />
+          <TimeSeriesChart title={mode === "horizontal" ? "向心力" : "角速度"} quantity={mode === "horizontal" ? "Fc" : "ω"} unit={mode === "horizontal" ? "N" : "rad/s"} strokeColor="#2563EB" valueKey={mode === "horizontal" ? "Fc" : "omega"} points={series} currentTime={time} currentValue={mode === "horizontal" ? sample.Fc : sample.omega} minDuration={chartDuration} windowDuration={chartWindow} />
+          <TimeSeriesChart title={mode === "vertical" ? "绳张力" : "速率"} quantity={mode === "vertical" ? "T" : "v"} unit={mode === "vertical" ? "N" : "m/s"} strokeColor="#6D28D9" valueKey={mode === "vertical" ? "tension" : "speed"} points={series} currentTime={time} currentValue={mode === "vertical" ? sample.tension : sample.speed} minDuration={chartDuration} windowDuration={chartWindow} />
         </>
       }
     />

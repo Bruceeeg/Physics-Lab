@@ -433,7 +433,7 @@ export function ProjectileLab() {
               {mode === "params" ? "虚线 预测轨迹　实线 v　拖动旋转" : "金色标牌为预估落点　拖动旋转"}
             </p>
           </div>
-          <div className="relative min-h-[280px] flex-1">
+          <div className="lab-scene-viewport relative min-h-[280px] flex-1">
             <div className="absolute inset-0">
               <SceneCanvas
                 params={activeParams}

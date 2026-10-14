@@ -123,7 +123,7 @@ function tocLinkClass(active: boolean, extra = "") {
   } ${extra}`;
 }
 
-export function CatalogToc({
+function CatalogTocState({
   tree,
   variant,
 }: {
@@ -135,33 +135,41 @@ export function CatalogToc({
   const [open, setOpen] = useState<Partial<Record<CourseId, boolean>>>({});
 
   useEffect(() => {
-    setActiveId(ids[0] ?? "");
-    setOpen({});
-  }, [ids]);
-
-  useEffect(() => {
     const nodes = ids
       .map((id) => document.getElementById(id))
       .filter((node): node is HTMLElement => Boolean(node));
     if (nodes.length === 0) {
       return;
     }
+    let frame = 0;
+    let nextId = "";
     const observer = new IntersectionObserver(
       (entries) => {
         const visible = entries
           .filter((entry) => entry.isIntersecting)
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
         const id = visible[0]?.target.id;
-        if (id) {
-          setActiveId(id);
+        if (!id) {
+          return;
         }
+        nextId = id;
+        if (frame) {
+          return;
+        }
+        frame = window.requestAnimationFrame(() => {
+          frame = 0;
+          setActiveId((current) => (current === nextId ? current : nextId));
+        });
       },
       { rootMargin: "-72px 0px -62% 0px", threshold: [0.08, 0.25, 0.6] },
     );
     for (const node of nodes) {
       observer.observe(node);
     }
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      window.cancelAnimationFrame(frame);
+    };
   }, [ids]);
 
   if (tree.length === 0) {
@@ -272,7 +280,7 @@ export function CatalogToc({
         className="sticky top-14 z-10 border-b border-line bg-paper/95 px-5 py-2"
       >
         <p className="sr-only">目录</p>
-        <div className="-mx-1 overflow-x-auto px-1">
+        <div className="catalog-scroll-quiet -mx-1 overflow-x-auto px-1">
           <ul className="flex gap-1">
             {tree.map((group) => (
               <li key={group.course} className="shrink-0">
@@ -293,7 +301,7 @@ export function CatalogToc({
   return (
     <nav
       aria-label="实验目录"
-      className="max-h-[calc(100dvh-5.5rem)] w-48 shrink-0 overflow-y-auto bg-paper lg:w-52"
+      className="catalog-scroll-quiet max-h-[calc(100dvh-5.5rem)] w-48 shrink-0 overflow-y-auto bg-paper lg:w-52"
     >
       <p className="mb-2 text-xs font-medium text-ink">目录</p>
       <ul className="space-y-0.5">
@@ -306,4 +314,15 @@ export function CatalogToc({
       </ul>
     </nav>
   );
+}
+
+export function CatalogToc({
+  tree,
+  variant,
+}: {
+  tree: CatalogGroupView[];
+  variant: "mobile" | "side";
+}) {
+  const resetKey = headingIds(tree).join("|");
+  return <CatalogTocState key={`${variant}:${resetKey}`} tree={tree} variant={variant} />;
 }

@@ -70,12 +70,12 @@ export function AtwoodMachineScene({
         <BoxMass position={hangPos} size={[0.16, 0.2, 0.16]} color={COLOR_B} />
         <SpriteLabel text="A" color={COLOR_A} position={[cart[0], cart[1] + 0.18, 0]} height={0.14} />
         <SpriteLabel text="B" color={COLOR_B} position={[hangPos[0], hangPos[1] + 0.2, 0]} height={0.14} />
-        <VectorArrow origin={cart} vector={[sample.T, 0, 0]} value={sample.T} unitLength={0.04} color={FORCE_COLORS.F} label="T" unit="N" scale={0.55} />
-        <VectorArrow origin={cart} vector={[-sample.f, 0, 0]} value={sample.f} unitLength={0.04} color={FORCE_COLORS.f} label={fLabel} unit="N" scale={0.55} />
-        <VectorArrow origin={cart} vector={[0, sample.N, 0]} value={sample.N} unitLength={0.04} color={FORCE_COLORS.N} label="N" unit="N" scale={0.55} />
-        <VectorArrow origin={cart} vector={[0, -g1, 0]} value={g1} unitLength={0.04} color={FORCE_COLORS.G} label="mgA" unit="N" scale={0.55} />
-        <VectorArrow origin={[hangPos[0], hangPos[1] + 0.14, 0]} vector={[0, sample.T, 0]} value={sample.T} unitLength={0.04} color={FORCE_COLORS.F} label="T" unit="N" scale={0.55} />
-        <VectorArrow origin={hangPos} vector={[0, -g2, 0]} value={g2} unitLength={0.04} color={FORCE_COLORS.G} label="mgB" unit="N" scale={0.55} />
+        <VectorArrow origin={cart} vector={[sample.T, 0, 0]} value={sample.T} unitLength={0.04} color={FORCE_COLORS.F} label="T" unit="N" scale={0.55} labelOffset={[0, 0.18, 0]} />
+        <VectorArrow origin={cart} vector={[-sample.f, 0, 0]} value={sample.f} unitLength={0.04} color={FORCE_COLORS.f} label={fLabel} unit="N" scale={0.55} labelOffset={[0, -0.18, 0]} />
+        <VectorArrow origin={cart} vector={[0, sample.N, 0]} value={sample.N} unitLength={0.04} color={FORCE_COLORS.N} label="N" unit="N" scale={0.55} labelOffset={[0.18, 0.02, 0]} />
+        <VectorArrow origin={cart} vector={[0, -g1, 0]} value={g1} unitLength={0.04} color={FORCE_COLORS.G} label="mgA" unit="N" scale={0.55} labelOffset={[-0.18, -0.02, 0]} />
+        <VectorArrow origin={[hangPos[0], hangPos[1] + 0.14, 0]} vector={[0, sample.T, 0]} value={sample.T} unitLength={0.04} color={FORCE_COLORS.F} label="T" unit="N" scale={0.55} labelOffset={[0.18, 0.02, 0]} />
+        <VectorArrow origin={hangPos} vector={[0, -g2, 0]} value={g2} unitLength={0.04} color={FORCE_COLORS.G} label="mgB" unit="N" scale={0.55} labelOffset={[-0.18, -0.02, 0]} />
         <SpriteLabel text={`轻物 ${light}`} color="#1e3a5f" position={[0, pos.pulleyY + 0.42, 0]} height={0.14} />
         <LabOrbit target={[0, pos.tableY, 0]} minDistance={1.4} />
       </>
@@ -112,9 +112,9 @@ export function AtwoodMachineScene({
         <BoxMass position={hangPos} size={[0.16, 0.2, 0.16]} color={COLOR_B} />
         <SpriteLabel text="A" color={COLOR_A} position={[cart[0], cart[1] + 0.18, 0]} height={0.14} />
         <SpriteLabel text="B" color={COLOR_B} position={[hangPos[0], hangPos[1] + 0.2, 0]} height={0.14} />
-        <VectorArrow origin={hangPos} vector={[0, -g2, 0]} value={g2} unitLength={0.04} color={FORCE_COLORS.G} label="mgB" unit="N" scale={0.55} />
-        <VectorArrow origin={[hangPos[0], hangPos[1] + 0.14, 0]} vector={[0, sample.T, 0]} value={sample.T} unitLength={0.04} color={FORCE_COLORS.F} label="T" unit="N" scale={0.55} />
-        <VectorArrow origin={cart} vector={[0, -g1, 0]} value={g1} unitLength={0.04} color={FORCE_COLORS.G} label="mgA" unit="N" scale={0.55} />
+        <VectorArrow origin={hangPos} vector={[0, -g2, 0]} value={g2} unitLength={0.04} color={FORCE_COLORS.G} label="mgB" unit="N" scale={0.55} labelOffset={[-0.18, -0.02, 0]} />
+        <VectorArrow origin={[hangPos[0], hangPos[1] + 0.14, 0]} vector={[0, sample.T, 0]} value={sample.T} unitLength={0.04} color={FORCE_COLORS.F} label="T" unit="N" scale={0.55} labelOffset={[0.18, 0.02, 0]} />
+        <VectorArrow origin={cart} vector={[0, -g1, 0]} value={g1} unitLength={0.04} color={FORCE_COLORS.G} label="mgA" unit="N" scale={0.55} labelOffset={[-0.18, -0.02, 0]} />
         <LabOrbit target={[0, pos.pulleyY * 0.45, 0]} minDistance={1.5} />
       </>
     );
@@ -151,8 +151,9 @@ export function AtwoodMachineScene({
         label={mode === "pulley" ? "T1" : "T"}
         unit="N"
         scale={0.55}
+        labelOffset={[0.18, 0.02, 0]}
       />
-      <VectorArrow origin={left} vector={[0, -g1, 0]} value={g1} unitLength={0.04} color={FORCE_COLORS.G} label="mgA" unit="N" scale={0.55} />
+      <VectorArrow origin={left} vector={[0, -g1, 0]} value={g1} unitLength={0.04} color={FORCE_COLORS.G} label="mgA" unit="N" scale={0.55} labelOffset={[-0.18, -0.02, 0]} />
       <VectorArrow
         origin={[right[0], right[1] + 0.16, 0]}
         vector={[0, sample.T, 0]}
@@ -162,8 +163,9 @@ export function AtwoodMachineScene({
         label={mode === "pulley" ? "T2" : "T"}
         unit="N"
         scale={0.55}
+        labelOffset={[0.18, 0.02, 0]}
       />
-      <VectorArrow origin={right} vector={[0, -g2, 0]} value={g2} unitLength={0.04} color={FORCE_COLORS.G} label="mgB" unit="N" scale={0.55} />
+      <VectorArrow origin={right} vector={[0, -g2, 0]} value={g2} unitLength={0.04} color={FORCE_COLORS.G} label="mgB" unit="N" scale={0.55} labelOffset={[-0.18, -0.02, 0]} />
       <SpriteLabel text={`轻物 ${light}`} color="#1e3a5f" position={[0, pos.pulleyY + 0.38, 0]} height={0.14} />
       <LabOrbit target={[0, pos.pulleyY * 0.45, 0]} minDistance={1.4} />
     </>

@@ -48,6 +48,7 @@ export function CircularMotionScene({
           label="T"
           unit="N"
           scale={0.8}
+          labelOffset={[0, 0.2, 0]}
         />
         <VectorArrow
           origin={bob}
@@ -58,6 +59,7 @@ export function CircularMotionScene({
           label="mg"
           unit="N"
           scale={0.7}
+          labelOffset={[-0.2, -0.02, 0]}
         />
         <VectorArrow
           origin={bob}
@@ -68,6 +70,7 @@ export function CircularMotionScene({
           label="N"
           unit="N"
           scale={0.7}
+          labelOffset={[0.2, 0.02, 0]}
         />
         <SpriteLabel
           text={`Fc = mv²/r = T`}
@@ -84,8 +87,9 @@ export function CircularMotionScene({
     const lift = params.r + 0.08;
     const bob: [number, number, number] = [sample.x, lift + sample.y, 0];
     const center: [number, number, number] = [0, lift, 0];
+    const ringEnd = sample.detachment?.phi ?? Math.PI * 2;
     const ring = Array.from({ length: 65 }, (_, index) => {
-      const phi = (index / 64) * Math.PI * 2;
+      const phi = (index / 64) * ringEnd;
       return [params.r * Math.sin(phi), lift - params.r * Math.cos(phi), 0] as [number, number, number];
     });
     const tVec: [number, number, number] = [-sample.x, -sample.y, 0];
@@ -93,19 +97,28 @@ export function CircularMotionScene({
       <>
         <LabScenery />
         <SphereMass position={center} radius={0.03} color="#334155" />
-        <LabLine points={[center, bob]} color="#1e3a5f" lineWidth={1.5} />
+        {sample.phase === "constrained" ? (
+          <LabLine points={[center, bob]} color="#1e3a5f" lineWidth={1.5} />
+        ) : null}
         <LabLine points={ring} color="#94a3b8" lineWidth={1} dashed />
         <TrailLine points={trail} />
         <SphereMass position={bob} radius={0.07} />
-        <ForceWithXY
-          origin={bob}
-          vector={tVec}
-          value={sample.tension}
-          unitLength={0.08}
-          color={FORCE_COLORS.F}
-          label="T"
-          scale={0.8}
-        />
+        {sample.phase === "constrained" ? (
+          <ForceWithXY
+            origin={bob}
+            vector={tVec}
+            value={sample.tension}
+            unitLength={0.08}
+            color={FORCE_COLORS.F}
+            label="T"
+            scale={0.8}
+            labelOffsets={{
+              main: [0.2, 0.08, 0],
+              horizontal: [0.2, -0.12, 0],
+              vertical: [-0.2, 0.04, 0],
+            }}
+          />
+        ) : null}
         <VectorArrow
           origin={bob}
           vector={[0, -weight, 0]}
@@ -115,12 +128,17 @@ export function CircularMotionScene({
           label="mg"
           unit="N"
           scale={0.7}
+          labelOffset={[-0.2, -0.02, 0]}
         />
         <SpriteLabel
           text={
-            sample.looping
+            sample.phase === "projectile"
+              ? `脱轨抛体　v = ${formatLabNumber(sample.speed)} m/s`
+              : sample.looping
               ? `过顶　v = ${formatLabNumber(sample.speed)} m/s`
-              : `摆荡　v = ${formatLabNumber(sample.speed)} m/s`
+              : sample.detachment
+                ? `绳仍拉紧　v = ${formatLabNumber(sample.speed)} m/s`
+                : `摆荡　v = ${formatLabNumber(sample.speed)} m/s`
           }
           color="#1e3a5f"
           position={[0, lift + params.r + 0.22, 0]}
@@ -165,6 +183,11 @@ export function CircularMotionScene({
         color={FORCE_COLORS.F}
         label="T"
         scale={0.8}
+        labelOffsets={{
+          main: [0.2, 0.08, 0],
+          horizontal: [0.2, -0.12, 0],
+          vertical: [-0.2, 0.04, 0],
+        }}
       />
       <VectorArrow
         origin={bob}
@@ -175,6 +198,7 @@ export function CircularMotionScene({
         label="mg"
         unit="N"
         scale={0.7}
+        labelOffset={[-0.2, -0.02, 0]}
       />
       <VectorArrow
         origin={bob}
@@ -186,9 +210,10 @@ export function CircularMotionScene({
         unit="N"
         dashed
         scale={0.75}
+        labelOffset={[0, 0.2, 0]}
       />
       <SpriteLabel
-        text={`v₀ = ${formatLabNumber(sample.speed)} m/s`}
+        text={`θ = ${formatLabNumber((sample.polar * 180) / Math.PI)}°　v = ${formatLabNumber(sample.speed)} m/s`}
         color="#1e3a5f"
         position={[0, pivotY + 0.18, 0]}
         height={0.16}

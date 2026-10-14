@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { CatalogPreview3D, useCatalogPreviewRuntime } from "@/components/catalog/previews/preview-3d";
+import { bindPreviewObserver, usePreviewSlot } from "@/components/catalog/previews/preview-slots";
 import {
   adjacentCourse,
   experimentHref,
@@ -22,18 +23,30 @@ function FeaturedPreview({
   experiment,
   running,
   fill = false,
+  visible,
 }: {
   experiment: ExperimentEntry;
   running: boolean;
   fill?: boolean;
+  visible: boolean;
 }) {
+  const frameRef = useRef<HTMLDivElement>(null);
   const ready = isReadyExperiment(experiment);
+  const { granted, report } = usePreviewSlot(2, visible && running && ready);
+  useEffect(() => {
+    const node = frameRef.current;
+    if (!node || !visible || !ready) {
+      report(0);
+      return;
+    }
+    return bindPreviewObserver(node, report);
+  }, [visible, ready, report]);
   const scene = ready ? (
     <CatalogPreview3D
       kind={experiment.preview}
       slug={experiment.slug}
       running={running}
-      visible
+      visible={visible && granted}
       hero={fill}
     />
   ) : (
@@ -41,7 +54,10 @@ function FeaturedPreview({
   );
 
   return (
-    <div className="relative mt-3 aspect-[16/10] w-full overflow-hidden rounded-[8px] border border-line bg-muted">
+    <div
+      ref={frameRef}
+      className="relative mt-3 aspect-[16/10] w-full overflow-hidden rounded-[8px] border border-line bg-muted"
+    >
       {scene}
     </div>
   );
@@ -49,9 +65,11 @@ function FeaturedPreview({
 
 export function CourseOverview({
   previewsPaused,
+  previewMounted = true,
   compact = false,
 }: {
   previewsPaused: boolean;
+  previewMounted?: boolean;
   compact?: boolean;
 }) {
   const headingId = useId();
@@ -75,12 +93,14 @@ export function CourseOverview({
   const reduceMotionRef = useRef(reduceMotion);
   const clipEpochRef = useRef(0);
 
-  slideRef.current = slide;
-  featuredIndexRef.current = featuredIndex;
-  holdAutoplayRef.current = holdAutoplay;
-  previewsPausedRef.current = previewsPaused;
-  inViewRef.current = inView;
-  reduceMotionRef.current = reduceMotion;
+  useEffect(() => {
+    slideRef.current = slide;
+    featuredIndexRef.current = featuredIndex;
+    holdAutoplayRef.current = holdAutoplay;
+    previewsPausedRef.current = previewsPaused;
+    inViewRef.current = inView;
+    reduceMotionRef.current = reduceMotion;
+  }, [featuredIndex, holdAutoplay, inView, previewsPaused, reduceMotion, slide]);
 
   const applyStep = useCallback((next: { course: CourseId; featuredIndex: number }) => {
     if (next.course === slideRef.current && next.featuredIndex === featuredIndexRef.current) {
@@ -215,7 +235,7 @@ export function CourseOverview({
               <div
                 className={
                   compact
-                    ? "min-h-0 overflow-y-auto px-5 py-6 md:px-8 md:pt-8 md:pb-7"
+                    ? "catalog-scroll-quiet min-h-0 overflow-y-auto px-5 py-6 md:px-8 md:pt-8 md:pb-7"
                     : "p-5 md:p-7"
                 }
               >
@@ -238,8 +258,24 @@ export function CourseOverview({
                 </p>
                 <div className={compact ? "mt-3" : "mt-6 overflow-x-auto"}>
                   <p className="text-xs text-quiet">考纲结构</p>
+                  <div className="mt-2 grid gap-2 sm:hidden">
+                    {overview.units.map((unit) => (
+                      <div
+                        key={unit.id}
+                        className="rounded-[8px] border border-line bg-paper px-3 py-2.5"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <p className="text-sm font-medium text-ink">{unit.title}</p>
+                          <p className="shrink-0 font-mono text-xs text-quiet">
+                            {unit.weighting}
+                          </p>
+                        </div>
+                        <p className="mt-1 text-xs leading-5 text-quiet">{unit.english}</p>
+                      </div>
+                    ))}
+                  </div>
                   <table
-                    className={`w-full border-collapse text-left ${
+                    className={`hidden w-full border-collapse text-left sm:table ${
                       compact ? "mt-1 text-xs" : "mt-2 min-w-[28rem] text-sm"
                     }`}
                   >
@@ -293,6 +329,7 @@ export function CourseOverview({
                       experiment={featured}
                       running={running}
                       fill={compact}
+                      visible={previewMounted && !reduceMotion}
                     />
                     {featuredLabs.length > 1 ? (
                       <div className="mt-2 flex shrink-0 flex-wrap gap-1" role="group" aria-label="本课重点实验">

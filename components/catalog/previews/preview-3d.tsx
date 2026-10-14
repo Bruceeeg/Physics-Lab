@@ -2,34 +2,80 @@
 
 import { View } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import dynamic from "next/dynamic";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 
-import { PreviewKindScene } from "@/components/catalog/previews/preview-scenes";
+import {
+  configurePreviewCap,
+  readPreviewCap,
+  setPreviewsSuspended,
+  usePreviewActivity,
+} from "@/components/catalog/previews/preview-slots";
+import {
+  PreviewRuntimeContext,
+  useCatalogPreviewRuntime,
+} from "@/components/catalog/previews/preview-runtime";
 import type { PreviewKind } from "@/lib/experiments/catalog";
+import { catalogPreviewDpr } from "@/lib/experiments/preview-timing";
+import { isUsableCanvasSize } from "@/lib/models/camera-fit";
+
+const PreviewKindScene = dynamic(
+  () => import("@/components/catalog/previews/preview-scenes").then((mod) => mod.PreviewKindScene),
+  { ssr: false, loading: () => null },
+);
 
 const SCROLL_IDLE_MS = 120;
 
-type PreviewRuntime = {
-  mounted: boolean;
-  scrolling: boolean;
-};
-
-const PreviewRuntimeContext = createContext<PreviewRuntime>({
-  mounted: false,
-  scrolling: false,
-});
-
 let nextViewIndex = 2;
 
-function PreviewCanvas({ scrolling }: { scrolling: boolean }) {
+function allocateViewIndex() {
+  const index = nextViewIndex;
+  nextViewIndex += 1;
+  return index;
+}
+
+function subscribeMounted() {
+  return () => {};
+}
+
+function getMounted() {
+  return true;
+}
+
+function getServerMounted() {
+  return false;
+}
+
+function PreviewCanvas({
+  frameloop,
+  dpr,
+}: {
+  frameloop: "always" | "demand";
+  dpr: number;
+}) {
   return (
     <div className="catalog-preview-gl" aria-hidden="true">
       <Canvas
         style={{ width: "100%", height: "100%" }}
-        dpr={scrolling ? 1 : 2}
-        frameloop="always"
+        dpr={dpr}
+        frameloop={frameloop}
         resize={{ offsetSize: true }}
-        gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+        gl={{
+          antialias: false,
+          alpha: true,
+          depth: true,
+          stencil: false,
+          powerPreference: "low-power",
+          preserveDrawingBuffer: false,
+        }}
         onCreated={({ gl }) => {
           gl.setClearColor(0x000000, 0);
         }}
@@ -40,18 +86,31 @@ function PreviewCanvas({ scrolling }: { scrolling: boolean }) {
   );
 }
 
-export function useCatalogPreviewRuntime() {
-  return useContext(PreviewRuntimeContext);
-}
+export { useCatalogPreviewRuntime } from "@/components/catalog/previews/preview-runtime";
 
 export function PreviewHost({ children }: { children: ReactNode }) {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(subscribeMounted, getMounted, getServerMounted);
   const [scrolling, setScrolling] = useState(false);
   const scrollingRef = useRef(false);
   const idle = useRef(0);
+  const activity = usePreviewActivity();
 
   useEffect(() => {
-    setMounted(true);
+    const onResize = () => {
+      const nextCap = readPreviewCap();
+      if (nextCap != null) {
+        configurePreviewCap(nextCap);
+      }
+    };
+    onResize();
+    const onVisibility = () => setPreviewsSuspended(document.hidden);
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("resize", onResize);
+    onVisibility();
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("resize", onResize);
+    };
   }, []);
 
   useEffect(() => {
@@ -83,9 +142,12 @@ export function PreviewHost({ children }: { children: ReactNode }) {
     [mounted, scrolling],
   );
 
+  const frameloop = scrolling || activity.running > 0 ? "always" : "demand";
+  const dpr = activity.cap <= 4 ? Math.min(catalogPreviewDpr(), 0.75) : catalogPreviewDpr();
+
   return (
     <PreviewRuntimeContext.Provider value={runtime}>
-      {mounted ? <PreviewCanvas scrolling={scrolling} /> : null}
+      {mounted && activity.live > 0 ? <PreviewCanvas frameloop={frameloop} dpr={dpr} /> : null}
       {children}
     </PreviewRuntimeContext.Provider>
   );
@@ -105,19 +167,38 @@ export function CatalogPreview3D({
   hero?: boolean;
 }) {
   const { mounted } = useCatalogPreviewRuntime();
-  const index = useRef(0);
-  if (index.current === 0) {
-    index.current = nextViewIndex;
-    nextViewIndex += 1;
-  }
+  const boxRef = useRef<HTMLDivElement>(null);
+  const [box, setBox] = useState({ width: 0, height: 0 });
+  const [index] = useState(allocateViewIndex);
 
-  if (!visible || !mounted) {
-    return <div className="h-full w-full bg-[#cbd5e1]" aria-hidden="true" />;
-  }
+  useLayoutEffect(() => {
+    const node = boxRef.current;
+    if (!node) {
+      return;
+    }
+    const sync = () => {
+      const rect = node.getBoundingClientRect();
+      setBox((current) =>
+        current.width === rect.width && current.height === rect.height
+          ? current
+          : { width: rect.width, height: rect.height },
+      );
+    };
+    sync();
+    const observer = new ResizeObserver(sync);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  const show = visible && mounted && isUsableCanvasSize(box.width, box.height);
 
   return (
-    <View className="h-full w-full bg-[#cbd5e1]" index={index.current} aria-hidden="true">
-      <PreviewKindScene kind={kind} slug={slug} running={running} hero={hero} />
-    </View>
+    <div ref={boxRef} className="h-full w-full bg-[#cbd5e1]" aria-hidden="true">
+      {show ? (
+        <View className="h-full w-full bg-[#cbd5e1]" data-preview-live="" index={index}>
+          <PreviewKindScene kind={kind} slug={slug} running={running} hero={hero} />
+        </View>
+      ) : null}
+    </div>
   );
 }

@@ -3,7 +3,7 @@
 import { Line } from "@react-three/drei";
 import { DoubleSide } from "three";
 
-import { LabOrbit, LabScenery, SphereMass, VectorArrow } from "@/components/lab-3d";
+import { LabLine, LabOrbit, LabScenery, SphereMass, VectorArrow } from "@/components/lab-3d";
 import { SpriteLabel } from "@/components/scene-label";
 import { FORCE_COLORS } from "@/lib/models/force-display";
 import { formatLabNumber } from "@/lib/models/lab-format";
@@ -29,25 +29,41 @@ export function FluidDynamicsScene({
 }) {
   const tankW = 0.7;
   const tankD = 0.45;
+  const tankHeight = Math.max(1, params.H + 0.16);
   const holes = holeYs(params, mode);
 
   return (
     <>
       <LabScenery />
-      <mesh position={[0, params.H / 2, 0]}>
-        <boxGeometry args={[tankW, params.H, tankD]} />
+      <mesh position={[0, tankHeight / 2, 0]}>
+        <boxGeometry args={[tankW, tankHeight, tankD]} />
         <meshPhysicalMaterial
-          color="#64748b"
+          color="#dbeafe"
           transparent
-          opacity={0.12}
-          roughness={0.1}
-          metalness={0.05}
+          opacity={0.2}
+          roughness={0.05}
+          transmission={0.2}
+          depthWrite={false}
           side={DoubleSide}
         />
       </mesh>
-      <mesh position={[0, params.H / 2, 0]}>
-        <boxGeometry args={[tankW - 0.04, params.H - 0.02, tankD - 0.04]} />
-        <meshPhysicalMaterial color="#3d5a80" transparent opacity={0.32} roughness={0.2} />
+      <mesh position={[0, Math.max(0.01, params.H) / 2, 0]}>
+        <boxGeometry args={[tankW - 0.045, Math.max(0.02, params.H), tankD - 0.045]} />
+        <meshPhysicalMaterial
+          color="#38bdf8"
+          transparent
+          opacity={0.5}
+          roughness={0.12}
+          depthWrite={false}
+        />
+      </mesh>
+      <mesh position={[0, params.H + 0.008, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[tankW - 0.05, tankD - 0.05]} />
+        <meshStandardMaterial color="#0284c7" transparent opacity={0.86} side={DoubleSide} />
+      </mesh>
+      <mesh position={[0, 0.018, 0]}>
+        <boxGeometry args={[tankW + 0.06, 0.036, tankD + 0.06]} />
+        <meshStandardMaterial color="#475569" />
       </mesh>
       {holes.map((holeY, index) => {
         const holeParams = paramsAtHole(params, holeY);
@@ -61,19 +77,35 @@ export function FluidDynamicsScene({
         return (
           <group key={`${holeY}-${index}`}>
             <mesh position={[tankW / 2, holeY, 0]} rotation={[0, 0, Math.PI / 2]}>
-              <cylinderGeometry args={[0.022, 0.022, 0.06, 16]} />
-              <meshStandardMaterial color="#334155" />
+              <cylinderGeometry args={[0.032, 0.032, 0.065, 20]} />
+              <meshStandardMaterial color="#0f172a" />
             </mesh>
             {path.length > 1 ? (
-              <Line points={path} color="#1e3a5f" lineWidth={1.2} dashed dashSize={0.05} gapSize={0.04} />
+              <Line points={path} color="#0284c7" lineWidth={4} />
             ) : null}
             {drops.map((drop, dropIndex) => (
-              <SphereMass key={dropIndex} position={drop} radius={0.024} color="#1e3a5f" />
+              <SphereMass key={dropIndex} position={drop} radius={0.026} color="#0ea5e9" />
             ))}
+            <LabLine
+              points={[
+                [tankW / 2, 0.025 + index * 0.008, 0],
+                [tankW / 2 + R, 0.025 + index * 0.008, 0],
+              ]}
+              color="#a16207"
+              lineWidth={1}
+              dashed
+            />
+            <mesh
+              position={[tankW / 2 + R, 0.028, 0]}
+              rotation={[Math.PI / 2, 0, 0]}
+            >
+              <torusGeometry args={[0.045, 0.009, 8, 24]} />
+              <meshBasicMaterial color="#a16207" />
+            </mesh>
             <SpriteLabel
               text={`R = ${formatLabNumber(R)} m`}
               color="#b45309"
-              position={[tankW / 2 + R, 0.12 + index * 0.11, 0]}
+              position={[tankW / 2 + R, 0.14 + index * 0.12, 0]}
               height={0.12}
             />
           </group>
@@ -105,7 +137,13 @@ export function FluidDynamicsScene({
           />
         </>
       ) : null}
-      <LabOrbit target={[0.4, params.H * 0.4, 0]} />
+      <SpriteLabel
+        text={`液面 H = ${formatLabNumber(params.H)} m`}
+        color="#0369a1"
+        position={[-0.04, params.H + 0.11, 0]}
+        height={0.12}
+      />
+      <LabOrbit target={[0.42, params.H * 0.45, 0]} />
     </>
   );
 }

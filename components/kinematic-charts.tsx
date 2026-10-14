@@ -2,6 +2,7 @@
 
 import { memo, useMemo } from "react";
 
+import { paddedValueRange, sliceTimeWindow } from "@/lib/models/chart-range";
 import { formatLabNumber, formatLabSci } from "@/lib/models/lab-format";
 
 const WIDTH = 320;
@@ -13,19 +14,6 @@ type NumericKeys<T> = { [K in keyof T]-?: T[K] extends number ? K : never }[keyo
 
 export type SeriesValueKey<T extends TimeSeriesPoint> = Exclude<NumericKeys<T>, "t">;
 
-function axisRange(values: number[]) {
-  if (values.length === 0) {
-    return { min: -1, max: 1 };
-  }
-  let min = Math.min(0, ...values);
-  let max = Math.max(0, ...values);
-  if (min === max) {
-    return { min: -1, max: 1 };
-  }
-  const pad = (max - min) * 0.08;
-  return { min: min - pad, max: max + pad };
-}
-
 function valueOf<T extends TimeSeriesPoint>(point: T, key: SeriesValueKey<T>): number {
   return point[key] as unknown as number;
 }
@@ -35,18 +23,19 @@ function buildLinePath<T extends TimeSeriesPoint>(
   valueKey: SeriesValueKey<T>,
   valueMin: number,
   valueMax: number,
-  timeMax: number,
+  timeStart: number,
+  timeEnd: number,
 ) {
   if (points.length === 0) {
     return "";
   }
 
   const range = valueMax - valueMin || 1;
-  const timeSpan = timeMax || 1;
+  const timeSpan = timeEnd - timeStart || 1;
 
   return points
     .map((point, index) => {
-      const px = (point.t / timeSpan) * WIDTH;
+      const px = ((point.t - timeStart) / timeSpan) * WIDTH;
       const py = HEIGHT - ((valueOf(point, valueKey) - valueMin) / range) * HEIGHT;
       return `${index === 0 ? "M" : "L"} ${px.toFixed(2)} ${py.toFixed(2)}`;
     })
@@ -63,6 +52,7 @@ type TimeSeriesChartProps<T extends TimeSeriesPoint> = {
   currentTime: number;
   currentValue: number;
   minDuration?: number;
+  windowDuration?: number;
 };
 
 function TimeSeriesChartInner<T extends TimeSeriesPoint>({
@@ -75,20 +65,29 @@ function TimeSeriesChartInner<T extends TimeSeriesPoint>({
   currentTime,
   currentValue,
   minDuration = 10,
+  windowDuration,
 }: TimeSeriesChartProps<T>) {
-  const timeMax = Math.max(minDuration, currentTime);
+  const window = useMemo(
+    () => sliceTimeWindow(points, currentTime, windowDuration ?? minDuration),
+    [currentTime, minDuration, points, windowDuration],
+  );
+  const visiblePoints = useMemo(
+    () => window.points.filter((point) => point.t >= window.start - 1e-9),
+    [window.points, window.start],
+  );
   const { min, max, range } = useMemo(() => {
-    const values = [...points.map((point) => valueOf(point, valueKey)), currentValue];
-    const next = axisRange(values);
+    const values = [...visiblePoints.map((point) => valueOf(point, valueKey)), currentValue];
+    const next = paddedValueRange(values);
     return { ...next, range: next.max - next.min || 1 };
-  }, [currentValue, points, valueKey]);
+  }, [currentValue, valueKey, visiblePoints]);
 
   const linePath = useMemo(
-    () => buildLinePath(points, valueKey, min, max, timeMax),
-    [max, min, points, timeMax, valueKey],
+    () => buildLinePath(window.points, valueKey, min, max, window.start, window.end),
+    [max, min, valueKey, window.end, window.points, window.start],
   );
 
-  const markerX = (currentTime / timeMax) * WIDTH;
+  const markerX =
+    ((currentTime - window.start) / Math.max(window.end - window.start, 1e-9)) * WIDTH;
   const markerY = HEIGHT - ((currentValue - min) / range) * HEIGHT;
   const zeroY = min < 0 && max > 0 ? HEIGHT - ((0 - min) / range) * HEIGHT : null;
 
@@ -142,7 +141,7 @@ function TimeSeriesChartInner<T extends TimeSeriesPoint>({
         ) : null}
         <line x1="0" y1="0" x2="0" y2={HEIGHT} stroke="#1E3A5F" strokeWidth="1" />
         <line x1="0" y1={HEIGHT} x2={WIDTH} y2={HEIGHT} stroke="#1E3A5F" strokeWidth="1" />
-        {points.length >= 2 ? (
+        {window.points.length >= 2 ? (
           <path
             d={linePath}
             fill="none"
@@ -168,7 +167,9 @@ function TimeSeriesChartInner<T extends TimeSeriesPoint>({
         <span>
           min {formatLabSci(min)} {unit}
         </span>
-        <span>0-{formatLabNumber(timeMax)} s</span>
+        <span>
+          {formatLabNumber(window.start)}-{formatLabNumber(window.end)} s
+        </span>
         <span>
           max {formatLabSci(max)} {unit}
         </span>

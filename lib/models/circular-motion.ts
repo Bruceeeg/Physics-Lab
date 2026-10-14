@@ -1,3 +1,9 @@
+import {
+  sphericalPendulumAt,
+  verticalRopeAt,
+  type VerticalDetachment,
+} from "./pendulum-dynamics.ts";
+
 export type CircularMode = "conical" | "horizontal" | "vertical";
 
 export type CircularParams = {
@@ -11,8 +17,10 @@ export type CircularParams = {
 
 export type CircularSample = {
   t: number;
+  phase: "constrained" | "projectile";
   phi: number;
   polar: number;
+  polarVelocity: number;
   x: number;
   y: number;
   z: number;
@@ -23,6 +31,7 @@ export type CircularSample = {
   tension: number;
   Fc: number;
   looping: boolean;
+  detachment: VerticalDetachment | null;
 };
 
 export const DEFAULT_CIRCULAR: CircularParams = {
@@ -105,27 +114,6 @@ export function canLoop(params: CircularParams) {
   return params.v0 + 1e-9 >= loopSpeed(params);
 }
 
-function verticalState(params: CircularParams, t: number) {
-  const R = Math.max(params.r, 1e-9);
-  const gOverR = params.g / R;
-  let phi = 0;
-  let omega = params.v0 / R;
-  let time = 0;
-  const dt = 0.002;
-  const limit = Math.max(0, t);
-  while (time < limit) {
-    const step = Math.min(dt, limit - time);
-    const a1 = -gOverR * Math.sin(phi);
-    const phiMid = phi + omega * (step / 2);
-    const omegaMid = omega + a1 * (step / 2);
-    const a2 = -gOverR * Math.sin(phiMid);
-    phi += omegaMid * step;
-    omega += a2 * step;
-    time += step;
-  }
-  return { phi, omega };
-}
-
 export function sampleAt(
   params: CircularParams,
   t: number,
@@ -139,8 +127,10 @@ export function sampleAt(
     const speed = params.v0;
     return {
       t: time,
+      phase: "constrained",
       phi,
       polar: Math.PI / 2,
+      polarVelocity: 0,
       x: r * Math.cos(phi),
       y: 0,
       z: r * Math.sin(phi),
@@ -151,48 +141,65 @@ export function sampleAt(
       tension: tension(params, mode),
       Fc: centripetalForce(params, mode, speed),
       looping: true,
+      detachment: null,
     };
   }
   if (mode === "vertical") {
     const R = params.r;
-    const { phi, omega } = verticalState(params, time);
-    const speed = Math.abs(omega) * R;
-    const v2 = speed * speed;
+    const state = verticalRopeAt(params, time);
     return {
       t: time,
-      phi,
-      polar: phi,
-      x: R * Math.sin(phi),
-      y: -R * Math.cos(phi),
+      phase: state.phase,
+      phi: state.phi,
+      polar: state.phi,
+      polarVelocity: state.omega,
+      x: state.x,
+      y: state.y,
       z: 0,
       r: R,
-      omega,
+      omega: state.omega,
       T: period(params, mode),
-      speed,
-      tension: params.m * (R > 1e-9 ? v2 / R : 0) + params.m * params.g * Math.cos(phi),
-      Fc: centripetalForce(params, mode, speed),
+      speed: state.speed,
+      tension: state.tension,
+      Fc:
+        state.phase === "constrained"
+          ? centripetalForce(params, mode, state.speed)
+          : 0,
       looping: canLoop(params),
+      detachment: state.detachment,
     };
   }
-  const theta = coneAngle(params);
-  const r = orbitRadius(params, "conical");
-  const omega = angularSpeed(params, "conical");
-  const phi = omega * time;
-  const speed = Math.abs(omega) * r;
+  const state = sphericalPendulumAt(params, time);
+  const theta = state.theta;
+  const r = params.L * Math.sin(theta);
+  const phi = state.phi;
+  const azimuthalSpeed = r * state.phiVelocity;
+  const speed =
+    params.L *
+    Math.hypot(state.thetaVelocity, Math.sin(theta) * state.phiVelocity);
+  const dynamicTension =
+    params.m *
+      params.L *
+      (state.thetaVelocity * state.thetaVelocity +
+        Math.sin(theta) ** 2 * state.phiVelocity * state.phiVelocity) +
+    params.m * params.g * Math.cos(theta);
   return {
     t: time,
+    phase: "constrained",
     phi,
     polar: theta,
+    polarVelocity: state.thetaVelocity,
     x: r * Math.cos(phi),
     y: -params.L * Math.cos(theta),
     z: r * Math.sin(phi),
     r,
-    omega,
+    omega: state.phiVelocity,
     T: period(params, "conical"),
     speed,
-    tension: tension(params, "conical"),
-    Fc: centripetalForce(params, "conical", speed),
+    tension: Math.max(0, dynamicTension),
+    Fc: r > 1e-9 ? (params.m * azimuthalSpeed * azimuthalSpeed) / r : 0,
     looping: true,
+    detachment: null,
   };
 }
 

@@ -4,14 +4,12 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import { CatalogPreview3D, useCatalogPreviewRuntime } from "@/components/catalog/previews/preview-3d";
+import { bindPreviewObserver, usePreviewSlot } from "@/components/catalog/previews/preview-slots";
 import {
   experimentHref,
   isReadyExperiment,
   type ExperimentEntry,
 } from "@/lib/experiments/catalog";
-
-const PRELOAD_MARGIN = "320px 0px";
-const UNMOUNT_DELAY_MS = 400;
 
 export function ExperimentCard({
   experiment,
@@ -22,12 +20,12 @@ export function ExperimentCard({
 }) {
   const mediaRef = useRef<HTMLDivElement>(null);
   const faceRef = useRef<HTMLDivElement>(null);
-  const leaveTimer = useRef(0);
   const { scrolling } = useCatalogPreviewRuntime();
   const [inView, setInView] = useState(false);
-  const [held, setHeld] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
   const ready = isReadyExperiment(experiment);
+  const playing = inView && !previewsPaused && !reduceMotion && !scrolling;
+  const { granted, report } = usePreviewSlot(1, playing && ready);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -39,33 +37,17 @@ export function ExperimentCard({
 
   useEffect(() => {
     const node = mediaRef.current;
-    if (!node) {
+    if (!node || !ready || reduceMotion) {
+      report(0);
+      setInView(false);
       return;
     }
-    const preload = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          window.clearTimeout(leaveTimer.current);
-          setHeld(true);
-          return;
-        }
-        window.clearTimeout(leaveTimer.current);
-        leaveTimer.current = window.setTimeout(() => setHeld(false), UNMOUNT_DELAY_MS);
-      },
-      { threshold: 0, rootMargin: PRELOAD_MARGIN },
-    );
-    const playback = new IntersectionObserver(
-      ([entry]) => setInView(Boolean(entry?.isIntersecting)),
-      { threshold: 0.05, rootMargin: "0px" },
-    );
-    preload.observe(node);
-    playback.observe(node);
-    return () => {
-      preload.disconnect();
-      playback.disconnect();
-      window.clearTimeout(leaveTimer.current);
-    };
-  }, []);
+    return bindPreviewObserver(node, (ratio) => {
+      const visible = ratio > 0;
+      setInView((current) => (current === visible ? current : visible));
+      report(ratio);
+    });
+  }, [ready, reduceMotion, report]);
 
   const resetTilt = () => {
     const face = faceRef.current;
@@ -85,7 +67,7 @@ export function ExperimentCard({
     face.style.setProperty("--tz", "8px");
   };
 
-  const running = inView && !previewsPaused && !reduceMotion && !scrolling;
+  const running = playing;
 
   const media = (
     <div
@@ -98,7 +80,7 @@ export function ExperimentCard({
             kind={experiment.preview}
             slug={experiment.slug}
             running={running}
-            visible={held}
+            visible={granted && !reduceMotion}
           />
         ) : (
           <div className="h-full w-full bg-muted opacity-40" />

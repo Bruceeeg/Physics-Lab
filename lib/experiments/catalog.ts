@@ -327,7 +327,7 @@ export const EXPERIMENTS: readonly ExperimentEntry[] = [
     unit: "Unit 2 力与平动动力学",
     preview: "circular",
     status: "ready",
-    summary: "给定摆长、张角与水平切向速度，观察圆锥摆周期与受力。",
+    summary: "把张角与水平切向速度作为初始条件，观察平衡圆锥摆或非平衡球摆的升降与受力。",
   },
   {
     slug: "horizontal-circular",
@@ -349,7 +349,7 @@ export const EXPERIMENTS: readonly ExperimentEntry[] = [
     unit: "Unit 2 力与平动动力学",
     preview: "circular",
     status: "ready",
-    summary: "竖直圆周：过顶或能量不足时在圆弧上摆荡，并给出受力。",
+    summary: "竖直绳约束：可以过顶、保持绳紧来回摆动，或在张力归零后脱轨转为抛体。",
   },
   {
     slug: "conservation-of-energy",

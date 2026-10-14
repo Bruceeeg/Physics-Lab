@@ -22,6 +22,11 @@ import {
   Vector3,
 } from "three";
 
+import { SpriteLabel } from "@/components/scene-label";
+import { FORCE_COLORS } from "@/lib/models/force-display";
+import { placeForceLabel } from "@/lib/models/force-label-layout";
+import { DISPLAY_EPS, formatLabNumber } from "@/lib/models/lab-format";
+
 class HelixPolylineCurve extends Curve<Vector3> {
   constructor(private readonly pts: Vector3[]) {
     super();
@@ -38,10 +43,6 @@ class HelixPolylineCurve extends Curve<Vector3> {
     return optionalTarget.copy(pts[i]).lerp(pts[i + 1], f - i);
   }
 }
-
-import { SpriteLabel } from "@/components/scene-label";
-import { FORCE_COLORS } from "@/lib/models/force-display";
-import { DISPLAY_EPS, formatLabNumber } from "@/lib/models/lab-format";
 
 type Vec3 = [number, number, number];
 
@@ -60,25 +61,28 @@ const TRAIL_MAX_POINTS = 400;
 const ARROW_RENDER_ORDER = 20;
 
 export const LabScenery = memo(function LabScenery() {
+  const lab = useLabControlsEnabled();
+  const preview = !lab;
+
   return (
     <>
       <color attach="background" args={["#cbd5e1"]} />
-      <hemisphereLight args={["#f8fafc", "#64748b", 0.7]} />
-      <ambientLight intensity={0.55} />
-      <directionalLight position={[6, 10, 4]} intensity={1.05} />
-      <directionalLight position={[2, -8, 3]} intensity={0.4} />
+      <hemisphereLight args={["#f8fafc", "#64748b", preview ? 0.55 : 0.7]} />
+      <ambientLight intensity={preview ? 0.5 : 0.55} />
+      <directionalLight position={[6, 10, 4]} intensity={preview ? 0.85 : 1.05} />
+      {preview ? null : <directionalLight position={[2, -8, 3]} intensity={0.4} />}
       <Grid
-        args={[40, 40]}
+        args={preview ? [16, 16] : [40, 40]}
         cellSize={1}
-        cellThickness={0.6}
-        sectionSize={5}
-        sectionThickness={1.1}
+        cellThickness={preview ? 0.45 : 0.6}
+        sectionSize={preview ? 4 : 5}
+        sectionThickness={preview ? 0.85 : 1.1}
         cellColor="#94a3b8"
         sectionColor="#1e3a5f"
-        fadeDistance={100}
+        fadeDistance={preview ? 28 : 100}
         fadeStrength={1}
-        infiniteGrid
-        followCamera
+        infiniteGrid={!preview}
+        followCamera={!preview}
         side={DoubleSide}
       />
     </>
@@ -149,9 +153,11 @@ export function SphereMass({
   radius?: number;
   color?: string;
 }) {
+  const lab = useLabControlsEnabled();
+  const segs = lab ? 32 : 12;
   return (
     <mesh position={position}>
-      <sphereGeometry args={[radius, 32, 24]} />
+      <sphereGeometry args={[radius, segs, Math.max(8, Math.round(segs * 0.75))]} />
       <meshPhysicalMaterial
         color={color}
         roughness={0.3}
@@ -328,6 +334,9 @@ export function VectorArrow({
   unit,
   dashed = false,
   scale = 1,
+  labelOffset = [0, 0, 0],
+  showLabel = true,
+  hideInPreview = true,
 }: {
   origin: Vec3;
   vector: Vec3;
@@ -338,9 +347,13 @@ export function VectorArrow({
   unit: string;
   dashed?: boolean;
   scale?: number;
+  labelOffset?: Vec3;
+  showLabel?: boolean;
+  hideInPreview?: boolean;
 }) {
+  const lab = useLabControlsEnabled();
   const magnitude = Math.hypot(vector[0], vector[1], vector[2]);
-  if (magnitude < 1e-6) {
+  if (magnitude < 1e-6 || (hideInPreview && !lab)) {
     return null;
   }
   const direction: Vec3 = [vector[0] / magnitude, vector[1] / magnitude, vector[2] / magnitude];
@@ -352,8 +365,12 @@ export function VectorArrow({
   const coneHeight = (dashed ? 0.08 : 0.1) * scale;
   const coneRadius = (dashed ? 0.028 : 0.036) * scale;
   const shaftRadius = (dashed ? 0.008 : 0.012) * scale;
-  const reach = shaft + coneHeight + 0.14 * scale;
-  const labelPosition: Vec3 = [direction[0] * reach, direction[1] * reach, direction[2] * reach];
+  const placement = placeForceLabel(
+    vector,
+    shaft + coneHeight,
+    labelOffset,
+    0.14 * scale,
+  );
 
   return (
     <group position={origin}>
@@ -375,12 +392,21 @@ export function VectorArrow({
           <meshBasicMaterial color={color} depthTest={false} />
         </mesh>
       </group>
-      <SpriteLabel
-        text={`${label} ${formatLabNumber(value)} ${unit}`}
-        color={color}
-        position={labelPosition}
-        height={0.18 * scale}
-      />
+      {showLabel && placement ? (
+        <>
+          <LabLine
+            points={[placement.tip, placement.label]}
+            color="#64748b"
+            lineWidth={0.65}
+          />
+          <SpriteLabel
+            text={`${label} ${formatLabNumber(value)} ${unit}`}
+            color={color}
+            position={placement.label}
+            height={0.18 * scale}
+          />
+        </>
+      ) : null}
     </group>
   );
 }
@@ -394,6 +420,7 @@ export function ForceWithXY({
   unitLength,
   scale = 1,
   unit = "N",
+  labelOffsets,
 }: {
   origin: Vec3;
   vector: Vec3;
@@ -403,6 +430,11 @@ export function ForceWithXY({
   unitLength: number;
   scale?: number;
   unit?: string;
+  labelOffsets?: {
+    main?: Vec3;
+    horizontal?: Vec3;
+    vertical?: Vec3;
+  };
 }) {
   const [vx, vy, vz] = vector;
   const horizMag = Math.hypot(vx, vz);
@@ -421,6 +453,7 @@ export function ForceWithXY({
         label={label}
         unit={unit}
         scale={scale}
+        labelOffset={labelOffsets?.main}
       />
       {oblique ? (
         <>
@@ -434,6 +467,7 @@ export function ForceWithXY({
             unit={unit}
             dashed
             scale={scale}
+            labelOffset={labelOffsets?.horizontal}
           />
           <VectorArrow
             origin={origin}
@@ -445,6 +479,7 @@ export function ForceWithXY({
             unit={unit}
             dashed
             scale={scale}
+            labelOffset={labelOffsets?.vertical}
           />
         </>
       ) : null}

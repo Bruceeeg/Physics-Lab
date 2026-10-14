@@ -53,24 +53,37 @@ function UnitTable({
   units: readonly { title: string; english: string; weighting: string }[];
 }) {
   return (
-    <table className="mt-5 w-full border-collapse text-left text-sm">
-      <thead>
-        <tr className="border-b border-line text-xs text-quiet">
-          <th className="py-2 pr-3 font-medium">单元</th>
-          <th className="py-2 pr-3 font-medium">英文名称</th>
-          <th className="py-2 font-medium">选择题约</th>
-        </tr>
-      </thead>
-      <tbody>
+    <>
+      <div className="mt-5 grid gap-2 sm:hidden">
         {units.map((unit) => (
-          <tr key={unit.title} className="border-b border-line">
-            <td className="py-2 pr-3 text-ink">{unit.title}</td>
-            <td className="py-2 pr-3 text-quiet">{unit.english}</td>
-            <td className="py-2 font-mono text-xs text-quiet">{unit.weighting}</td>
-          </tr>
+          <div key={unit.title} className="rounded-[8px] border border-line bg-surface px-3 py-2.5">
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-sm font-medium text-ink">{unit.title}</p>
+              <p className="shrink-0 font-mono text-xs text-quiet">{unit.weighting}</p>
+            </div>
+            <p className="mt-1 text-xs leading-5 text-quiet">{unit.english}</p>
+          </div>
         ))}
-      </tbody>
-    </table>
+      </div>
+      <table className="mt-5 hidden w-full border-collapse text-left text-sm sm:table">
+        <thead>
+          <tr className="border-b border-line text-xs text-quiet">
+            <th className="py-2 pr-3 font-medium">单元</th>
+            <th className="py-2 pr-3 font-medium">英文名称</th>
+            <th className="py-2 font-medium">选择题约</th>
+          </tr>
+        </thead>
+        <tbody>
+          {units.map((unit) => (
+            <tr key={unit.title} className="border-b border-line">
+              <td className="py-2 pr-3 text-ink">{unit.title}</td>
+              <td className="py-2 pr-3 text-quiet">{unit.english}</td>
+              <td className="py-2 font-mono text-xs text-quiet">{unit.weighting}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </>
   );
 }
 
@@ -97,10 +110,59 @@ export default function AboutPage() {
     <div className="min-h-[100dvh] bg-paper text-ink">
       <SiteHeader />
       <main className="mx-auto max-w-[720px] px-5 py-16 md:px-10">
-        <h1 className="text-3xl font-medium tracking-tight">关于</h1>
+        <p className="font-mono text-xs uppercase tracking-[0.14em] text-gold">Project note · 2026</p>
+        <h1 className="mt-3 text-3xl font-medium tracking-tight">关于 Physics Lab</h1>
         <p className="mt-4 text-sm leading-7 text-quiet">
-          Physics Lab 是面向 AP 物理课堂的可交互实验台。首页按 AP Physics 1、Physics 2、C 力学和 C 电磁列出实验。C 力学与 C 电磁中与 1、2 重合的实验共用同一张实验台；考纲要求而代数课程没有的内容（滑轮惯量、高斯定理、电容、螺线管、RL 等）补在对应实验台或独立条目里。
+          Physics Lab 是一个面向 AP 物理学习的交互式可视化实验平台。项目把参数控制、物理公式、三维装置、受力标注、实时读数和时间图放进同一个实验台，让学生通过改变条件观察运动、电磁、流体、热学、波动、光学与近代物理模型的响应。
         </p>
+        <p className="mt-3 text-sm leading-7 text-quiet">
+          首页按 AP Physics 1、Physics 2、C 力学和 C 电磁列出 40 个独立实验条目。C 力学与 C 电磁中与 1、2 重合的实验共用同一张实验台；考纲要求而代数课程没有的内容（滑轮惯量、高斯定理、电容、螺线管、RL 等）补在对应实验台或独立条目里。
+        </p>
+
+        <section className="mt-10 border-y border-line py-7">
+          <h2 className="text-lg font-medium text-ink">项目目标</h2>
+          <ul className="mt-4 space-y-3 text-sm leading-6 text-quiet">
+            <li>把课程单元转化为可浏览、可操作的实验目录。</li>
+            <li>让场景、公式、页头读数和时间图描述同一个时刻。</li>
+            <li>展示摩擦切换、绳松弛、脱轨等边界状态，而不只播放理想动画。</li>
+            <li>同时支持桌面三栏实验台和窄屏场景优先布局。</li>
+          </ul>
+        </section>
+
+        <section className="mt-10">
+          <h2 className="text-lg font-medium text-ink">设计与架构</h2>
+          <p className="mt-3 text-sm leading-7 text-quiet">
+            系统使用 Next.js、React、TypeScript 与 Three.js。课程和路由层管理课程、单元与实验 slug；模型层提供闭式解、状态机和数值积分；实验台层组合参数、公式、读数与图表；场景层只消费模型输出的 sample，不维护另一套物理状态。
+          </p>
+          <p className="mt-3 text-sm leading-7 text-quiet">
+            视觉采用海军蓝、金色与冷灰构成的仪器式界面。受力箭头、轨迹和引线负责解释关系，目录预览则主动减少标签，避免在小画布中堆积信息。模型内部保持浮点精度，学生可见数值统一为两位小数。
+          </p>
+        </section>
+
+        <section className="mt-10 rounded-[10px] border border-line bg-surface p-5">
+          <h2 className="text-lg font-medium text-ink">验证与项目资料</h2>
+          <p className="mt-3 text-sm leading-7 text-quiet">
+            项目通过模型单元测试、React/TypeScript lint、Next.js production build 和多尺寸浏览器检查验证。测试重点覆盖守恒关系、临界条件、数值积分、图表范围和目录数据。
+          </p>
+          <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm">
+            <a
+              className="font-medium text-blue transition-colors hover:text-ink"
+              href="https://github.com/Bruceeeg/Physics-Lab/blob/main/docs/physics-lab-project-report.md"
+              rel="noreferrer"
+              target="_blank"
+            >
+              阅读完整项目报告 ↗
+            </a>
+            <a
+              className="font-medium text-blue transition-colors hover:text-ink"
+              href="https://github.com/Bruceeeg/Physics-Lab"
+              rel="noreferrer"
+              target="_blank"
+            >
+              查看源代码仓库 ↗
+            </a>
+          </div>
+        </section>
 
         <h2 className="mt-12 text-lg font-medium text-ink">AP Physics 1 考纲结构</h2>
         <p className="mt-3 text-sm leading-7 text-quiet">

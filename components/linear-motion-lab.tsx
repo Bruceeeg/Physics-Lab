@@ -132,6 +132,9 @@ export function LinearMotionLab() {
     if (playingRef.current) {
       return;
     }
+    if (timeRef.current >= TIME_MAX - 1e-9) {
+      setClock(TIME_MIN);
+    }
     playingRef.current = true;
     setIsPlaying(true);
     lastStampRef.current = 0;
@@ -150,7 +153,13 @@ export function LinearMotionLab() {
 
       const dt = Math.min(0.05, Math.max(0, (now - lastStampRef.current) / 1000));
       lastStampRef.current = now;
-      setClock(timeRef.current + dt);
+      const next = setClock(Math.min(TIME_MAX, timeRef.current + dt));
+      if (next >= TIME_MAX - 1e-9) {
+        playingRef.current = false;
+        setIsPlaying(false);
+        frameRef.current = 0;
+        return;
+      }
       frameRef.current = requestAnimationFrame(tick);
     };
 
@@ -330,7 +339,7 @@ export function LinearMotionLab() {
           </div>
 
           <div className="mx-2 min-h-8 border border-line bg-paper px-2 py-1.5 text-[11px] leading-4 text-quiet">
-            滑条 {TIME_MIN}–{TIME_MAX} s，数字框可超出。播放按真实时间推进。
+            时间范围 {TIME_MIN}–{TIME_MAX} s，播放按真实时间推进并在上限自动暂停。
           </div>
 
           <section className="mx-2 mt-2 border-t border-line pt-2">
@@ -360,7 +369,7 @@ export function LinearMotionLab() {
             <h2 className="text-xs font-medium text-ink">三维轨道</h2>
             <p className="font-mono text-[10px] text-quiet">水平运动　y = 0.00 m　拖动旋转</p>
           </div>
-          <div className="relative min-h-[280px] flex-1">
+          <div className="lab-scene-viewport relative min-h-[280px] flex-1">
             <div className="absolute inset-0">
               <SceneCanvas camera={[2.8, 1.4, 3.6]} fov={42}>
                 <LinearMotionScene

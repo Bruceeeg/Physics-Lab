@@ -29,7 +29,12 @@ import {
   listFeaturedExperiments,
   parseCourseFilter,
 } from "./catalog.ts";
-import { FEATURED_CLIP_MS, FEATURED_GAP_MS, PREVIEW_PLAY } from "./preview-timing.ts";
+import {
+  catalogPreviewDpr,
+  FEATURED_CLIP_MS,
+  FEATURED_GAP_MS,
+  PREVIEW_PLAY,
+} from "./preview-timing.ts";
 
 const P1_READY = [
   "linear-motion",
@@ -336,6 +341,11 @@ test("featured autoplay waits half a second after a preview clip", () => {
   assert.equal(PREVIEW_PLAY, 5);
   assert.equal(FEATURED_GAP_MS, 500);
   assert.equal(FEATURED_CLIP_MS, 5500);
+});
+
+test("catalog preview pixel ratio does not change while scrolling", () => {
+  assert.equal(catalogPreviewDpr(true), catalogPreviewDpr(false));
+  assert.equal(catalogPreviewDpr(true), 1);
 });
 
 test("advances featured labs then wraps to the next course", () => {

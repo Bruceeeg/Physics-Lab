@@ -40,6 +40,9 @@ export default function LabCanvas({
           resize={{ offsetSize: true }}
           camera={{ position: camera, fov, near: 0.05, far: 2000 }}
           gl={{ antialias: true, alpha: false }}
+          onCreated={({ gl }) => {
+            gl.setClearColor("#cbd5e1");
+          }}
         >
           {children}
         </Canvas>

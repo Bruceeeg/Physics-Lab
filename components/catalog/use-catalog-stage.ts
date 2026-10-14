@@ -174,10 +174,14 @@ export function useCatalogStage() {
   useEffect(() => {
     const html = document.documentElement;
     html.classList.toggle("catalog-hero-lock", stage === "hero");
+    html.classList.toggle("catalog-labs-open", stage === "catalog");
     if (stage === "catalog" && !heroReturning) {
       window.scrollTo(0, 0);
     }
-    return () => html.classList.remove("catalog-hero-lock");
+    return () => {
+      html.classList.remove("catalog-hero-lock");
+      html.classList.remove("catalog-labs-open");
+    };
   }, [heroReturning, stage]);
 
   useEffect(() => {

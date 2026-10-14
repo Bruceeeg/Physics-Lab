@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 function precisionFor(step: number) {
   const text = String(step);
@@ -39,29 +39,23 @@ export function ParameterControl({
   invalid?: boolean;
   onChange: (value: number) => void;
 }) {
-  const [draft, setDraft] = useState(() => displayValue(value, step));
-  const focused = useRef(false);
-
-  useEffect(() => {
-    focused.current = false;
-    setDraft(displayValue(value, step));
-  }, [id]);
-
-  useEffect(() => {
-    if (!focused.current) {
-      setDraft(displayValue(value, step));
-    }
-  }, [step, value]);
+  const [editing, setEditing] = useState<{ id: string; draft: string } | null>(null);
+  const cancelBlur = useRef(false);
+  const draft = editing?.id === id ? editing.draft : displayValue(value, step);
 
   const commit = () => {
-    focused.current = false;
+    if (cancelBlur.current) {
+      cancelBlur.current = false;
+      setEditing(null);
+      return;
+    }
     const parsed = Number(draft);
     if (!Number.isFinite(parsed)) {
-      setDraft(displayValue(value, step));
+      setEditing(null);
       return;
     }
     const next = snapToStep(parsed, step);
-    setDraft(displayValue(next, step));
+    setEditing(null);
     onChange(next);
   };
 
@@ -79,11 +73,12 @@ export function ParameterControl({
           value={draft}
           aria-invalid={invalid}
           onFocus={() => {
-            focused.current = true;
+            cancelBlur.current = false;
+            setEditing({ id, draft: displayValue(value, step) });
           }}
           onChange={(event) => {
             const nextDraft = event.target.value;
-            setDraft(nextDraft);
+            setEditing({ id, draft: nextDraft });
             if (nextDraft.trim() === "" || nextDraft === "-") {
               return;
             }
@@ -98,8 +93,8 @@ export function ParameterControl({
               event.currentTarget.blur();
             }
             if (event.key === "Escape") {
-              focused.current = false;
-              setDraft(displayValue(value, step));
+              cancelBlur.current = true;
+              setEditing(null);
               event.currentTarget.blur();
             }
           }}
