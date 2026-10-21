@@ -4,6 +4,9 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { FreeformAside, FreeformReset } from "@/components/freeform/parts-panel";
+import { usePublishPlayback } from "@/components/freeform/use-publish-playback";
+import { velocityOf } from "@/components/freeform/playback-bridge";
 import { TimeSeriesChart } from "@/components/kinematic-charts";
 import { ParameterControl } from "@/components/parameter-control";
 import { ProjectileMeasurementBoard } from "@/components/projectile-measurement-board";
@@ -315,6 +318,14 @@ export function ProjectileLab() {
     status = `调整参数后按开始。预测射程 R = ${formatNumber(range(activeParams))} m`;
   }
 
+  usePublishPlayback({
+    getTime: () => timeRef.current,
+    getPoint: () => [sample.x, sample.y, 0],
+    getVelocity: () => velocityOf(sample),
+    pause,
+    reset,
+  });
+
   return (
     <div className="lab-shell bg-paper text-ink">
       <header className="lab-commandbar lab-commandbar--modes border-b border-line bg-surface">
@@ -362,18 +373,13 @@ export function ProjectileLab() {
           >
             暂停
           </button>
-          <button
-            type="button"
-            onClick={reset}
-            className="h-8 min-w-16 cursor-pointer border border-line bg-surface px-3 text-[13px] font-medium text-ink"
-          >
-            重置
-          </button>
+          <FreeformReset />
         </div>
       </header>
 
       <main className="lab-workspace">
         <aside className="lab-parameters min-h-0 overflow-y-auto border border-line bg-surface">
+          <FreeformAside>
           {mode === "params" ? (
             <>
               <div className="border-b border-line px-2.5 py-2">
@@ -424,6 +430,7 @@ export function ProjectileLab() {
               onRetry={handleRetry}
             />
           ) : null}
+          </FreeformAside>
         </aside>
 
         <section className="lab-scene min-h-0 border border-line bg-surface">

@@ -3,6 +3,10 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { useFreeformOptional } from "@/components/freeform/freeform-context";
+import { PartsPanel, ResetMenu } from "@/components/freeform/parts-panel";
+import { ProblemPanel } from "@/components/problems/problem-panel";
+
 export { formatLabNumber, formatLabSci, formatLabSigned } from "@/lib/models/lab-format";
 
 export function LabStat({
@@ -46,6 +50,7 @@ export function LabFrame({
   readouts,
   charts,
   modes,
+  sandboxHost = false,
 }: {
   title: string;
   subtitle: string;
@@ -68,7 +73,12 @@ export function LabFrame({
   readouts: { label: string; value: string; unit: string }[];
   charts: ReactNode;
   modes?: ReactNode;
+  sandboxHost?: boolean;
 }) {
+  const freeform = useFreeformOptional();
+  const covered = Boolean(freeform?.diverged && !sandboxHost);
+  const shownScene = covered ? <div className="min-h-[280px]" /> : scene;
+  const shownCharts = covered ? null : charts;
   const cols = readouts.length <= 4 ? "grid-cols-4" : "grid-cols-5";
 
   return (
@@ -120,32 +130,82 @@ export function LabFrame({
           >
             暂停
           </button>
-          <button
-            type="button"
-            onClick={onReset}
-            className="h-8 min-w-16 cursor-pointer border border-line bg-surface px-3 text-[13px] font-medium text-ink"
-          >
-            重置
-          </button>
+          {freeform ? (
+            <ResetMenu />
+          ) : (
+            <button
+              type="button"
+              onClick={onReset}
+              className="h-8 min-w-16 cursor-pointer border border-line bg-surface px-3 text-[13px] font-medium text-ink"
+            >
+              重置
+            </button>
+          )}
         </div>
       </header>
 
       <main className="lab-workspace">
         <aside className="lab-parameters min-h-0 overflow-y-auto border border-line bg-surface">
           <div className="border-b border-line px-2.5 py-2">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-medium text-ink">参数设置</h2>
-              <span className="font-mono text-[10px] text-quiet">SI</span>
-            </div>
+            {freeform ? (
+              <div className="flex" role="tablist" aria-label="参数、零件或 free response">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={freeform.tab === "params"}
+                  onClick={() => freeform.setTab("params")}
+                  className={`h-8 flex-1 cursor-pointer text-[13px] ${freeform.tab === "params" ? "bg-navy text-white" : "text-quiet"}`}
+                >
+                  参数
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={freeform.tab === "parts"}
+                  onClick={() => freeform.setTab("parts")}
+                  className={`h-8 flex-1 cursor-pointer text-[13px] ${freeform.tab === "parts" ? "bg-navy text-white" : "text-quiet"}`}
+                >
+                  零件
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={freeform.tab === "problems"}
+                  onClick={() => freeform.setTab("problems")}
+                  className={`h-8 flex-1 cursor-pointer text-[13px] ${freeform.tab === "problems" ? "bg-navy text-white" : "text-quiet"}`}
+                >
+                  FRQ
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-medium text-ink">参数设置</h2>
+                <span className="font-mono text-[10px] text-quiet">SI</span>
+              </div>
+            )}
             <p className="mt-0.5 text-[11px] text-quiet">
-              改任一参数即回到 t = 0。数字输入按 Enter 确认，滑条立即生效。
+              {freeform?.tab === "problems"
+                ? "Free-response values are calculated with this lab model and checked against an independent expression."
+                : freeform
+                  ? "零件页添加器材或改力，时间保持不动。标准模型里改滑条仍会回到 t = 0。重置可以单独归零、收回操作或整台还原。"
+                  : "改任一参数即回到 t = 0。数字输入按 Enter 确认，滑条立即生效。"}
             </p>
           </div>
-          <div className="space-y-1 px-1.5 py-1.5">{parameters}</div>
+          <div className="space-y-1 px-1.5 py-1.5">
+            {freeform?.tab === "parts" ? (
+              <PartsPanel />
+            ) : freeform?.tab === "problems" ? (
+              <ProblemPanel />
+            ) : (
+              parameters
+            )}
+          </div>
+          {freeform?.tab === "problems" ? null : (
           <section className="mx-2 mt-2 border-t border-line pt-2 pb-3">
             <h2 className="text-[13px] font-medium text-ink">公式与当前数值</h2>
             <div className="mt-1 space-y-1 font-mono text-[11px] leading-5">{formula}</div>
           </section>
+          )}
         </aside>
 
         <section className="lab-scene min-h-0 border border-line bg-surface">
@@ -154,7 +214,7 @@ export function LabFrame({
             <p className="font-mono text-[10px] text-quiet">{sceneCaption}</p>
           </div>
           <div className="lab-scene-viewport relative min-h-[280px] flex-1">
-            <div className="absolute inset-0 h-full w-full">{scene}</div>
+            <div className="absolute inset-0 h-full w-full">{shownScene}</div>
           </div>
           <dl className={`grid h-12 ${cols} border-t border-line font-mono text-[11px] tabular-nums`}>
             {readouts.map((item) => (
@@ -168,7 +228,7 @@ export function LabFrame({
           </dl>
         </section>
 
-        <aside className="lab-charts min-h-0">{charts}</aside>
+        <aside className="lab-charts min-h-0">{shownCharts}</aside>
       </main>
     </div>
   );

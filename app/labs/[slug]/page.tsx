@@ -31,6 +31,7 @@ import { ThermalConductivityLab } from "@/components/p2/thermal-conductivity-lab
 import { WavesOpticsLab } from "@/components/p2/waves-optics-lab";
 import { ProjectileLab } from "@/components/projectile-lab";
 import { PullFrictionLab } from "@/components/pull-friction-lab";
+import { FreeformLab } from "@/components/freeform/freeform-lab";
 import {
   getExperiment,
   listExperimentSlugs,
@@ -113,5 +114,9 @@ export default async function LabPage({ params }: LabPageProps) {
     notFound();
   }
   const Lab = LAB_PAGES[experiment.slug];
-  return <Lab key={experiment.slug} slug={experiment.slug} />;
+  return (
+    <FreeformLab slug={experiment.slug}>
+      <Lab key={experiment.slug} slug={experiment.slug} />
+    </FreeformLab>
+  );
 }

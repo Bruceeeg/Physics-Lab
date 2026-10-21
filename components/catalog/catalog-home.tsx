@@ -117,7 +117,7 @@ export function CatalogHome() {
           onTransitionEnd={onHeroTransitionEnd}
         >
             {header}
-            <div className="mx-auto flex min-h-0 w-full max-w-[1400px] flex-1 flex-col px-5 pt-6 md:px-10 md:pt-8">
+            <div className="mx-auto flex min-h-0 w-full max-w-[1600px] flex-1 flex-col px-5 pt-6 md:px-6 md:pt-8">
               <header className="catalog-hero-copy shrink-0 pb-8 md:pb-10">
                 <h1 className="text-4xl font-medium tracking-tight text-ink md:text-5xl">
                   AP 物理实验
@@ -162,7 +162,7 @@ export function CatalogHome() {
             <div className="md:hidden">
               <CatalogToc tree={tree} variant="mobile" />
             </div>
-            <div className="mx-auto flex max-w-[1400px] items-start gap-8 px-5 pb-16 pt-4 md:gap-10 md:px-10 md:pt-5">
+            <div className="mx-auto flex max-w-[1600px] items-start gap-8 px-5 pb-16 pt-4 md:gap-10 md:px-6 md:pt-5">
               <div className="sticky top-20 hidden self-start md:block">
                 <CatalogToc tree={tree} variant="side" />
               </div>

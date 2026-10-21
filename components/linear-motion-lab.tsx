@@ -4,6 +4,8 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { FreeformAside, FreeformReset } from "@/components/freeform/parts-panel";
+import { usePublishPlayback } from "@/components/freeform/use-publish-playback";
 import { TimeSeriesChart } from "@/components/kinematic-charts";
 import { ModeSwitch } from "@/components/lab-frame";
 import { LinearMotionScene } from "@/components/linear-motion-scene";
@@ -222,6 +224,14 @@ export function LinearMotionLab() {
   const paramValues: Record<ParamKey, number> = { x0, v0, a, t: time };
   const status = isPlaying ? "正在播放" : time > 0 ? "已暂停" : "待开始";
 
+  usePublishPlayback({
+    getTime: () => timeRef.current,
+    getPoint: () => [currentPosition, 0.08, 0],
+    getVelocity: () => ({ vx: currentVelocity, vy: 0, vz: 0 }),
+    pause,
+    reset,
+  });
+
   return (
     <div className="lab-shell bg-paper text-ink">
       <header className="lab-commandbar lab-commandbar--modes border-b border-line bg-surface">
@@ -273,18 +283,13 @@ export function LinearMotionLab() {
           >
             暂停
           </button>
-          <button
-            type="button"
-            onClick={reset}
-            className="h-8 min-w-16 cursor-pointer border border-line bg-surface px-3 text-[13px] font-medium text-ink"
-          >
-            重置
-          </button>
+          <FreeformReset />
         </div>
       </header>
 
       <main className="lab-workspace">
         <aside className="lab-parameters min-h-0 border border-line bg-surface">
+          <FreeformAside>
           <div className="border-b border-line px-2.5 py-2">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-medium text-ink">参数设置</h2>
@@ -362,6 +367,7 @@ export function LinearMotionLab() {
               <p>ax = {formatNumber(currentA)} m/s²　ay = 0.00 m/s²</p>
             </div>
           </section>
+          </FreeformAside>
         </aside>
 
         <section className="lab-scene min-h-0 border border-line bg-surface">

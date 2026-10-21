@@ -24,7 +24,7 @@ export function SiteHeader({
   };
 
   return (
-    <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between gap-4 border-b border-line bg-surface px-5 md:px-10">
+    <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between gap-4 border-b border-line bg-surface px-5 md:px-6">
       <Link
         href="/"
         onClick={goHome}

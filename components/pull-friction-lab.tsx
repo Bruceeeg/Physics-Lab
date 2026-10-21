@@ -4,6 +4,8 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { FreeformAside, FreeformReset } from "@/components/freeform/parts-panel";
+import { usePublishPlayback } from "@/components/freeform/use-publish-playback";
 import { TimeSeriesChart } from "@/components/kinematic-charts";
 import { ParameterControl } from "@/components/parameter-control";
 import { PullFrictionDiagram2D } from "@/components/pull-friction-diagram-2d";
@@ -285,6 +287,14 @@ export function PullFrictionLab() {
         ? `已暂停，${alertCopy(derived.alert)}`
         : alertCopy(derived.alert);
 
+  usePublishPlayback({
+    getTime: () => state.t,
+    getPoint: () => [state.x, 0.08, state.z],
+    getVelocity: () => ({ vx: state.vx, vy: 0, vz: state.vz }),
+    pause,
+    reset,
+  });
+
   return (
     <div className="lab-shell bg-paper text-ink">
       <header className="lab-commandbar border-b border-line bg-surface">
@@ -331,18 +341,13 @@ export function PullFrictionLab() {
           >
             暂停
           </button>
-          <button
-            type="button"
-            onClick={reset}
-            className="h-8 min-w-16 cursor-pointer border border-line bg-surface px-3 text-[13px] font-medium text-ink"
-          >
-            重置
-          </button>
+          <FreeformReset />
         </div>
       </header>
 
       <main className="lab-workspace">
         <aside className="lab-parameters min-h-0 border border-line bg-surface">
+          <FreeformAside>
           <div className="border-b border-line px-2.5 py-2">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-medium text-ink">参数设置</h2>
@@ -398,6 +403,7 @@ export function PullFrictionLab() {
               </p>
             </div>
           </section>
+          </FreeformAside>
         </aside>
 
         <section className="lab-scene min-h-0 border border-line bg-surface">

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { registerPlayback, velocityOf } from "@/components/freeform/playback-bridge";
 import { appendTimeSample } from "@/lib/models/time-series";
 
 export type LabPoint = [number, number, number];
@@ -23,6 +24,8 @@ export function useLabPlayback<T extends { t: number }>(
   const computeRef = useRef(compute);
   const getLimitRef = useRef(getLimit);
   const rateRef = useRef(options?.rate ?? 1);
+  const lastPointRef = useRef<LabPoint>([0, 0, 0]);
+  const lastSampleRef = useRef<T | null>(null);
 
   useEffect(() => {
     computeRef.current = compute;
@@ -54,6 +57,8 @@ export function useLabPlayback<T extends { t: number }>(
 
   const record = useCallback((next: number, seed: boolean) => {
     const live = computeRef.current(next);
+    lastPointRef.current = live.point;
+    lastSampleRef.current = live.sample;
     if (seed || next <= 1e-9) {
       setSeries([live.sample]);
       setTrail([live.point]);
@@ -138,6 +143,16 @@ export function useLabPlayback<T extends { t: number }>(
     lastStampRef.current = 0;
     record(0, true);
   }, [pause, record]);
+
+  useEffect(() => {
+    return registerPlayback({
+      getTime: () => timeRef.current,
+      getPoint: () => lastPointRef.current,
+      getVelocity: () => velocityOf(lastSampleRef.current),
+      pause,
+      reset,
+    });
+  }, [pause, reset]);
 
   const live = compute(time);
   const chartSeries =
